@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>Остатки OZON</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0f0f0f;
+    --surface:   #1a1a1a;
+    --surface2:  #232323;
+    --border:    #2e2e2e;
+    --nes:       #c8a96e;
+    --nes-dim:   #3d2e15;
+    --dg:        #e05c5c;
+    --dg-dim:    #3d1515;
+    --ok:        #4caf7d;
+    --warn:      #f0c040;
+    --crit:      #e05c5c;
+    --text:      #f0f0f0;
+    --text-dim:  #888;
+    --mono:      'IBM Plex Mono', monospace;
+    --sans:      'IBM Plex Sans', sans-serif;
+    --display:   'Bebas Neue', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overscroll-behavior: none;
+  }
+
+  /* ── HEADER ── */
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .app-title {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  .app-title span { color: var(--nes); }
+
+  .refresh-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:active { transform: scale(0.96); background: var(--border); }
+  .refresh-btn.loading .icon { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── SETUP SCREEN ── */
+  .setup-screen {
+    padding: 24px 16px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .setup-screen h2 {
+    font-family: var(--display);
+    font-size: 32px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .setup-screen p {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .input-group label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .input-group input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-group input:focus { border-color: var(--nes); }
+
+  .save-btn {
+    width: 100%;
+    background: var(--nes);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--display);
+    font-size: 20px;
+    letter-spacing: 2px;
+    padding: 14px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+
+  .save-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* ── SUMMARY CARDS ── */
+  .summary {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  .summary-card.full { grid-column: 1 / -1; }
+
+  .summary-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .summary-value {
+    font-family: var(--display);
+    font-size: 36px;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+
+  .summary-value.crit { color: var(--crit); }
+  .summary-value.warn { color: var(--warn); }
+  .summary-value.ok   { color: var(--ok); }
+
+  .summary-sub {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    padding: 0 16px;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tab.active-nes  { background: var(--nes-dim);  border-color: var(--nes);  color: var(--nes); }
+  .tab.active-dg   { background: var(--dg-dim);   border-color: var(--dg);   color: var(--dg); }
+  .tab.active-all  { background: var(--surface2); border-color: var(--text); color: var(--text); }
+
+  /* ── FILTERS ── */
+  .filters {
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+
+  .filter-chip {
+    white-space: nowrap;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-chip.active { border-color: var(--warn); color: var(--warn); background: rgba(240,192,64,0.1); }
+
+  /* ── PRODUCT LIST ── */
+  .product-list {
+    padding: 8px 16px 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .product-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.3s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .product-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--ok);
+  }
+
+  .product-card.warn::before { background: var(--warn); }
+  .product-card.crit::before { background: var(--crit); }
+
+  .product-card.warn { border-color: rgba(240,192,64,0.3); }
+  .product-card.crit { border-color: rgba(224,92,92,0.3); background: rgba(224,92,92,0.05); }
+
+  .product-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .product-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .days-badge {
+    font-family: var(--display);
+    font-size: 28px;
+    line-height: 1;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .days-badge .days-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    display: block;
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .days-badge.ok   { color: var(--ok); }
+  .days-badge.warn { color: var(--warn); }
+  .days-badge.crit { color: var(--crit); }
+
+  .product-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .stat {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .product-article {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ok);
+    display: inline-block;
+    margin-right: 6px;
+  }
+
+  .status-dot.loading { background: var(--warn); animation: pulse 1s infinite; }
+  .status-dot.error   { background: var(--crit); }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  /* ── LOADING ── */
+  .loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 16px;
+    gap: 16px;
+  }
+
+  .loading-spinner {
+    width: 40px; height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--nes);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* ── ERROR ── */
+  .error-box {
+    margin: 16px;
+    background: rgba(224,92,92,0.1);
+    border: 1px solid var(--crit);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--crit);
+  }
+
+  .settings-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 2px;
+    padding: 4px 0 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+  }
+
+  .section-header.nes { color: var(--nes); }
+  .section-header.dg  { color: var(--dg); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="app-title">OZON<span>.</span>STOCK</div>
+  <button class="refresh-btn" onclick="loadData()" id="refreshBtn">
+    <span class="icon">↻</span>
+    <span>Обновить</span>
+  </button>
+</div>
+
+<div id="setupScreen" class="setup-screen hidden">
+  <h2>Настройка</h2>
+  <p>Введите ваши ключи от Ozon Seller API. Они хранятся только на вашем устройстве.</p>
+  <div class="input-group">
+    <label>Client ID</label>
+    <input type="text" id="clientIdInput" placeholder="28416" inputmode="numeric">
+  </div>
+  <div class="input-group">
+    <label>API Key</label>
+    <input type="text" id="apiKeyInput" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+  </div>
+  <button class="save-btn" onclick="saveCredentials()">СОХРАНИТЬ</button>
+</div>
+
+<div id="mainScreen" class="hidden">
+  <div class="summary" id="summaryCards"></div>
+
+  <div class="tabs">
+    <div class="tab active-all" onclick="setTab('all')"    id="tabAll">Все</div>
+    <div class="tab"            onclick="setTab('nes')"    id="tabNes">Nespresso</div>
+    <div class="tab"            onclick="setTab('dg')"     id="tabDg">Dolce Gusto</div>
+  </div>
+
+  <div class="filters">
+    <div class="filter-chip" onclick="setFilter('all')"  id="filterAll">Все товары</div>
+    <div class="filter-chip" onclick="setFilter('crit')" id="filterCrit">🔴 Критично ≤7д</div>
+    <div class="filter-chip" onclick="setFilter('warn')" id="filterWarn">🟡 Внимание ≤14д</div>
+  </div>
+
+  <div class="product-list" id="productList"></div>
+</div>
+
+<div id="loadingScreen" class="loading-screen hidden">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Загружаем данные...</div>
+</div>
+
+<div id="errorBox" class="hidden"></div>
+
+<div class="status-bar">
+  <div>
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">Готов</span>
+  </div>
+  <div id="lastUpdate"></div>
+</div>
+
+<script>
+const COMPATIBILITY_ATTR = 7491;
+const DAYS_FOR_AVG = 7;
+let allProducts = [];
+let currentTab = 'all';
+let currentFilter = 'all';
+
+// ── Credentials ──────────────────────────────
+function getCredentials() {
+  return {
+    clientId: localStorage.getItem('ozon_client_id') || '',
+    apiKey:   localStorage.getItem('ozon_api_key')   || ''
+  };
+}
+
+function saveCredentials() {
+  const clientId = document.getElementById('clientIdInput').value.trim();
+  const apiKey   = document.getElementById('apiKeyInput').value.trim();
+  if (!clientId || !apiKey) { alert('Заполните оба поля'); return; }
+  localStorage.setItem('ozon_client_id', clientId);
+  localStorage.setItem('ozon_api_key',   apiKey);
+  document.getElementById('setupScreen').classList.add('hidden');
+  document.getElementById('mainScreen').classList.remove('hidden');
+  loadData();
+}
+
+// ── API ──────────────────────────────────────
+async function ozonPost(url, body) {
+  const { clientId, apiKey } = getCredentials();
+  const response = await fetch('https://api-seller.ozon.ru' + url, {
+    method: 'POST',
+    headers: {
+      'Client-Id':   clientId,
+      'Api-Key':     apiKey,
+      'Content-Type':'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) throw new Error('HTTP ' + response.status + ' для ' + url);
+  return response.json();
+}
+
+function setLoading(text) {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingScreen').classList.remove('hidden');
+  document.getElementById('productList').classList.add('hidden');
+  document.getElementById('summaryCards').classList.add('hidden');
+  document.getElementById('statusDot').className = 'status-dot loading';
+  document.getElementById('statusText').textContent = text;
+  document.getElementById('refreshBtn').classList.add('loading');
+}
+
+function setReady() {
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('productList').classList.remove('hidden');
+  document.getElementById('summaryCards').classList.remove('hidden');
+  document.getElementById('statusDot').className = 'status-dot';
+  document.getElementById('statusText').textContent = 'Данные актуальны';
+  document.getElementById('refreshBtn').classList.remove('loading');
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent =
+    now.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+}
+
+function setError(msg) {
+  document.getElementById('loadingScreen').classList.add('hidden');
+  document.getElementById('statusDot').className = 'status-dot error';
+  document.getElementById('statusText').textContent = 'Ошибка';
+  document.getElementById('refreshBtn').classList.remove('loading');
+  const box = document.getElementById('errorBox');
+  box.className = 'error-box';
+  box.innerHTML = msg + '<br><span class="settings-link" onclick="showSetup()">Изменить настройки</span>';
+}
+
+// ── Load Data ────────────────────────────────
+async function loadData() {
+  try {
+    setLoading('Загружаем остатки...');
+
+    // 1. Остатки
+    let grouped = {};
+    let totalWarehouses = new Set();
+    let offset = 0;
+
+    while (true) {
+      const data = await ozonPost('/v2/analytics/stock_on_warehouses',
+        { limit: 1000, offset, warehouse_type: 'ALL' });
+      const rows = data.result?.rows || [];
+      if (!rows.length) break;
+
+      rows.forEach(r => {
+        const sku = String(r.sku);
+        totalWarehouses.add(r.warehouse_name);
+        if (!grouped[sku]) {
+          grouped[sku] = {
+            sku, article: r.item_code, name: r.item_name,
+            available: 0, reserved: 0, sold7: 0,
+            warehousesWithStock: new Set(),
+            compatibility: '', productId: '0'
+          };
+        }
+        grouped[sku].available += (r.free_to_sell_amount || 0);
+        grouped[sku].reserved  += (r.reserved_amount     || 0);
+        if ((r.free_to_sell_amount || 0) > 0)
+          grouped[sku].warehousesWithStock.add(r.warehouse_name);
+      });
+
+      if (rows.length < 1000) break;
+      offset += 1000;
+    }
+
+    const totalWH = totalWarehouses.size;
+
+    // 2. product_id
+    setLoading('Загружаем карточки товаров...');
+    const allSkus = Object.keys(grouped).map(Number);
+
+    for (let i = 0; i < allSkus.length; i += 100) {
+      const batch = allSkus.slice(i, i + 100);
+      const data = await ozonPost('/v3/product/info/list', { sku: batch });
+      const items = data.items || data.result?.items || [];
+      items.forEach(p => {
+        (p.sources || []).forEach(s => {
+          if (grouped[String(s.sku)])
+            grouped[String(s.sku)].productId = String(p.id);
+        });
+      });
+    }
+
+    // 3. Атрибуты совместимости
+    setLoading('Определяем совместимость...');
+    const uniquePids = [...new Set(
+      Object.values(grouped).map(d => d.productId).filter(id => id !== '0')
+    )].map(Number);
+
+    let pidToCompat = {};
+    for (let i = 0; i < uniquePids.length; i += 100) {
+      const batch = uniquePids.slice(i, i + 100);
+      const data = await ozonPost('/v4/product/info/attributes',
+        { filter: { product_id: batch }, limit: 100, sort_dir: 'ASC' });
+      (data.result || []).forEach(p => {
+        const attr = (p.attributes || []).find(a => a.id === COMPATIBILITY_ATTR);
+        pidToCompat[String(p.id)] = (attr?.values?.[0]?.value || '').toLowerCase();
+      });
+    }
+
+    Object.keys(grouped).forEach(sku => {
+      grouped[sku].compatibility = pidToCompat[grouped[sku].productId] || '';
+    });
+
+    // 4. Продажи за 7 дней
+    setLoading('Загружаем статистику продаж...');
+    const dateTo   = new Date();
+    const dateFrom = new Date();
+    dateFrom.setDate(dateFrom.getDate() - DAYS_FOR_AVG);
+
+    const salesData = await ozonPost('/v1/analytics/data', {
+      date_from: dateFrom.toISOString().split('T')[0],
+      date_to:   dateTo.toISOString().split('T')[0],
+      dimension: ['sku'], metrics: ['ordered_units'],
+      limit: 1000, offset: 0
+    });
+
+    (salesData.result?.data || []).forEach(r => {
+      const sku = String(r.dimensions?.[0]?.id);
+      if (grouped[sku]) grouped[sku].sold7 = r.metrics?.[0] || 0;
+    });
+
+    // 5. Финальный массив
+    allProducts = Object.values(grouped).map(d => {
+      const avgPerDay = d.sold7 > 0 ? +(d.sold7 / DAYS_FOR_AVG).toFixed(1) : 0;
+      const daysLeft  = avgPerDay > 0 ? Math.floor(d.available / avgPerDay) : Infinity;
+      return { ...d, avgPerDay, daysLeft, totalWH };
+    });
+
+    renderAll();
+    setReady();
+
+  } catch(e) {
+    setError('Ошибка загрузки данных:<br><b>' + e.message + '</b><br><br>Проверьте Client ID и API Key.');
+  }
+}
+
+// ── Render ───────────────────────────────────
+function getTabProducts() {
+  if (currentTab === 'nes') return allProducts.filter(p => p.compatibility.includes('nespresso'));
+  if (currentTab === 'dg')  return allProducts.filter(p => p.compatibility.includes('dolce'));
+  return allProducts;
+}
+
+function getFilteredProducts(products) {
+  if (currentFilter === 'crit') return products.filter(p => p.daysLeft !== Infinity && p.daysLeft <= 7);
+  if (currentFilter === 'warn') return products.filter(p => p.daysLeft !== Infinity && p.daysLeft <= 14);
+  return products;
+}
+
+function renderAll() {
+  renderSummary();
+  renderProducts();
+}
+
+function renderSummary() {
+  const nes = allProducts.filter(p => p.compatibility.includes('nespresso'));
+  const dg  = allProducts.filter(p => p.compatibility.includes('dolce'));
+
+  const critCount = allProducts.filter(p => p.daysLeft !== Infinity && p.daysLeft <= 7).length;
+  const warnCount = allProducts.filter(p => p.daysLeft !== Infinity && p.daysLeft > 7 && p.daysLeft <= 14).length;
+  const totalSales = allProducts.reduce((s, p) => s + p.avgPerDay, 0).toFixed(1);
+
+  document.getElementById('summaryCards').innerHTML = `
+    <div class="summary-card">
+      <div class="summary-label">🔴 Критично</div>
+      <div class="summary-value crit">${critCount}</div>
+      <div class="summary-sub">товаров ≤ 7 дней</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">🟡 Внимание</div>
+      <div class="summary-value warn">${warnCount}</div>
+      <div class="summary-sub">товаров ≤ 14 дней</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">☕ Nespresso</div>
+      <div class="summary-value" style="color:var(--nes)">${nes.length}</div>
+      <div class="summary-sub">SKU</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">☕ Dolce Gusto</div>
+      <div class="summary-value" style="color:var(--dg)">${dg.length}</div>
+      <div class="summary-sub">SKU</div>
+    </div>
+    <div class="summary-card full">
+      <div class="summary-label">Продаж в день (все товары)</div>
+      <div class="summary-value ok">${totalSales}</div>
+      <div class="summary-sub">единиц суммарно</div>
+    </div>
+  `;
+}
+
+function renderProducts() {
+  const tabProducts = getTabProducts();
+  const products = getFilteredProducts(tabProducts)
+    .sort((a, b) => {
+      const da = a.daysLeft === Infinity ? 99999 : a.daysLeft;
+      const db = b.daysLeft === Infinity ? 99999 : b.daysLeft;
+      return da - db;
+    });
+
+  const list = document.getElementById('productList');
+
+  if (!products.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-family:var(--mono);font-size:13px;padding:40px 0">Нет товаров</div>';
+    return;
+  }
+
+  // Разделяем по группам если вкладка "Все"
+  let html = '';
+
+  if (currentTab === 'all') {
+    const nes = products.filter(p => p.compatibility.includes('nespresso'));
+    const dg  = products.filter(p => p.compatibility.includes('dolce'));
+    const other = products.filter(p => !p.compatibility.includes('nespresso') && !p.compatibility.includes('dolce'));
+
+    if (nes.length) {
+      html += `<div class="section-header nes">☕ NESPRESSO</div>`;
+      html += nes.map(productCard).join('');
+    }
+    if (dg.length) {
+      html += `<div class="section-header dg" style="margin-top:16px">☕ DOLCE GUSTO</div>`;
+      html += dg.map(productCard).join('');
+    }
+    if (other.length) {
+      html += `<div class="section-header" style="margin-top:16px;color:var(--text-dim)">📦 ОСТАЛЬНЫЕ</div>`;
+      html += other.map(productCard).join('');
+    }
+  } else {
+    html = products.map(productCard).join('');
+  }
+
+  list.innerHTML = html;
+}
+
+function productCard(p) {
+  const days = p.daysLeft === Infinity ? '∞' : p.daysLeft;
+  const dayClass = p.daysLeft <= 7 ? 'crit' : p.daysLeft <= 14 ? 'warn' : 'ok';
+  const cardClass = p.daysLeft <= 7 ? 'crit' : p.daysLeft <= 14 ? 'warn' : '';
+
+  return `
+    <div class="product-card ${cardClass}">
+      <div class="product-top">
+        <div class="product-name">${p.name}</div>
+        <div class="days-badge ${dayClass}">
+          ${days}
+          <span class="days-label">дней</span>
+        </div>
+      </div>
+      <div class="product-stats">
+        <div class="stat">
+          <div class="stat-label">На складе</div>
+          <div class="stat-value">${p.available.toLocaleString('ru')}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">В день</div>
+          <div class="stat-value">${p.avgPerDay}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">За 7 дней</div>
+          <div class="stat-value">${p.sold7}</div>
+        </div>
+      </div>
+      <div class="product-article">${p.article} · SKU ${p.sku}</div>
+    </div>
+  `;
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.className = 'tab');
+  if (tab === 'nes') { document.getElementById('tabNes').className = 'tab active-nes'; }
+  else if (tab === 'dg') { document.getElementById('tabDg').className = 'tab active-dg'; }
+  else { document.getElementById('tabAll').className = 'tab active-all'; }
+  renderProducts();
+}
+
+function setFilter(f) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  document.getElementById('filter' + f.charAt(0).toUpperCase() + f.slice(1)).classList.add('active');
+  renderProducts();
+}
+
+function showSetup() {
+  document.getElementById('setupScreen').classList.remove('hidden');
+  document.getElementById('mainScreen').classList.add('hidden');
+  document.getElementById('errorBox').className = 'hidden';
+}
+
+// ── Init ─────────────────────────────────────
+function init() {
+  const { clientId, apiKey } = getCredentials();
+  if (!clientId || !apiKey) {
+    document.getElementById('setupScreen').classList.remove('hidden');
+  } else {
+    document.getElementById('mainScreen').classList.remove('hidden');
+    loadData();
+  }
+}
+
+// Активируем фильтр "Все" по умолчанию
+document.getElementById('filterAll').classList.add('active');
+init();
+</script>
+</body>
+</html>
