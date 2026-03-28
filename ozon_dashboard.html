@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OZON STOCK DASHBOARD</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080b10;
+  --s1:      #0e1218;
+  --s2:      #141920;
+  --s3:      #1c2330;
+  --border:  #242d3a;
+  --nes:     #d4a843;
+  --dg:      #e05252;
+  --ok:      #3ecf74;
+  --warn:    #f0b429;
+  --crit:    #e05252;
+  --blue:    #4f9cf9;
+  --text:    #e8edf5;
+  --dim:     #5a6880;
+  --mono:    'JetBrains Mono', monospace;
+  --sans:    'Manrope', sans-serif;
+  --display: 'Bebas Neue', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+/* SETUP */
+.setup-overlay { position: fixed; inset: 0; background: rgba(8,11,16,0.97); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.setup-box { background: var(--s1); border: 1px solid var(--border); border-radius: 16px; padding: 40px; width: 420px; }
+.setup-box h2 { font-family: var(--display); font-size: 36px; letter-spacing: 2px; margin-bottom: 8px; }
+.setup-box h2 span { color: var(--nes); }
+.setup-box p { color: var(--dim); font-size: 13px; line-height: 1.6; margin-bottom: 28px; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+.field input { width: 100%; background: var(--s2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 13px; padding: 11px 14px; outline: none; transition: border-color 0.2s; }
+.field input:focus { border-color: var(--nes); }
+.btn-primary { width: 100%; background: var(--nes); color: #000; border: none; border-radius: 8px; font-family: var(--display); font-size: 22px; letter-spacing: 3px; padding: 13px; cursor: pointer; transition: opacity 0.2s; }
+.btn-primary:hover { opacity: 0.9; }
+
+/* TOPBAR */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); background: var(--s1); position: sticky; top: 0; z-index: 50; }
+.logo { font-family: var(--display); font-size: 32px; letter-spacing: 3px; }
+.logo span { color: var(--nes); }
+.topbar-right { display: flex; align-items: center; gap: 16px; }
+.last-update { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.refresh-btn { background: var(--s2); border: 1px solid var(--border); color: var(--text); padding: 8px 18px; border-radius: 8px; font-family: var(--mono); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+.refresh-btn:hover { border-color: var(--nes); color: var(--nes); }
+.refresh-btn.spinning .spin-icon { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.settings-btn { background: none; border: 1px solid var(--border); color: var(--dim); padding: 8px 12px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.2s; }
+.settings-btn:hover { color: var(--text); }
+
+/* ALERTS */
+.alerts-bar { background: rgba(224,82,82,0.08); border-bottom: 1px solid rgba(224,82,82,0.2); padding: 10px 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.alerts-bar.hidden { display: none; }
+.alert-label { font-family: var(--mono); font-size: 11px; color: var(--crit); white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; }
+.alert-chip { background: rgba(224,82,82,0.15); border: 1px solid rgba(224,82,82,0.3); border-radius: 6px; padding: 4px 10px; font-family: var(--mono); font-size: 11px; color: var(--crit); white-space: nowrap; }
+
+/* CONTENT */
+.content { padding: 24px 28px; display: flex; flex-direction: column; gap: 24px; }
+
+/* KPI */
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.kpi-card { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+.kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent, var(--border)); }
+.kpi-card.crit { --accent: var(--crit); background: rgba(224,82,82,0.05); border-color: rgba(224,82,82,0.2); }
+.kpi-card.warn { --accent: var(--warn); }
+.kpi-card.ok   { --accent: var(--ok); }
+.kpi-card.nes  { --accent: var(--nes); }
+.kpi-card.dg   { --accent: var(--dg); }
+.kpi-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.kpi-value { font-family: var(--display); font-size: 52px; line-height: 1; letter-spacing: 1px; }
+.kpi-card.crit .kpi-value { color: var(--crit); }
+.kpi-card.warn .kpi-value { color: var(--warn); }
+.kpi-card.ok   .kpi-value { color: var(--ok); }
+.kpi-card.nes  .kpi-value { color: var(--nes); }
+.kpi-card.dg   .kpi-value { color: var(--dg); }
+.kpi-sub { font-size: 12px; color: var(--dim); margin-top: 4px; }
+
+/* TWO COL */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+/* PANEL */
+.panel { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.panel.nes-panel { border-color: rgba(212,168,67,0.3); }
+.panel.dg-panel  { border-color: rgba(224,82,82,0.3); }
+.panel-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.panel.nes-panel .panel-header { background: rgba(212,168,67,0.07); border-bottom-color: rgba(212,168,67,0.2); }
+.panel.dg-panel  .panel-header { background: rgba(224,82,82,0.07);  border-bottom-color: rgba(224,82,82,0.2); }
+.panel-title { font-family: var(--display); font-size: 20px; letter-spacing: 2px; }
+.panel.nes-panel .panel-title { color: var(--nes); }
+.panel.dg-panel  .panel-title { color: var(--dg); }
+.panel-badge { font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; background: var(--s2); color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.panel-scroll { max-height: 460px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* ROWS */
+.product-row { display: grid; grid-template-columns: 1fr 80px 80px; align-items: center; gap: 12px; padding: 11px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.product-row:last-child { border-bottom: none; }
+.product-row:hover { background: var(--s2); }
+.product-row.row-crit { background: rgba(224,82,82,0.06); }
+.product-row.row-crit:hover { background: rgba(224,82,82,0.1); }
+.product-row.row-warn { background: rgba(240,180,41,0.05); }
+.product-row.row-warn:hover { background: rgba(240,180,41,0.09); }
+
+.top-row { display: grid; grid-template-columns: 28px 1fr 75px 75px; align-items: center; gap: 12px; padding: 11px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.top-row:last-child { border-bottom: none; }
+.top-row:hover { background: var(--s2); }
+.top-row.row-crit { background: rgba(224,82,82,0.06); }
+.top-row.row-warn { background: rgba(240,180,41,0.05); }
+
+.rank { font-family: var(--display); font-size: 22px; color: var(--dim); text-align: center; }
+
+.prod-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+.prod-article { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 2px; }
+
+.prod-days-wrap { text-align: right; }
+.prod-days { font-family: var(--display); font-size: 30px; line-height: 1; }
+.prod-days.ok   { color: var(--ok); }
+.prod-days.warn { color: var(--warn); }
+.prod-days.crit { color: var(--crit); }
+.prod-days-label { font-family: var(--mono); font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+
+.prod-sales-wrap { text-align: right; }
+.prod-sales { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--blue); }
+.prod-sales-label { font-family: var(--mono); font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+
+/* LOADING */
+.loading-overlay { position: fixed; inset: 0; background: rgba(8,11,16,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; z-index: 200; }
+.loading-overlay.hidden { display: none; }
+.loader { width: 48px; height: 48px; border: 2px solid var(--border); border-top-color: var(--nes); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.loading-step { font-family: var(--mono); font-size: 13px; color: var(--dim); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); display: inline-block; margin-right: 6px; }
+.status-dot.loading { background: var(--warn); animation: pulse 1s infinite; }
+.status-dot.error   { background: var(--crit); }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.empty-state { padding: 40px; text-align: center; color: var(--dim); font-family: var(--mono); font-size: 13px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup-overlay" id="setupOverlay">
+  <div class="setup-box">
+    <h2>OZON<span>.</span>STOCK</h2>
+    <p>Введите ключи от Ozon Seller API. Они сохраняются только в вашем браузере.</p>
+    <div class="field">
+      <label>Client ID</label>
+      <input type="text" id="clientIdInput" placeholder="28416">
+    </div>
+    <div class="field">
+      <label>API Key</label>
+      <input type="text" id="apiKeyInput" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+    </div>
+    <button class="btn-primary" onclick="saveAndLoad()">ВОЙТИ</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="loader"></div>
+  <div class="loading-step" id="loadingStep">Загружаем данные...</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none">
+
+  <div class="topbar">
+    <div class="logo">OZON<span>.</span>STOCK</div>
+    <div class="topbar-right">
+      <div class="last-update">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Загрузка...</span>
+      </div>
+      <div class="last-update" id="lastUpdate"></div>
+      <button class="refresh-btn" onclick="loadData()" id="refreshBtn">
+        <span class="spin-icon">↻</span> Обновить
+      </button>
+      <button class="settings-btn" onclick="showSetup()">⚙</button>
+    </div>
+  </div>
+
+  <div class="alerts-bar hidden" id="alertsBar">
+    <div class="alert-label">⚠ СРОЧНО ВЕЗТИ:</div>
+    <div id="alertChips" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi-card crit">
+        <div class="kpi-label">🔴 Критично</div>
+        <div class="kpi-value" id="kpiCrit">—</div>
+        <div class="kpi-sub">товаров ≤ 7 дней</div>
+      </div>
+      <div class="kpi-card warn">
+        <div class="kpi-label">🟡 Внимание</div>
+        <div class="kpi-value" id="kpiWarn">—</div>
+        <div class="kpi-sub">товаров ≤ 14 дней</div>
+      </div>
+      <div class="kpi-card ok">
+        <div class="kpi-label">📦 Всего SKU</div>
+        <div class="kpi-value" id="kpiTotal">—</div>
+        <div class="kpi-sub">позиций на складах</div>
+      </div>
+      <div class="kpi-card nes">
+        <div class="kpi-label">☕ Nespresso</div>
+        <div class="kpi-value" id="kpiNes">—</div>
+        <div class="kpi-sub">SKU</div>
+      </div>
+      <div class="kpi-card dg">
+        <div class="kpi-label">☕ Dolce Gusto</div>
+        <div class="kpi-value" id="kpiDg">—</div>
+        <div class="kpi-sub">SKU</div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Топ продаж + Критические -->
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title" style="color:var(--blue)">ТОП ПРОДАЖ В ДЕНЬ</div>
+          <div class="panel-badge">за 7 дней</div>
+        </div>
+        <div id="topSalesList"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title" style="color:var(--crit)">КРИТИЧЕСКИЕ ОСТАТКИ</div>
+          <div class="panel-badge">срочно везти</div>
+        </div>
+        <div id="criticalList"></div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Nespresso + Dolce Gusto -->
+    <div class="two-col">
+
+      <div class="panel nes-panel">
+        <div class="panel-header">
+          <div class="panel-title">☕ NESPRESSO</div>
+          <div class="panel-badge" id="nesCount">— SKU</div>
+        </div>
+        <div class="panel-scroll">
+          <div id="nesList"></div>
+        </div>
+      </div>
+
+      <div class="panel dg-panel">
+        <div class="panel-header">
+          <div class="panel-title">☕ DOLCE GUSTO</div>
+          <div class="panel-badge" id="dgCount">— SKU</div>
+        </div>
+        <div class="panel-scroll">
+          <div id="dgList"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+const COMPATIBILITY_ATTR = 7491;
+const DAYS_FOR_AVG = 7;
+let allProducts = [];
+
+function getCredentials() {
+  return {
+    clientId: localStorage.getItem('ozon_client_id') || '',
+    apiKey:   localStorage.getItem('ozon_api_key')   || ''
+  };
+}
+
+function saveAndLoad() {
+  const clientId = document.getElementById('clientIdInput').value.trim();
+  const apiKey   = document.getElementById('apiKeyInput').value.trim();
+  if (!clientId || !apiKey) { alert('Заполните оба поля'); return; }
+  localStorage.setItem('ozon_client_id', clientId);
+  localStorage.setItem('ozon_api_key',   apiKey);
+  document.getElementById('setupOverlay').classList.add('hidden');
+  document.getElementById('dashboard').style.display = 'block';
+  loadData();
+}
+
+function showSetup() {
+  document.getElementById('setupOverlay').classList.remove('hidden');
+}
+
+async function ozonPost(url, body) {
+  const { clientId, apiKey } = getCredentials();
+  const r = await fetch('https://api-seller.ozon.ru' + url, {
+    method: 'POST',
+    headers: { 'Client-Id': clientId, 'Api-Key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+function setStep(text) {
+  document.getElementById('loadingStep').textContent = text;
+  document.getElementById('statusText').textContent = text;
+  document.getElementById('statusDot').className = 'status-dot loading';
+  document.getElementById('refreshBtn').classList.add('spinning');
+}
+
+function setReady() {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  document.getElementById('statusDot').className = 'status-dot';
+  document.getElementById('statusText').textContent = 'Данные актуальны';
+  document.getElementById('refreshBtn').classList.remove('spinning');
+  const now = new Date();
+  document.getElementById('lastUpdate').textContent =
+    'Обновлено в ' + now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadData() {
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+  setStep('Загружаем остатки со складов...');
+
+  try {
+    // 1. Остатки
+    let grouped = {};
+    let offset = 0;
+    while (true) {
+      const data = await ozonPost('/v2/analytics/stock_on_warehouses',
+        { limit: 1000, offset, warehouse_type: 'ALL' });
+      const rows = data.result?.rows || [];
+      if (!rows.length) break;
+      rows.forEach(r => {
+        const sku = String(r.sku);
+        if (!grouped[sku]) {
+          grouped[sku] = { sku, article: r.item_code, name: r.item_name, available: 0, reserved: 0, sold7: 0, compatibility: '', productId: '0' };
+        }
+        grouped[sku].available += (r.free_to_sell_amount || 0);
+        grouped[sku].reserved  += (r.reserved_amount || 0);
+      });
+      if (rows.length < 1000) break;
+      offset += 1000;
+    }
+
+    // 2. product_id
+    setStep('Загружаем карточки товаров...');
+    const allSkus = Object.keys(grouped).map(Number);
+    for (let i = 0; i < allSkus.length; i += 100) {
+      const data = await ozonPost('/v3/product/info/list', { sku: allSkus.slice(i, i+100) });
+      const items = data.items || data.result?.items || [];
+      items.forEach(p => {
+        (p.sources || []).forEach(s => {
+          if (grouped[String(s.sku)]) grouped[String(s.sku)].productId = String(p.id);
+        });
+      });
+    }
+
+    // 3. Совместимость
+    setStep('Определяем совместимость...');
+    const pids = [...new Set(Object.values(grouped).map(d => d.productId).filter(id => id !== '0'))].map(Number);
+    let pidToCompat = {};
+    for (let i = 0; i < pids.length; i += 100) {
+      const data = await ozonPost('/v4/product/info/attributes',
+        { filter: { product_id: pids.slice(i, i+100) }, limit: 100, sort_dir: 'ASC' });
+      (data.result || []).forEach(p => {
+        const attr = (p.attributes || []).find(a => a.id === COMPATIBILITY_ATTR);
+        pidToCompat[String(p.id)] = (attr?.values?.[0]?.value || '').toLowerCase();
+      });
+    }
+    Object.keys(grouped).forEach(sku => {
+      grouped[sku].compatibility = pidToCompat[grouped[sku].productId] || '';
+    });
+
+    // 4. Продажи
+    setStep('Загружаем статистику продаж...');
+    const dateTo   = new Date();
+    const dateFrom = new Date();
+    dateFrom.setDate(dateFrom.getDate() - DAYS_FOR_AVG);
+    const salesData = await ozonPost('/v1/analytics/data', {
+      date_from: dateFrom.toISOString().split('T')[0],
+      date_to:   dateTo.toISOString().split('T')[0],
+      dimension: ['sku'], metrics: ['ordered_units'], limit: 1000, offset: 0
+    });
+    (salesData.result?.data || []).forEach(r => {
+      const sku = String(r.dimensions?.[0]?.id);
+      if (grouped[sku]) grouped[sku].sold7 = r.metrics?.[0] || 0;
+    });
+
+    // 5. Финал
+    allProducts = Object.values(grouped).map(d => {
+      const avgPerDay = d.sold7 > 0 ? +(d.sold7 / DAYS_FOR_AVG).toFixed(1) : 0;
+      const daysLeft  = avgPerDay > 0 ? Math.floor(d.available / avgPerDay) : Infinity;
+      return { ...d, avgPerDay, daysLeft };
+    });
+
+    renderDashboard();
+    setReady();
+
+  } catch(e) {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    document.getElementById('statusDot').className = 'status-dot error';
+    document.getElementById('statusText').textContent = 'Ошибка: ' + e.message;
+    document.getElementById('refreshBtn').classList.remove('spinning');
+  }
+}
+
+function dc(days) {
+  if (days === Infinity) return 'ok';
+  if (days <= 7)  return 'crit';
+  if (days <= 14) return 'warn';
+  return 'ok';
+}
+
+function rc(days) {
+  if (days === Infinity) return '';
+  if (days <= 7)  return 'row-crit';
+  if (days <= 14) return 'row-warn';
+  return '';
+}
+
+function dl(days) { return days === Infinity ? '∞' : String(days); }
+
+function sortByDays(arr) {
+  return [...arr].sort((a, b) => {
+    const da = a.daysLeft === Infinity ? 99999 : a.daysLeft;
+    const db = b.daysLeft === Infinity ? 99999 : b.daysLeft;
+    return da - db;
+  });
+}
+
+function brandRow(p) {
+  return `
+    <div class="product-row ${rc(p.daysLeft)}">
+      <div>
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-article">${p.article} · SKU ${p.sku}</div>
+      </div>
+      <div class="prod-sales-wrap">
+        <div class="prod-sales">${p.avgPerDay}</div>
+        <div class="prod-sales-label">шт/день</div>
+      </div>
+      <div class="prod-days-wrap">
+        <div class="prod-days ${dc(p.daysLeft)}">${dl(p.daysLeft)}</div>
+        <div class="prod-days-label">дней</div>
+      </div>
+    </div>`;
+}
+
+function renderDashboard() {
+  const nes  = allProducts.filter(p => p.compatibility.includes('nespresso'));
+  const dg   = allProducts.filter(p => p.compatibility.includes('dolce'));
+  const crit = allProducts.filter(p => p.daysLeft !== Infinity && p.daysLeft <= 7);
+  const warn = allProducts.filter(p => p.daysLeft !== Infinity && p.daysLeft > 7 && p.daysLeft <= 14);
+
+  // KPI
+  document.getElementById('kpiCrit').textContent  = crit.length;
+  document.getElementById('kpiWarn').textContent  = warn.length;
+  document.getElementById('kpiTotal').textContent = allProducts.length;
+  document.getElementById('kpiNes').textContent   = nes.length;
+  document.getElementById('kpiDg').textContent    = dg.length;
+
+  // Alerts
+  if (crit.length > 0) {
+    document.getElementById('alertsBar').classList.remove('hidden');
+    document.getElementById('alertChips').innerHTML = crit
+      .map(p => `<span class="alert-chip">${p.name.substring(0, 40)}… (${p.daysLeft} дн)</span>`)
+      .join('');
+  }
+
+  // Топ продаж
+  const topSales = [...allProducts].sort((a, b) => b.avgPerDay - a.avgPerDay).slice(0, 8);
+  document.getElementById('topSalesList').innerHTML = topSales.map((p, i) => {
+    const isNes = p.compatibility.includes('nespresso');
+    const isDg  = p.compatibility.includes('dolce');
+    const tag   = isNes ? `<span style="color:var(--nes);font-size:9px;margin-right:4px">NES</span>`
+                : isDg  ? `<span style="color:var(--dg);font-size:9px;margin-right:4px">DG</span>` : '';
+    return `
+      <div class="top-row ${rc(p.daysLeft)}">
+        <div class="rank">${i+1}</div>
+        <div>
+          <div class="prod-name">${tag}${p.name.substring(0,42)}${p.name.length>42?'…':''}</div>
+          <div class="prod-article">${p.article}</div>
+        </div>
+        <div class="prod-sales-wrap">
+          <div class="prod-sales">${p.avgPerDay}</div>
+          <div class="prod-sales-label">шт/день</div>
+        </div>
+        <div class="prod-days-wrap">
+          <div class="prod-days ${dc(p.daysLeft)}">${dl(p.daysLeft)}</div>
+          <div class="prod-days-label">дней</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Критические
+  const critAndWarn = sortByDays(allProducts.filter(p => p.daysLeft !== Infinity && p.daysLeft <= 14));
+  document.getElementById('criticalList').innerHTML = critAndWarn.length > 0
+    ? critAndWarn.map(p => `
+      <div class="top-row ${rc(p.daysLeft)}">
+        <div class="rank" style="color:${p.daysLeft<=7?'var(--crit)':'var(--warn)'}">!</div>
+        <div>
+          <div class="prod-name">${p.name.substring(0,42)}${p.name.length>42?'…':''}</div>
+          <div class="prod-article">${p.article} · ${p.available.toLocaleString('ru')} шт на складе</div>
+        </div>
+        <div class="prod-sales-wrap">
+          <div class="prod-sales">${p.avgPerDay}</div>
+          <div class="prod-sales-label">шт/день</div>
+        </div>
+        <div class="prod-days-wrap">
+          <div class="prod-days ${dc(p.daysLeft)}">${p.daysLeft}</div>
+          <div class="prod-days-label">дней</div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty-state">✅ Все остатки в норме</div>';
+
+  // Nespresso
+  document.getElementById('nesCount').textContent = nes.length + ' SKU';
+  document.getElementById('nesList').innerHTML = sortByDays(nes).length > 0
+    ? sortByDays(nes).map(brandRow).join('')
+    : '<div class="empty-state">Нет товаров</div>';
+
+  // Dolce Gusto
+  document.getElementById('dgCount').textContent = dg.length + ' SKU';
+  document.getElementById('dgList').innerHTML = sortByDays(dg).length > 0
+    ? sortByDays(dg).map(brandRow).join('')
+    : '<div class="empty-state">Нет товаров</div>';
+}
+
+function init() {
+  const { clientId, apiKey } = getCredentials();
+  if (clientId && apiKey) {
+    document.getElementById('setupOverlay').classList.add('hidden');
+    document.getElementById('dashboard').style.display = 'block';
+    loadData();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
