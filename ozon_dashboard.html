@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STOCK DASHBOARD</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #080b10;
+  --s1:      #0e1218;
+  --s2:      #141920;
+  --s3:      #1c2330;
+  --border:  #242d3a;
+  --nes:     #d4a843;
+  --dg:      #e05252;
+  --ok:      #3ecf74;
+  --warn:    #f0b429;
+  --crit:    #e05252;
+  --blue:    #4f9cf9;
+  --text:    #e8edf5;
+  --dim:     #5a6880;
+  --mono:    'JetBrains Mono', monospace;
+  --sans:    'Manrope', sans-serif;
+  --display: 'Bebas Neue', sans-serif;
+  --ozon:       #005bff;
+  --ozon-dim:   rgba(0,91,255,0.12);
+  --wb:         #cb11ab;
+  --wb-dim:     rgba(203,17,171,0.12);
+  --market:     var(--ozon);
+  --market-dim: var(--ozon-dim);
+}
+body.wb-mode { --market: var(--wb); --market-dim: var(--wb-dim); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+/* ── LOGIN ── */
+.login-overlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.login-box { background: var(--s1); border: 1px solid var(--border); border-radius: 16px; padding: 48px 40px; width: 380px; text-align: center; }
+.login-logo { font-family: var(--display); font-size: 42px; letter-spacing: 4px; margin-bottom: 4px; }
+.login-logo .oc { color: var(--ozon); }
+.login-logo .wc { color: var(--wb); }
+.login-sub { font-family: var(--mono); font-size: 11px; color: var(--dim); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 36px; }
+.login-field { margin-bottom: 14px; text-align: left; }
+.login-field label { display: block; font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; }
+.login-field input { width: 100%; background: var(--s2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 15px; padding: 12px 14px; outline: none; transition: border-color 0.2s; }
+.login-field input:focus { border-color: var(--ozon); }
+.login-error { font-family: var(--mono); font-size: 12px; color: var(--crit); margin-bottom: 12px; min-height: 18px; }
+.login-btn { width: 100%; background: var(--ozon); color: white; border: none; border-radius: 8px; font-family: var(--display); font-size: 22px; letter-spacing: 3px; padding: 13px; cursor: pointer; margin-top: 4px; transition: opacity 0.2s; }
+.login-btn:hover { opacity: 0.9; }
+
+/* ── TOPBAR ── */
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 28px; border-bottom: 1px solid var(--border); background: var(--s1); position: sticky; top: 0; z-index: 50; }
+.logo { font-family: var(--display); font-size: 28px; letter-spacing: 3px; }
+.market-switcher { display: flex; background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; gap: 3px; }
+.market-btn { font-family: var(--display); font-size: 16px; letter-spacing: 2px; padding: 8px 20px; border-radius: 7px; border: none; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--dim); }
+.market-btn.active-ozon { background: var(--ozon); color: white; }
+.market-btn.active-wb   { background: var(--wb);   color: white; }
+.market-btn:not(.active-ozon):not(.active-wb):hover { background: var(--s3); color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.last-update { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.refresh-btn { background: var(--s2); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; font-family: var(--mono); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+.refresh-btn:hover { border-color: var(--market); color: var(--market); }
+.refresh-btn.spinning .spin-icon { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.logout-btn { background: none; border: 1px solid var(--border); color: var(--dim); padding: 8px 14px; border-radius: 8px; font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.2s; }
+.logout-btn:hover { color: var(--crit); border-color: var(--crit); }
+
+/* ── ALERTS ── */
+.alerts-bar { border-bottom: 1px solid rgba(224,82,82,0.2); padding: 10px 28px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(224,82,82,0.08); }
+.alerts-bar.hidden { display: none; }
+.alert-label { font-family: var(--mono); font-size: 11px; color: var(--crit); white-space: nowrap; text-transform: uppercase; letter-spacing: 1px; }
+.alert-chip { background: rgba(224,82,82,0.15); border: 1px solid rgba(224,82,82,0.3); border-radius: 6px; padding: 4px 10px; font-family: var(--mono); font-size: 11px; color: var(--crit); white-space: nowrap; }
+
+/* ── CONTENT ── */
+.content { padding: 24px 28px; display: flex; flex-direction: column; gap: 24px; }
+
+/* ── KPI ── */
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.kpi-card { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; }
+.kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--accent, var(--border)); }
+.kpi-card.crit { --accent: var(--crit); background: rgba(224,82,82,0.05); border-color: rgba(224,82,82,0.2); }
+.kpi-card.warn { --accent: var(--warn); }
+.kpi-card.ok   { --accent: var(--ok); }
+.kpi-card.nes  { --accent: var(--nes); }
+.kpi-card.dg   { --accent: var(--dg); }
+.kpi-label { font-family: var(--mono); font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.kpi-value { font-family: var(--display); font-size: 52px; line-height: 1; letter-spacing: 1px; }
+.kpi-card.crit .kpi-value { color: var(--crit); }
+.kpi-card.warn .kpi-value { color: var(--warn); }
+.kpi-card.ok   .kpi-value { color: var(--ok); }
+.kpi-card.nes  .kpi-value { color: var(--nes); }
+.kpi-card.dg   .kpi-value { color: var(--dg); }
+.kpi-sub { font-size: 12px; color: var(--dim); margin-top: 4px; }
+
+/* ── TWO COL ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+/* ── PANEL ── */
+.panel { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.panel.nes-panel { border-color: rgba(212,168,67,0.3); }
+.panel.dg-panel  { border-color: rgba(224,82,82,0.3); }
+.panel-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.panel.nes-panel .panel-header { background: rgba(212,168,67,0.07); border-bottom-color: rgba(212,168,67,0.2); }
+.panel.dg-panel  .panel-header { background: rgba(224,82,82,0.07); border-bottom-color: rgba(224,82,82,0.2); }
+.panel-title { font-family: var(--display); font-size: 20px; letter-spacing: 2px; }
+.panel.nes-panel .panel-title { color: var(--nes); }
+.panel.dg-panel  .panel-title { color: var(--dg); }
+.panel-badge { font-family: var(--mono); font-size: 10px; padding: 3px 8px; border-radius: 4px; background: var(--s2); color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.panel-scroll { max-height: 460px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+/* ── ROWS ── */
+.product-row { display: grid; grid-template-columns: 1fr 80px 80px; align-items: center; gap: 12px; padding: 11px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.product-row:last-child { border-bottom: none; }
+.product-row:hover { background: var(--s2); }
+.product-row.row-crit { background: rgba(224,82,82,0.06); }
+.product-row.row-warn { background: rgba(240,180,41,0.05); }
+.top-row { display: grid; grid-template-columns: 28px 1fr 75px 75px; align-items: center; gap: 12px; padding: 11px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.top-row:last-child { border-bottom: none; }
+.top-row:hover { background: var(--s2); }
+.top-row.row-crit { background: rgba(224,82,82,0.06); }
+.top-row.row-warn { background: rgba(240,180,41,0.05); }
+.rank { font-family: var(--display); font-size: 22px; color: var(--dim); text-align: center; }
+.prod-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+.prod-article { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 2px; }
+.prod-days-wrap { text-align: right; }
+.prod-days { font-family: var(--display); font-size: 30px; line-height: 1; }
+.prod-days.ok   { color: var(--ok); }
+.prod-days.warn { color: var(--warn); }
+.prod-days.crit { color: var(--crit); }
+.prod-days-label { font-family: var(--mono); font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+.prod-sales-wrap { text-align: right; }
+.prod-sales { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--blue); }
+.prod-sales-label { font-family: var(--mono); font-size: 9px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+
+/* ── WH BLOCK ── */
+.wh-panel { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.wh-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border-bottom: 1px solid var(--border); background: var(--s2); }
+.wh-panel-title { font-family: var(--display); font-size: 22px; letter-spacing: 2px; }
+.wh-panel-sub { font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.wh-table { width: 100%; border-collapse: collapse; }
+.wh-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--dim); padding: 10px 24px; text-align: left; border-bottom: 1px solid var(--border); background: var(--s2); }
+.wh-table th:nth-child(2),.wh-table th:nth-child(3),.wh-table th:nth-child(4) { text-align: right; }
+.wh-table th:nth-child(5) { min-width: 180px; }
+.wh-row { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+.wh-row:last-child { border-bottom: none; }
+.wh-row:hover { background: var(--s2); }
+.wh-row.wh-crit { background: rgba(224,82,82,0.05); }
+.wh-row.wh-warn { background: rgba(240,180,41,0.04); }
+.wh-row td { padding: 11px 24px; vertical-align: middle; }
+.wh-name { font-size: 13px; font-weight: 600; }
+.wh-article { font-family: var(--mono); font-size: 10px; color: var(--dim); margin-top: 2px; }
+.wh-count { font-family: var(--display); font-size: 26px; text-align: right; white-space: nowrap; }
+.wh-total { font-family: var(--mono); font-size: 11px; color: var(--dim); text-align: right; }
+.wh-pct-cell { text-align: right; white-space: nowrap; }
+.wh-pct-num { font-family: var(--display); font-size: 22px; }
+.c-crit { color: var(--crit); } .c-warn { color: var(--warn); } .c-ok { color: var(--ok); }
+.wh-bar-cell { min-width: 200px; padding-right: 28px; }
+.wh-bar-track { height: 8px; background: var(--s3); border-radius: 4px; overflow: hidden; }
+.wh-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+.wh-bar-fill.c-crit { background: var(--crit); }
+.wh-bar-fill.c-warn { background: var(--warn); }
+.wh-bar-fill.c-ok   { background: var(--ok); }
+.wh-group-row td { padding: 8px 24px; font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; background: var(--s3); border-bottom: 1px solid var(--border); }
+.wh-group-row.g-nes td { color: var(--nes); }
+.wh-group-row.g-dg  td { color: var(--dg); }
+
+/* ── LOADING ── */
+.loading-overlay { position: fixed; inset: 0; background: rgba(8,11,16,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; z-index: 200; }
+.loading-overlay.hidden { display: none; }
+.loader { width: 48px; height: 48px; border: 2px solid var(--border); border-top-color: var(--market); border-radius: 50%; animation: spin 0.8s linear infinite; }
+.loading-step { font-family: var(--mono); font-size: 13px; color: var(--dim); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); display: inline-block; margin-right: 6px; }
+.status-dot.loading { background: var(--warn); animation: pulse 1s infinite; }
+.status-dot.error   { background: var(--crit); }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.empty-state { padding: 40px; text-align: center; color: var(--dim); font-family: var(--mono); font-size: 13px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-logo">OZON<span class="oc">.</span>WB<span class="wc">.</span>STOCK</div>
+    <div class="login-sub">Stock Dashboard</div>
+    <div class="login-field">
+      <label>Логин</label>
+      <input type="text" id="loginInput" placeholder="Логин" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>Пароль</label>
+      <input type="password" id="passwordInput" placeholder="Пароль" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" onclick="doLogin()">ВОЙТИ</button>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="loader"></div>
+  <div class="loading-step" id="loadingStep">Загружаем данные...</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" style="display:none">
+
+  <div class="topbar">
+    <div class="logo" id="logoText">OZON<span style="color:var(--ozon)">.</span>STOCK</div>
+    <div class="market-switcher">
+      <button class="market-btn active-ozon" id="btnOzon" onclick="switchMarket('ozon')">OZON</button>
+      <button class="market-btn" id="btnWb" onclick="switchMarket('wb')">WB</button>
+    </div>
+    <div class="topbar-right">
+      <div class="last-update">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Загрузка...</span>
+      </div>
+      <div class="last-update" id="lastUpdate"></div>
+      <button class="refresh-btn" onclick="loadCurrent()" id="refreshBtn">
+        <span class="spin-icon">↻</span> Обновить
+      </button>
+      <button class="logout-btn" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+
+  <div class="alerts-bar hidden" id="alertsBar">
+    <div class="alert-label">⚠ СРОЧНО ВЕЗТИ:</div>
+    <div id="alertChips" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  </div>
+
+  <div class="content">
+    <div class="kpi-row">
+      <div class="kpi-card crit"><div class="kpi-label">🔴 Критично</div><div class="kpi-value" id="kpiCrit">—</div><div class="kpi-sub">товаров ≤ 7 дней</div></div>
+      <div class="kpi-card warn"><div class="kpi-label">🟡 Внимание</div><div class="kpi-value" id="kpiWarn">—</div><div class="kpi-sub">товаров ≤ 14 дней</div></div>
+      <div class="kpi-card ok">  <div class="kpi-label">📦 Всего SKU</div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-sub">позиций на складах</div></div>
+      <div class="kpi-card nes"> <div class="kpi-label">☕ Nespresso</div><div class="kpi-value" id="kpiNes">—</div><div class="kpi-sub">SKU</div></div>
+      <div class="kpi-card dg">  <div class="kpi-label">☕ Dolce Gusto</div><div class="kpi-value" id="kpiDg">—</div><div class="kpi-sub">SKU</div></div>
+    </div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title" style="color:var(--blue)">ТОП ПРОДАЖ В ДЕНЬ</div><div class="panel-badge">за 7 дней</div></div>
+        <div id="topSalesList"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title" style="color:var(--crit)">КРИТИЧЕСКИЕ ОСТАТКИ</div><div class="panel-badge">срочно везти</div></div>
+        <div id="criticalList"></div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="panel nes-panel">
+        <div class="panel-header"><div class="panel-title">☕ NESPRESSO</div><div class="panel-badge" id="nesCount">— SKU</div></div>
+        <div class="panel-scroll"><div id="nesList"></div></div>
+      </div>
+      <div class="panel dg-panel">
+        <div class="panel-header"><div class="panel-title">☕ DOLCE GUSTO</div><div class="panel-badge" id="dgCount">— SKU</div></div>
+        <div class="panel-scroll"><div id="dgList"></div></div>
+      </div>
+    </div>
+    <div class="wh-panel">
+      <div class="wh-panel-header">
+        <div class="wh-panel-title">🏭 ЗАПОЛНЕННОСТЬ СКЛАДОВ</div>
+        <div class="wh-panel-sub" id="whPanelSub">— товаров · — складов</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="wh-table">
+          <thead><tr>
+            <th>Название товара</th><th>Заполнено</th><th>Всего</th><th>%</th><th>Заполненность</th>
+          </tr></thead>
+          <tbody id="whTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Credentials (встроены в код) ─────────────
+const OZON_CLIENT_ID = "28416";
+const OZON_API_KEY   = "8960b558-d6cc-4fe6-a1fb-edf32a4f106c";
+const WB_API_KEY     = "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjYwMzAydjEiLCJ0eXAiOiJKV1QifQ.eyJhY2MiOjEsImVudCI6MSwiZXhwIjoxNzkwNjUxOTIxLCJpZCI6IjAxOWQzZjUzLTVkMGQtN2IwYS05ZmM3LWE1OTI0ZjM5OTZjMCIsImlpZCI6MzcxMjg3ODEsIm9pZCI6MTM4ODMsInMiOjEwNzM3NTc5NTAsInNpZCI6IjU1MWQ3OTYyLWU4OTAtNWI1OC04NDExLTk2MWY4YWZkZTQwMyIsInQiOmZhbHNlLCJ1aWQiOjM3MTI4NzgxfQ.k60edLPsY_tdbacqt9YQ0zDsgecMezPtXn9_RssvBsGLevh2RBiGYZ5o8qKbtHiass-zVrFt2W8jGzUlGD5m6g";
+
+// ── Логин/пароль ─────────────────────────────
+const LOGIN    = "Singlecup";
+const PASSWORD = "Coffeepod";
+
+// ── WB штрихкоды ─────────────────────────────
+const NES_BARCODES = new Set([
+  "4602009425653","4602009432569","4602009461477","4602009406935","4602009967429",
+  "4602009406966","4603781299593","4603781299623","4602009967467","4602009461484",
+  "4602009406980","4602009461316","4602009425615","4602009406959","4603781299777",
+  "4603781299791","4602009406928","4603781299647","4602009952142","4602009425646",
+  "4602009456404","4603781299562","4603781299616","4602009461460","4602009967436",
+  "4602009423932","4602009406904","4602009425608","4603781299579","4603781299630",
+  "4602009967443","4602009406942","4602009425639","4603781299609","4602009423291",
+  "4602009461309","4603781299555","4602009425622","4602009406911","4602009967450",
+  "4602009425677","4602009406973","4603781299586","4602009461385","4603781299869",
+  "4602009461354","4603781299883","4602009461361","4602009461347","4602009461415",
+  "4602009461330","4603781299852","4602009461439","4602009461408","4603781299890",
+  "4602009461378","4602009461392","4602009461323","4602009461422","4603781299876",
+  "4603781299913","4603781299920","4602009967498","4603781299807","4602009967474",
+  "4602009967481","4603809726100","4603809726094","4603809726001","4603781299999",
+  "4603781299784","4602009432576","4602009425660","4673746767375","4673746767382",
+  "4673746767399","4673746767405","4673746767412","4673746767429","4673746767436",
+  "4673746767443","4673746767450","4673746767467","4673746767474","4673746767481",
+  "4673746767498","4673746767504","4673746767511","4603809726063","4673746767528",
+  "4673746767535","4673746767696","4673746767733","4673746767900","4673746767924",
+  "4673746767894","4673746767917","4673746767740","4673746767856","4673746767887",
+  "4673746767863","4673746767825","4673746767818","4673746767801","4673746767849",
+  "4673746767795","4673746767832","4673746767870","4673765387110","4673765387127",
+  "4603809726025","4673765387769","4673765387752"
+]);
+
+const DG_BARCODES = new Set([
+  "4603781299814","4603781299821","4603781299845","4603781299838","4603781299937",
+  "4603781299944","4603781299951","4603809726070","4603809726018","4603809726032",
+  "4603809726087","4603781299968","4603809726049","4603781299975","4603781299982",
+  "4603809726056","4603809726490","4673746767016","4673746767030","4673746767061",
+  "4673746767085","4673746767108","4673746767122","4673746767153","4673746767009",
+  "4673746767023","4673746767047","4673746767078","4673746767092","4673746767115",
+  "4673746767139","4673746767160","4673746767054","4673746767146","4673746767184",
+  "4673746767177","4673746767290","4673746767719","4673746767726","4673746767702",
+  "4673746767603","4673746767627","4673746767665","4673746767689","4673746767634",
+  "4673746767658","4673746767788","4673746767931","4673746767764","4673746767948",
+  "4673746767771","4673746767757","4673765387349","4673765387332","4673765387356",
+  "4673765387530"
+]);
+
+const COMPATIBILITY_ATTR = 7491;
+const DAYS = 7;
+
+let currentMarket = 'ozon';
+let ozonProducts  = [];
+let wbProducts    = [];
+let ozonLoaded    = false;
+let wbLoaded      = false;
+let totalWHCount  = 0;
+
+// ── Login ─────────────────────────────────────
+function doLogin() {
+  const login    = document.getElementById('loginInput').value.trim();
+  const password = document.getElementById('passwordInput').value;
+  const err      = document.getElementById('loginError');
+
+  if (login === LOGIN && password === PASSWORD) {
+    sessionStorage.setItem('auth', '1');
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('dashboard').style.display = 'block';
+    err.textContent = '';
+    loadOzon();
+  } else {
+    err.textContent = 'Неверный логин или пароль';
+    document.getElementById('passwordInput').value = '';
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('auth');
+  ozonLoaded = false;
+  wbLoaded   = false;
+  ozonProducts = [];
+  wbProducts   = [];
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.getElementById('loginInput').value    = '';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('loginError').textContent = '';
+}
+
+// ── Market switch ─────────────────────────────
+function switchMarket(market) {
+  currentMarket = market;
+  document.body.classList.toggle('wb-mode', market === 'wb');
+  document.getElementById('btnOzon').className = 'market-btn' + (market === 'ozon' ? ' active-ozon' : '');
+  document.getElementById('btnWb').className   = 'market-btn' + (market === 'wb'   ? ' active-wb'   : '');
+  if (market === 'ozon') {
+    document.getElementById('logoText').innerHTML = 'OZON<span style="color:var(--ozon)">.</span>STOCK';
+  } else {
+    document.getElementById('logoText').innerHTML = 'WB<span style="color:var(--wb)">.</span>STOCK';
+  }
+  if (market === 'ozon' && ozonLoaded) { renderDashboard(ozonProducts, totalWHCount); return; }
+  if (market === 'wb'   && wbLoaded)   { renderDashboard(wbProducts,   totalWHCount); return; }
+  loadCurrent();
+}
+
+function loadCurrent() {
+  if (currentMarket === 'ozon') loadOzon();
+  else loadWb();
+}
+
+// ── Ozon API ──────────────────────────────────
+async function ozonPost(url, body) {
+  const r = await fetch('https://api-seller.ozon.ru' + url, {
+    method: 'POST',
+    headers: { 'Client-Id': OZON_CLIENT_ID, 'Api-Key': OZON_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error('Ozon HTTP ' + r.status);
+  return r.json();
+}
+
+async function loadOzon() {
+  setStep('Загружаем остатки Ozon...');
+  try {
+    let grouped = {}, totalWH = new Set(), offset = 0;
+    while (true) {
+      const data = await ozonPost('/v2/analytics/stock_on_warehouses', { limit: 1000, offset, warehouse_type: 'ALL' });
+      const rows = data.result?.rows || [];
+      if (!rows.length) break;
+      rows.forEach(r => {
+        const sku = String(r.sku);
+        totalWH.add(r.warehouse_name);
+        if (!grouped[sku]) grouped[sku] = { sku, article: r.item_code, name: r.item_name, available: 0, sold7: 0, whCount: new Set(), compatibility: '', productId: '0' };
+        grouped[sku].available += (r.free_to_sell_amount || 0);
+        if ((r.free_to_sell_amount || 0) > 0) grouped[sku].whCount.add(r.warehouse_name);
+      });
+      if (rows.length < 1000) break;
+      offset += 1000;
+    }
+    totalWHCount = totalWH.size;
+
+    setStep('Загружаем карточки Ozon...');
+    const allSkus = Object.keys(grouped).map(Number);
+    for (let i = 0; i < allSkus.length; i += 100) {
+      const data = await ozonPost('/v3/product/info/list', { sku: allSkus.slice(i, i+100) });
+      (data.items || []).forEach(p => {
+        (p.sources || []).forEach(s => { if (grouped[String(s.sku)]) grouped[String(s.sku)].productId = String(p.id); });
+      });
+    }
+
+    setStep('Определяем совместимость Ozon...');
+    const pids = [...new Set(Object.values(grouped).map(d => d.productId).filter(id => id !== '0'))].map(Number);
+    let pidToCompat = {};
+    for (let i = 0; i < pids.length; i += 100) {
+      const data = await ozonPost('/v4/product/info/attributes', { filter: { product_id: pids.slice(i, i+100) }, limit: 100, sort_dir: 'ASC' });
+      (data.result || []).forEach(p => {
+        const attr = (p.attributes || []).find(a => a.id === COMPATIBILITY_ATTR);
+        pidToCompat[String(p.id)] = (attr?.values?.[0]?.value || '').toLowerCase();
+      });
+    }
+    Object.keys(grouped).forEach(sku => { grouped[sku].compatibility = pidToCompat[grouped[sku].productId] || ''; });
+
+    setStep('Загружаем продажи Ozon...');
+    const dateTo = new Date(), dateFrom = new Date();
+    dateFrom.setDate(dateFrom.getDate() - DAYS);
+    const salesData = await ozonPost('/v1/analytics/data', {
+      date_from: dateFrom.toISOString().split('T')[0], date_to: dateTo.toISOString().split('T')[0],
+      dimension: ['sku'], metrics: ['ordered_units'], limit: 1000, offset: 0
+    });
+    (salesData.result?.data || []).forEach(r => {
+      const sku = String(r.dimensions?.[0]?.id);
+      if (grouped[sku]) grouped[sku].sold7 = r.metrics?.[0] || 0;
+    });
+
+    ozonProducts = Object.values(grouped).map(d => {
+      const avgPerDay = d.sold7 > 0 ? +(d.sold7 / DAYS).toFixed(1) : 0;
+      const daysLeft  = avgPerDay > 0 ? Math.floor(d.available / avgPerDay) : Infinity;
+      return { ...d, avgPerDay, daysLeft, whFilled: d.whCount.size, whPct: Math.round((d.whCount.size / totalWHCount) * 100) };
+    });
+
+    ozonLoaded = true;
+    renderDashboard(ozonProducts, totalWHCount);
+    setReady();
+  } catch(e) { setError(e.message); }
+}
+
+// ── WB API ────────────────────────────────────
+async function wbGet(url) {
+  const r = await fetch(url, { headers: { 'Authorization': WB_API_KEY } });
+  if (!r.ok) throw new Error('WB HTTP ' + r.status);
+  return r.json();
+}
+
+async function wbPost(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Authorization': WB_API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error('WB HTTP ' + r.status);
+  return r.json();
+}
+
+async function loadWb() {
+  setStep('Загружаем остатки WB...');
+  try {
+    const stocksData = await wbGet('https://statistics-api.wildberries.ru/api/v1/supplier/stocks?dateFrom=2020-01-01');
+    if (!Array.isArray(stocksData)) throw new Error('Неверный ответ WB');
+
+    let grouped = {}, allWH = new Set();
+    stocksData.forEach(item => {
+      const barcode = String(item.supplierArticle || '').trim();
+      const wh = item.warehouseName || '';
+      const qty = item.quantity || 0;
+      let compat = '';
+      if (NES_BARCODES.has(barcode)) compat = 'nespresso';
+      else if (DG_BARCODES.has(barcode)) compat = 'dolce gusto';
+      allWH.add(wh);
+      if (!grouped[barcode]) grouped[barcode] = { sku: barcode, article: barcode, name: item.subject || '', available: 0, sold7: 0, whCount: new Set(), compatibility: compat };
+      grouped[barcode].available += qty;
+      if (qty > 0) grouped[barcode].whCount.add(wh);
+    });
+
+    const wbTotalWH = allWH.size;
+
+    setStep('Загружаем названия WB...');
+    try {
+      const cardsData = await wbPost('https://content-api.wildberries.ru/content/v2/get/cards/list', {
+        settings: { cursor: { limit: 100 }, filter: { withPhoto: -1 } }
+      });
+      (cardsData.cards || []).forEach(card => {
+        (card.sizes || []).forEach(size => {
+          (size.skus || []).forEach(sku => { if (grouped[sku]) grouped[sku].name = card.title || grouped[sku].name; });
+        });
+      });
+    } catch(e) { console.log('Названия WB не загружены'); }
+
+    setStep('Загружаем продажи WB...');
+    const dateTo = new Date(), dateFrom = new Date();
+    dateFrom.setDate(dateFrom.getDate() - DAYS);
+    const ordersData = await wbGet(`https://statistics-api.wildberries.ru/api/v1/supplier/orders?dateFrom=${dateFrom.toISOString().split('T')[0]}&flag=0`);
+    if (Array.isArray(ordersData)) {
+      ordersData.forEach(order => {
+        const barcode = String(order.supplierArticle || '').trim();
+        if (grouped[barcode] && order.isCancel === false) grouped[barcode].sold7 += 1;
+      });
+    }
+
+    wbProducts = Object.values(grouped)
+      .filter(d => d.sold7 > 0)
+      .map(d => {
+        const avgPerDay = d.sold7 > 0 ? +(d.sold7 / DAYS).toFixed(1) : 0;
+        const daysLeft  = avgPerDay > 0 ? Math.floor(d.available / avgPerDay) : Infinity;
+        return { ...d, avgPerDay, daysLeft, whFilled: d.whCount.size, whPct: Math.round((d.whCount.size / wbTotalWH) * 100) };
+      });
+
+    wbLoaded = true;
+    totalWHCount = wbTotalWH;
+    renderDashboard(wbProducts, wbTotalWH);
+    setReady();
+  } catch(e) { setError(e.message); }
+}
+
+// ── Helpers ───────────────────────────────────
+const dc = days => days === Infinity ? 'ok' : days <= 7 ? 'crit' : days <= 14 ? 'warn' : 'ok';
+const rc = days => days === Infinity ? '' : days <= 7 ? 'row-crit' : days <= 14 ? 'row-warn' : '';
+const dl = days => days === Infinity ? '∞' : String(days);
+const whClass    = pct => pct <= 30 ? 'c-crit' : pct <= 60 ? 'c-warn' : 'c-ok';
+const whRowClass = pct => pct <= 30 ? 'wh-crit' : pct <= 60 ? 'wh-warn' : '';
+
+function sortByDays(arr) {
+  return [...arr].sort((a, b) => {
+    const da = a.daysLeft === Infinity ? 99999 : a.daysLeft;
+    const db = b.daysLeft === Infinity ? 99999 : b.daysLeft;
+    return da - db;
+  });
+}
+
+function brandRow(p) {
+  return `<div class="product-row ${rc(p.daysLeft)}">
+    <div><div class="prod-name">${p.name}</div><div class="prod-article">${p.article}</div></div>
+    <div class="prod-sales-wrap"><div class="prod-sales">${p.avgPerDay}</div><div class="prod-sales-label">шт/день</div></div>
+    <div class="prod-days-wrap"><div class="prod-days ${dc(p.daysLeft)}">${dl(p.daysLeft)}</div><div class="prod-days-label">дней</div></div>
+  </div>`;
+}
+
+function whTableRow(p, totalWH) {
+  const cls = whClass(p.whPct), rowCls = whRowClass(p.whPct);
+  return `<tr class="wh-row ${rowCls}">
+    <td><div class="wh-name">${p.name}</div><div class="wh-article">${p.article}</div></td>
+    <td style="text-align:right"><div class="wh-count ${cls}">${p.whFilled}</div></td>
+    <td style="text-align:right"><div class="wh-total">${totalWH}</div></td>
+    <td class="wh-pct-cell"><div class="wh-pct-num ${cls}">${p.whPct}%</div></td>
+    <td class="wh-bar-cell"><div class="wh-bar-track"><div class="wh-bar-fill ${cls}" style="width:${p.whPct}%"></div></div></td>
+  </tr>`;
+}
+
+// ── Render ────────────────────────────────────
+function renderDashboard(products, totalWH) {
+  const nes  = products.filter(p => p.compatibility.includes('nespresso'));
+  const dg   = products.filter(p => p.compatibility.includes('dolce'));
+  const crit = products.filter(p => p.daysLeft !== Infinity && p.daysLeft <= 7);
+  const warn = products.filter(p => p.daysLeft !== Infinity && p.daysLeft > 7 && p.daysLeft <= 14);
+
+  document.getElementById('kpiCrit').textContent  = crit.length;
+  document.getElementById('kpiWarn').textContent  = warn.length;
+  document.getElementById('kpiTotal').textContent = products.length;
+  document.getElementById('kpiNes').textContent   = nes.length;
+  document.getElementById('kpiDg').textContent    = dg.length;
+
+  const alertsBar = document.getElementById('alertsBar');
+  if (crit.length > 0) {
+    alertsBar.classList.remove('hidden');
+    document.getElementById('alertChips').innerHTML = crit.map(p => `<span class="alert-chip">${p.name.substring(0,40)}… (${p.daysLeft} дн)</span>`).join('');
+  } else { alertsBar.classList.add('hidden'); }
+
+  const topSales = [...products].sort((a, b) => b.avgPerDay - a.avgPerDay).slice(0, 8);
+  document.getElementById('topSalesList').innerHTML = topSales.map((p, i) => {
+    const isNes = p.compatibility.includes('nespresso');
+    const isDg  = p.compatibility.includes('dolce');
+    const tag   = isNes ? `<span style="color:var(--nes);font-size:9px;margin-right:4px">NES</span>`
+                : isDg  ? `<span style="color:var(--dg);font-size:9px;margin-right:4px">DG</span>` : '';
+    return `<div class="top-row ${rc(p.daysLeft)}">
+      <div class="rank">${i+1}</div>
+      <div><div class="prod-name">${tag}${p.name.substring(0,42)}${p.name.length>42?'…':''}</div><div class="prod-article">${p.article}</div></div>
+      <div class="prod-sales-wrap"><div class="prod-sales">${p.avgPerDay}</div><div class="prod-sales-label">шт/день</div></div>
+      <div class="prod-days-wrap"><div class="prod-days ${dc(p.daysLeft)}">${dl(p.daysLeft)}</div><div class="prod-days-label">дней</div></div>
+    </div>`;
+  }).join('');
+
+  const critAndWarn = sortByDays(products.filter(p => p.daysLeft !== Infinity && p.daysLeft <= 14));
+  document.getElementById('criticalList').innerHTML = critAndWarn.length > 0
+    ? critAndWarn.map(p => `<div class="top-row ${rc(p.daysLeft)}">
+        <div class="rank" style="color:${p.daysLeft<=7?'var(--crit)':'var(--warn)'}">!</div>
+        <div><div class="prod-name">${p.name.substring(0,42)}${p.name.length>42?'…':''}</div><div class="prod-article">${p.article} · ${p.available.toLocaleString('ru')} шт</div></div>
+        <div class="prod-sales-wrap"><div class="prod-sales">${p.avgPerDay}</div><div class="prod-sales-label">шт/день</div></div>
+        <div class="prod-days-wrap"><div class="prod-days ${dc(p.daysLeft)}">${p.daysLeft}</div><div class="prod-days-label">дней</div></div>
+      </div>`).join('')
+    : '<div class="empty-state">✅ Все остатки в норме</div>';
+
+  document.getElementById('nesCount').textContent = nes.length + ' SKU';
+  document.getElementById('nesList').innerHTML = sortByDays(nes).map(brandRow).join('') || '<div class="empty-state">Нет товаров</div>';
+  document.getElementById('dgCount').textContent = dg.length + ' SKU';
+  document.getElementById('dgList').innerHTML = sortByDays(dg).map(brandRow).join('') || '<div class="empty-state">Нет товаров</div>';
+
+  const nesSorted = [...nes].sort((a, b) => a.whPct - b.whPct);
+  const dgSorted  = [...dg].sort((a, b) => a.whPct - b.whPct);
+  document.getElementById('whPanelSub').textContent = `${nes.length + dg.length} товаров · ${totalWH} складов`;
+  let whRows = '';
+  if (nesSorted.length > 0) {
+    whRows += `<tr class="wh-group-row g-nes"><td colspan="5">☕ Nespresso — ${nes.length} SKU</td></tr>`;
+    whRows += nesSorted.map(p => whTableRow(p, totalWH)).join('');
+  }
+  if (dgSorted.length > 0) {
+    whRows += `<tr class="wh-group-row g-dg"><td colspan="5">☕ Dolce Gusto — ${dg.length} SKU</td></tr>`;
+    whRows += dgSorted.map(p => whTableRow(p, totalWH)).join('');
+  }
+  document.getElementById('whTableBody').innerHTML = whRows || '<tr><td colspan="5" class="empty-state">Нет данных</td></tr>';
+}
+
+// ── Status ────────────────────────────────────
+function setStep(text) {
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+  document.getElementById('loadingStep').textContent = text;
+  document.getElementById('statusText').textContent  = text;
+  document.getElementById('statusDot').className = 'status-dot loading';
+  document.getElementById('refreshBtn').classList.add('spinning');
+}
+function setReady() {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  document.getElementById('statusDot').className = 'status-dot';
+  document.getElementById('statusText').textContent = 'Данные актуальны';
+  document.getElementById('refreshBtn').classList.remove('spinning');
+  document.getElementById('lastUpdate').textContent = 'Обновлено в ' + new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+function setError(msg) {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  document.getElementById('statusDot').className = 'status-dot error';
+  document.getElementById('statusText').textContent = 'Ошибка: ' + msg;
+  document.getElementById('refreshBtn').classList.remove('spinning');
+}
+
+// ── Init ──────────────────────────────────────
+function init() {
+  if (sessionStorage.getItem('auth') === '1') {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('dashboard').style.display = 'block';
+    loadOzon();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
