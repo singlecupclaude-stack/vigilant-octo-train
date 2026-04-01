@@ -237,7 +237,7 @@
 
   <div class="links">
 
-    <a href="https://www.ozon.ru/brand/single-cup-coffee-145539127/" class="store-link" target="_blank" rel="noopener">
+    <a href="https://www.ozon.ru/brand/single-cup-coffee-145539127/" onclick="return openStore('intent://www.ozon.ru/brand/single-cup-coffee-145539127/#Intent;scheme=https;package=ru.ozon.app.android;end', 'https://www.ozon.ru/brand/single-cup-coffee-145539127/')" class="store-link" target="_blank" rel="noopener">
       <div class="store-left">
         <div class="store-badge b-ozon">OZ</div>
         <div>
@@ -248,7 +248,7 @@
       <div class="store-arrow"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></div>
     </a>
 
-    <a href="https://www.wildberries.ru/seller/13883" class="store-link" target="_blank" rel="noopener">
+    <a href="https://www.wildberries.ru/seller/13883" onclick="return openStore('intent://www.wildberries.ru/seller/13883#Intent;scheme=https;package=com.wildberries.ru;end', 'https://www.wildberries.ru/seller/13883')" class="store-link" target="_blank" rel="noopener">
       <div class="store-left">
         <div class="store-badge b-wb">WB</div>
         <div>
@@ -297,5 +297,22 @@
 
 
 </div>
-</body>
+<script>
+  function openStore(appUrl, webUrl) {
+    var isAndroid = /Android/i.test(navigator.userAgent);
+    var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isAndroid || isIOS) {
+      var start = Date.now();
+      window.location = appUrl;
+      setTimeout(function() {
+        if (Date.now() - start < 2000) {
+          window.location = webUrl;
+        }
+      }, 1200);
+    } else {
+      window.location = webUrl;
+    }
+    return false;
+  }
+</script>
 </html>
