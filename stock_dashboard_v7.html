@@ -2994,7 +2994,7 @@ let wbSkuRevenue         = {}; // {barcode: выручка ₽} из WB Orders A
 // ═══ ЯМ API ═══
 const YM_CAMPAIGN_ID = '21577916'; // FBY · Single cup coffee (из скрина: partner.market.yandex.ru)
 const YM_CAMPAIGN_ID2 = '93482655'; // FBY · ИП Тимашков (второй магазин)
-const YM_API_KEY = 'ACMA:q7rkGAHIS7gbMxLegK6a1rVp8pCGy41B6NijFi7Z:65218333'; // токен (Business ID: 888240)
+const YM_API_KEY = 'ACMA:fZXiiieY25IU5UaReloKCuwsLQ8LzbFNp8tBz5aN:4e1957d1';
 
 // ════════════════════════════════════════════════════
 // ВСЕ RENDER-ФУНКЦИИ
@@ -3879,7 +3879,7 @@ function loadSber() { loadSberApi(); }
 
 const SBER_BASE  = 'https://api.megamarket.tech';
 const SBER_MERCHANT_ID = '250549';
-const SBER_TOKEN_DEFAULT = '915A9886-DF35-4D83-882E-9E55866AC8FA';
+const SBER_TOKEN_DEFAULT = '8A320203-3A64-496C-BD85-4D4BD86D6BB2';
 
 async function sberPost(path, body, token) {
   return corsPost(SBER_BASE + path, body || {}, { 'X-Merchant-Token': token });
