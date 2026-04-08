@@ -9,7 +9,6 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root { color-scheme: only light; }
-
   html, body { width: 100%; min-height: 100%; }
 
   body {
@@ -20,49 +19,33 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    padding: 5vw 5vw;
     -webkit-text-size-adjust: 100%;
   }
 
-  .page {
-    width: 100%;
-    max-width: 90vw;   /* телефон: почти на всю ширину */
-    text-align: center;
-  }
+  .page { width: 100%; text-align: center; }
 
-  /* ── Логотип ── */
-  .logo-wrap { margin-bottom: 4vw; animation: fadeDown 0.5s ease both; }
-  .logo-img  { width: clamp(100px, 36vw, 150px); height: auto; display: block; margin: 0 auto; }
+  .logo-wrap { animation: fadeDown 0.5s ease both; }
+  .logo-img  { display: block; margin: 0 auto; }
 
-  /* ── Подзаголовок ── */
   .tagline {
-    font-size: clamp(9px, 3vw, 11px);
     font-weight: 600; letter-spacing: 0.2em;
     text-transform: uppercase; color: #8e8e93;
-    margin-bottom: 4vw; animation: fadeIn 0.5s 0.15s ease both;
+    animation: fadeIn 0.5s 0.15s ease both;
   }
 
-  /* ── Сетка иконок ── */
   .app-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: clamp(14px, 4vw, 24px) clamp(8px, 2.5vw, 16px);
-    margin-bottom: 5vw;
     animation: fadeIn 0.6s 0.2s ease both;
   }
 
   .app-item {
     display: flex; flex-direction: column; align-items: center;
-    gap: clamp(5px, 1.5vw, 8px);
     text-decoration: none;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
 
-  /* Иконка: на телефоне ~26vw, максимум 90px */
   .app-icon {
-    width: clamp(72px, 26vw, 90px);
-    height: clamp(72px, 26vw, 90px);
-    border-radius: clamp(15px, 5.5vw, 20px);
     overflow: hidden; flex-shrink: 0;
     transition: transform 0.1s ease, filter 0.1s ease;
     box-shadow: 0 2px 10px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.07);
@@ -76,19 +59,8 @@
   }
   .app-item:active .app-icon { transform: scale(0.86); filter: brightness(0.9); }
 
-  .app-label {
-    font-size: clamp(10px, 3.2vw, 13px);
-    font-weight: 500; color: #1c1c1e;
-    text-align: center; line-height: 1.3;
-    max-width: clamp(72px, 28vw, 100px);
-  }
-  .app-sub {
-    font-size: clamp(8.5px, 2.6vw, 11px);
-    font-weight: 400; color: #8e8e93;
-    text-align: center; line-height: 1.3;
-    max-width: clamp(72px, 28vw, 100px);
-    margin-top: 1px;
-  }
+  .app-label { font-weight: 500; color: #1c1c1e; text-align: center; line-height: 1.3; }
+  .app-sub   { font-weight: 400; color: #8e8e93; text-align: center; line-height: 1.3; margin-top: 2px; }
 
   .icon-official {
     background: #CC0000;
@@ -99,16 +71,37 @@
     filter: brightness(0) invert(1);
   }
 
-  /* ── Футер ── */
-  .footer-text { font-size: clamp(10px, 3vw, 12px); color: #8e8e93; animation: fadeIn 0.5s 0.6s ease both; }
+  .footer-text { color: #8e8e93; animation: fadeIn 0.5s 0.6s ease both; }
   .footer-link { color: #CC0000; text-decoration: none; font-weight: 600; }
 
-  /* ── Десктоп: фиксированный компактный размер ── */
+  /* ═══════════════════════════════
+     ТЕЛЕФОН (до 599px)
+  ═══════════════════════════════ */
+  @media (max-width: 599px) {
+    body        { padding: 8vw 4vw; align-items: flex-start; padding-top: 10vw; }
+    .page       { max-width: 100%; }
+    .logo-wrap  { margin-bottom: 6vw; }
+    .logo-img   { width: 50vw; }
+    .tagline    { font-size: 3vw; margin-bottom: 6vw; }
+    .app-grid   { gap: 5vw 3vw; margin-bottom: 6vw; }
+    .app-item   { gap: 2vw; }
+    .app-icon   { width: 26vw; height: 26vw; border-radius: 5.5vw; }
+    .app-label  { font-size: 3.4vw; max-width: 28vw; }
+    .app-sub    { font-size: 2.6vw; max-width: 28vw; }
+    .footer-text{ font-size: 3vw; }
+  }
+
+  /* ═══════════════════════════════
+     ДЕСКТОП (от 600px)
+  ═══════════════════════════════ */
   @media (min-width: 600px) {
+    body        { padding: 2rem; }
     .page       { max-width: 420px; }
+    .logo-wrap  { margin-bottom: 1.4rem; }
     .logo-img   { width: 150px; }
     .tagline    { font-size: 11px; margin-bottom: 1.6rem; }
     .app-grid   { gap: 22px 10px; margin-bottom: 1.8rem; }
+    .app-item   { gap: 6px; }
     .app-icon   { width: 86px; height: 86px; border-radius: 19px; }
     .app-label  { font-size: 12px; max-width: 94px; }
     .app-sub    { font-size: 10px; max-width: 94px; }
