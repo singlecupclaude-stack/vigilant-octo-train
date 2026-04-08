@@ -6417,33 +6417,36 @@ async function sheetsRequest(method, path, body) {
 }
 
 // ── Убедиться что нужные листы существуют ────────────────────
-async function gsheetsEnsureSheets() {
-  const meta = await sheetsRequest('GET', '?fields=sheets.properties');
-  const names = (meta.sheets || []).map(function(s){ return s.properties.title; });
-  const toAdd = [];
-  if (!names.includes('snapshots'))        toAdd.push({ addSheet: { properties: { title: 'snapshots' } } });
-  if (!names.includes('products_history')) toAdd.push({ addSheet: { properties: { title: 'products_history' } } });
-  if (toAdd.length) {
-    await sheetsRequest('POST', ':batchUpdate', { requests: toAdd });
-  }
+// Листы и их заголовки
+const GSHEETS_SHEETS = {
+  snapshots:  { title: 'snapshots',  headers: ['дата','время','маркетплейс','всего_sku','критично','внимание','норма','без_продаж','остаток_шт','продажи_шт','выручка_руб','период_дней'] },
+  products:   { title: 'products',   headers: ['дата','маркетплейс','штрихкод','код_1с','бренд','короткое_имя','группа','капсул','категория','полное_название','остаток_шт','продажи_шт','уходимость_день','дней_остатка','статус','себест_ед','себест_остатка'] },
+  warehouses: { title: 'warehouses', headers: ['дата','маркетплейс','кластер','склад','код_1с','штрихкод','короткое_имя','категория','остаток_шт','уходимость_день','дней_остатка','статус','себест_остатка'] },
+  critical:   { title: 'critical',   headers: ['дата','маркетплейс','штрихкод','код_1с','короткое_имя','остаток_шт','продажи_день','дней_остатка','статус'] },
+};
 
-  // Заголовки для snapshots
-  if (!names.includes('snapshots')) {
-    await sheetsRequest('PUT',
-      '/values/snapshots!A1?valueInputOption=RAW',
-      { values: [['дата','время','маркетплейс','всего_sku','критично','внимание','норма','без_продаж','остаток_шт','продажи_шт','выручка_руб','период_дней']] }
-    );
-  }
-  // Заголовки для products_history
-  if (!names.includes('products_history')) {
-    await sheetsRequest('PUT',
-      '/values/products_history!A1?valueInputOption=RAW',
-      { values: [['дата','маркетплейс','штрихкод','код_1с','короткое_имя','категория','остаток_шт','продажи_шт','уходимость_день','дней_остатка','статус']] }
-    );
+async function gsheetsEnsureSheets() {
+  const meta  = await sheetsRequest('GET', '?fields=sheets.properties');
+  const exist = (meta.sheets || []).map(function(s){ return s.properties.title; });
+  const toAdd = [];
+  Object.values(GSHEETS_SHEETS).forEach(function(sh) {
+    if (!exist.includes(sh.title)) toAdd.push({ addSheet: { properties: { title: sh.title } } });
+  });
+  if (toAdd.length) await sheetsRequest('POST', ':batchUpdate', { requests: toAdd });
+
+  // Записываем заголовки в новые листы
+  for (var key in GSHEETS_SHEETS) {
+    var sh = GSHEETS_SHEETS[key];
+    if (!exist.includes(sh.title)) {
+      await sheetsRequest('PUT',
+        '/values/' + sh.title + '!A1?valueInputOption=RAW',
+        { values: [sh.headers] }
+      );
+    }
   }
 }
 
-// ── Сохранить снапшот ─────────────────────────────────────────
+// ── Сохранить снапшот ────────────────────────────────────────
 async function gsheetsSaveSnapshot() {
   if (!gsheetsToken) { gsheetsSignIn(); return; }
 
@@ -6453,61 +6456,108 @@ async function gsheetsSaveSnapshot() {
   try {
     await gsheetsEnsureSheets();
 
-    var now    = new Date();
+    var now     = new Date();
     var dateStr = now.toLocaleDateString('ru-RU');
     var timeStr = now.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
 
-    // Снапшоты по каждому загруженному МП
-    var snapshotRows = [];
-    var productRows  = [];
+    var snapRows = [], prodRows = [], whRows = [], critRows = [];
 
-    function addProductsSnap(mpName, products, eanFn) {
-      var isObj = !eanFn; // ozon/wb — products array
-      var ps = products;
-      var crit  = ps.filter(function(p){ return (isObj ? (p.daysLeft !== Infinity && p.daysLeft <= 7) : (p.days !== null && p.days <= 7)); }).length;
-      var warn  = ps.filter(function(p){ return (isObj ? (p.daysLeft !== Infinity && p.daysLeft > 7 && p.daysLeft <= 14) : (p.days !== null && p.days > 7 && p.days <= 14)); }).length;
-      var noS   = ps.filter(function(p){ return (isObj ? (p.available > 0 && (!p.sold7 || p.sold7 === 0)) : (p.stock > 0 && (!p.sold || p.sold === 0))); }).length;
-      var stock = ps.reduce(function(s,p){ return s + (isObj ? (p.available||0) : (p.stock||0)); }, 0);
-      var sold  = ps.reduce(function(s,p){ return s + (isObj ? (p.sold7||0) : (p.sold||0)); }, 0);
-      snapshotRows.push([dateStr, timeStr, mpName, ps.length, crit, warn, ps.length-crit-warn, noS, stock, sold, '', DAYS]);
+    // ── helpers ──
+    function getDays(p, isObj) { return isObj ? (p.daysLeft===Infinity||p.daysLeft===undefined ? null : p.daysLeft) : p.days; }
+    function getStock(p, isObj){ return isObj ? (p.available||0) : (p.stock||0); }
+    function getSold(p, isObj) { return isObj ? (p.sold7||0) : (p.sold||0); }
+    function getVel(p, isObj)  { return isObj ? (p.avgPerDay||0) : (p.vel||0); }
 
-      ps.forEach(function(p) {
+    // ── Построить строки по МП ──
+    function buildMpRows(mpName, products, eanFn, gbcData, gbcIsWb) {
+      var isObj = !eanFn;
+
+      // 1. snapshots
+      var crit  = products.filter(function(p){ var d=getDays(p,isObj); return d!==null&&d<=7; }).length;
+      var warn  = products.filter(function(p){ var d=getDays(p,isObj); return d!==null&&d>7&&d<=14; }).length;
+      var noS   = products.filter(function(p){ return getStock(p,isObj)>0&&!getSold(p,isObj); }).length;
+      var stock = products.reduce(function(s,p){ return s+getStock(p,isObj); }, 0);
+      var sold  = products.reduce(function(s,p){ return s+getSold(p,isObj); }, 0);
+      snapRows.push([dateStr, timeStr, mpName, products.length, crit, warn, products.length-crit-warn, noS, stock, sold, '', DAYS]);
+
+      // 2. products
+      products.forEach(function(p) {
         var bc   = isObj ? (p.barcode||p.article||'') : (eanFn ? eanFn(p) : (p.sku||''));
         var info = xInfo(bc, bc);
-        var days = isObj ? (p.daysLeft===Infinity?'':Math.round(p.daysLeft)) : (p.days!==null?Math.round(p.days):'');
-        productRows.push([dateStr, mpName, bc, info.code1c||'', info.shortName||p.name||'', info.category||'',
-          isObj ? (p.available||0) : (p.stock||0),
-          isObj ? (p.sold7||0)     : (p.sold||0),
-          isObj ? (p.avgPerDay||0) : (p.vel||0),
-          days, xStatus(isObj ? p.daysLeft : p.days)]);
+        var map  = WB_BARCODE_MAP[bc] || {};
+        var cost = xCost(bc, bc);
+        var days = getDays(p, isObj);
+        var stk  = getStock(p, isObj);
+        prodRows.push([
+          dateStr, mpName, bc,
+          info.code1c||map.code1c||'', info.brand||map.brand||'',
+          info.shortName||map.shortName||(isObj?p.name:p.name)||'',
+          info.group||map.group||'', info.capsLot||map.capsLot||'',
+          info.category||map.category||'',
+          (isObj ? p.name : p.name)||'',
+          stk, getSold(p,isObj), getVel(p,isObj),
+          days!==null ? Math.round(days) : '',
+          xStatus(days), cost||'', cost&&stk ? Math.round(cost*stk) : ''
+        ]);
       });
+
+      // 3. warehouses — из GBC данных
+      if (gbcData && gbcData.length) {
+        gbcData.forEach(function(r) {
+          var bc   = gbcIsWb ? (r.sku||'') : (r.ean||r.barcode||'');
+          var info = xInfo(bc, r.code||bc);
+          var cost = xCost(bc, r.code||bc);
+          var qty  = gbcIsWb ? (r.qty||0) : (r.qty||0);
+          var days = r.days;
+          whRows.push([
+            dateStr, mpName,
+            gbcIsWb ? (r.fo||'') : (r.cl||''),
+            r.wh||'',
+            r.code||r.code1c||info.code1c||'',
+            bc,
+            r.shortName||info.shortName||r.name||'',
+            info.category||'',
+            qty,
+            r.vel ? +r.vel.toFixed(2) : 0,
+            days!==null&&days!==undefined ? Math.round(days) : '',
+            xStatus(days),
+            cost&&qty ? Math.round(cost*qty) : ''
+          ]);
+        });
+      }
+
+      // 4. critical (≤14 дней)
+      products.filter(function(p){ var d=getDays(p,isObj); return d!==null&&d<=14; })
+        .sort(function(a,b){ return (getDays(a,isObj)||0)-(getDays(b,isObj)||0); })
+        .forEach(function(p) {
+          var bc   = isObj ? (p.barcode||p.article||'') : (eanFn ? eanFn(p) : (p.sku||''));
+          var info = xInfo(bc, bc);
+          var days = getDays(p, isObj);
+          critRows.push([dateStr, mpName, bc, info.code1c||'',
+            info.shortName||p.name||'', getStock(p,isObj),
+            getVel(p,isObj), days!==null?Math.round(days):'', xStatus(days)]);
+        });
     }
 
-    if (ozonLoaded && ozonProducts.length) addProductsSnap('Ozon', ozonProducts, null);
-    if (wbLoaded   && wbProducts.length)   addProductsSnap('WB',   wbProducts,   null);
-    if (ymLoaded   && ymMetrics.length)    addProductsSnap('ЯМ',   ymMetrics,    function(m){return m.sku||'';});
-    if (sberLoaded && _sberMetricsCache.length) addProductsSnap('Сбер', _sberMetricsCache, sberEanKey);
+    if (ozonLoaded && ozonProducts.length)      buildMpRows('Ozon', ozonProducts, null,       GBC_DATA,            false);
+    if (wbLoaded   && wbProducts.length)         buildMpRows('WB',   wbProducts,   null,       WB_GBC_DATA,         true);
+    if (ymLoaded   && ymMetrics.length)           buildMpRows('ЯМ',   ymMetrics,    function(m){return m.sku||'';}, null, false);
+    if (sberLoaded && _sberMetricsCache.length)  buildMpRows('Сбер', _sberMetricsCache, sberEanKey, SBER_GBC_DATA, false);
 
-    if (!snapshotRows.length) { alert('Нет загруженных данных для сохранения'); return; }
+    if (!snapRows.length) { alert('Нет загруженных данных для сохранения'); return; }
 
-    // Записываем снапшоты
-    await sheetsRequest('POST',
-      '/values/snapshots!A:L:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
-      { values: snapshotRows }
-    );
+    // Параллельная запись всех листов
+    var writes = [
+      sheetsRequest('POST', '/values/snapshots!A:L:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',   { values: snapRows }),
+    ];
+    if (prodRows.length)  writes.push(sheetsRequest('POST', '/values/products!A:Q:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',   { values: prodRows }));
+    if (whRows.length)    writes.push(sheetsRequest('POST', '/values/warehouses!A:M:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',  { values: whRows }));
+    if (critRows.length)  writes.push(sheetsRequest('POST', '/values/critical!A:I:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',    { values: critRows }));
 
-    // Записываем товары
-    if (productRows.length) {
-      await sheetsRequest('POST',
-        '/values/products_history!A:K:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',
-        { values: productRows }
-      );
-    }
-
-    // Удаляем строки старше 90 дней
+    await Promise.all(writes);
     await gsheetsCleanOld();
 
-    showToast('✅ Сохранено в Google Sheets: ' + snapshotRows.length + ' МП · ' + productRows.length + ' товаров');
+    showToast('✅ Сохранено: ' + snapRows.length + ' МП · ' + prodRows.length + ' товаров · ' + whRows.length + ' складов · ' + critRows.length + ' критичных');
 
   } catch(e) {
     console.error('Sheets save error:', e);
@@ -6522,9 +6572,14 @@ async function gsheetsCleanOld() {
   var cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 90);
 
-  for (var sheet of ['snapshots', 'products_history']) {
+  // Получаем sheetId для каждого листа
+  var meta = await sheetsRequest('GET', '?fields=sheets.properties');
+  var idMap = {};
+  (meta.sheets || []).forEach(function(s){ idMap[s.properties.title] = s.properties.sheetId; });
+
+  for (var sheetName of Object.keys(GSHEETS_SHEETS)) {
     try {
-      var data = await sheetsRequest('GET', '/values/' + sheet + '!A:A');
+      var data = await sheetsRequest('GET', '/values/' + sheetName + '!A:A');
       var rows = data.values || [];
       var toDelete = [];
       for (var i = 1; i < rows.length; i++) {
@@ -6536,19 +6591,19 @@ async function gsheetsCleanOld() {
           if (d < cutoff) toDelete.push(i);
         }
       }
-      if (toDelete.length > 0) {
-        // Удаляем с конца чтобы индексы не сдвигались
+      if (toDelete.length > 0 && idMap[sheetName] !== undefined) {
         var requests = toDelete.reverse().map(function(idx) {
           return { deleteDimension: { range: {
-            sheetId: sheet === 'snapshots' ? 0 : 1,
+            sheetId: idMap[sheetName],
             dimension: 'ROWS', startIndex: idx, endIndex: idx + 1
           }}};
         });
         await sheetsRequest('POST', ':batchUpdate', { requests: requests });
       }
-    } catch(e) { console.warn('Clean old rows error:', e); }
+    } catch(e) { console.warn('Clean old [' + sheetName + ']:', e.message); }
   }
 }
+
 
 // ── Показать историю ─────────────────────────────────────────
 async function gsheetsShowHistory() {
@@ -6557,88 +6612,167 @@ async function gsheetsShowHistory() {
   var modal = document.createElement('div');
   modal.id = 'gsheetsHistoryModal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)';
-  modal.innerHTML = '<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:28px 32px;width:760px;max-width:94vw;max-height:85vh;overflow-y:auto">'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">'
-    + '<div style="font-size:17px;font-weight:700">📊 История из Google Sheets</div>'
+
+  var tabStyle = 'font-size:12px;font-weight:600;padding:7px 16px;border-radius:7px;border:none;cursor:pointer;transition:all 0.2s;background:transparent;color:var(--dim);font-family:var(--sans)';
+  modal.innerHTML = '<div style="background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:24px 28px;width:900px;max-width:96vw;max-height:88vh;display:flex;flex-direction:column">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-shrink:0">'
+    + '<div style="font-size:17px;font-weight:700">📊 История · Google Sheets</div>'
     + '<button onclick="document.getElementById(\'gsheetsHistoryModal\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--dim)">✕</button>'
     + '</div>'
-    + '<div id="gsheetsHistoryContent"><div style="text-align:center;padding:40px;color:var(--dim)">⏳ Загружаем данные...</div></div>'
+    + '<div style="display:flex;gap:3px;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:3px;flex-shrink:0;margin-bottom:16px">'
+    + '<button id="gshTab_snap" style="'+tabStyle+';background:var(--ok);color:white" onclick="gshTabSwitch(\'snap\')">📈 Сводка</button>'
+    + '<button id="gshTab_prod" style="'+tabStyle+'" onclick="gshTabSwitch(\'prod\')">📦 Товары</button>'
+    + '<button id="gshTab_wh"   style="'+tabStyle+'" onclick="gshTabSwitch(\'wh\')">🏭 Склады</button>'
+    + '<button id="gshTab_crit" style="'+tabStyle+'" onclick="gshTabSwitch(\'crit\')">🔴 Критичные</button>'
+    + '</div>'
+    + '<div id="gsheetsHistoryContent" style="overflow-y:auto;flex:1"><div style="text-align:center;padding:40px;color:var(--dim)">⏳ Загружаем...</div></div>'
     + '</div>';
   document.body.appendChild(modal);
   modal.addEventListener('click', function(e){ if(e.target===modal) modal.remove(); });
 
-  try {
-    var data = await sheetsRequest('GET', '/values/snapshots!A:L');
-    var rows = data.values || [];
-    if (rows.length < 2) {
-      document.getElementById('gsheetsHistoryContent').innerHTML =
-        '<div style="text-align:center;padding:40px;color:var(--dim)">Нет сохранённых данных.<br>Нажми «💾 Сохранить» чтобы записать первый снапшот.</div>';
-      return;
-    }
-
-    // Группируем по маркетплейсу
-    var byMp = {};
-    for (var i = 1; i < rows.length; i++) {
-      var r = rows[i];
-      var mp = r[2] || '';
-      if (!byMp[mp]) byMp[mp] = [];
-      byMp[mp].push({
-        date: r[0], time: r[1], mp: r[2],
-        total: +r[3]||0, crit: +r[4]||0, warn: +r[5]||0,
-        ok: +r[6]||0, noS: +r[7]||0, stock: +r[8]||0,
-        sold: +r[9]||0, revenue: +r[10]||0, days: +r[11]||0
-      });
-    }
-
-    var html = '';
-    Object.keys(byMp).forEach(function(mp) {
-      var entries = byMp[mp].slice().reverse(); // новые сначала
-      var last  = entries[0];
-      var prev  = entries[1] || null;
-
-      function delta(cur, prv, field) {
-        if (!prv) return '';
-        var d = cur[field] - prv[field];
-        if (d === 0) return '<span style="color:var(--dim)"> →0</span>';
-        var col = field === 'crit' ? (d > 0 ? 'var(--crit)' : 'var(--ok)') : (d > 0 ? 'var(--ok)' : 'var(--crit)');
-        return '<span style="color:'+col+'"> '+(d>0?'+':'')+d+'</span>';
-      }
-
-      html += '<div style="margin-bottom:24px">'
-        + '<div style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--market)">'+mp+'</div>'
-        + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">'
-        + '<div style="background:var(--s2);border-radius:10px;padding:12px"><div style="font-size:10px;color:var(--dim);margin-bottom:4px">КРИТИЧНО</div><div style="font-size:24px;font-weight:800;color:var(--crit)">'+last.crit+delta(last,prev,'crit')+'</div></div>'
-        + '<div style="background:var(--s2);border-radius:10px;padding:12px"><div style="font-size:10px;color:var(--dim);margin-bottom:4px">ВНИМАНИЕ</div><div style="font-size:24px;font-weight:800;color:var(--warn)">'+last.warn+delta(last,prev,'warn')+'</div></div>'
-        + '<div style="background:var(--s2);border-radius:10px;padding:12px"><div style="font-size:10px;color:var(--dim);margin-bottom:4px">ОСТАТОК, шт</div><div style="font-size:24px;font-weight:800;color:var(--blue)">'+fmtNum(last.stock)+delta(last,prev,'stock')+'</div></div>'
-        + '<div style="background:var(--s2);border-radius:10px;padding:12px"><div style="font-size:10px;color:var(--dim);margin-bottom:4px">ПРОДАЖИ, шт</div><div style="font-size:24px;font-weight:800;color:var(--ok)">'+fmtNum(last.sold)+delta(last,prev,'sold')+'</div></div>'
-        + '</div>'
-        + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
-        + '<thead><tr style="background:var(--s2)">'
-        + '<th style="padding:7px 10px;text-align:left;color:var(--dim);font-weight:600">Дата</th>'
-        + '<th style="padding:7px 10px;text-align:right;color:var(--dim);font-weight:600">Критично</th>'
-        + '<th style="padding:7px 10px;text-align:right;color:var(--dim);font-weight:600">Внимание</th>'
-        + '<th style="padding:7px 10px;text-align:right;color:var(--dim);font-weight:600">Остаток</th>'
-        + '<th style="padding:7px 10px;text-align:right;color:var(--dim);font-weight:600">Продажи</th>'
-        + '<th style="padding:7px 10px;text-align:right;color:var(--dim);font-weight:600">Всего SKU</th>'
-        + '</tr></thead><tbody>';
-
-      entries.slice(0, 30).forEach(function(e) {
-        html += '<tr style="border-bottom:1px solid var(--border)">'
-          + '<td style="padding:7px 10px;color:var(--dim)">'+e.date+' '+e.time+'</td>'
-          + '<td style="padding:7px 10px;text-align:right;color:var(--crit);font-weight:700">'+e.crit+'</td>'
-          + '<td style="padding:7px 10px;text-align:right;color:var(--warn);font-weight:700">'+e.warn+'</td>'
-          + '<td style="padding:7px 10px;text-align:right;color:var(--blue)">'+fmtNum(e.stock)+'</td>'
-          + '<td style="padding:7px 10px;text-align:right;color:var(--ok)">'+fmtNum(e.sold)+'</td>'
-          + '<td style="padding:7px 10px;text-align:right;color:var(--dim)">'+e.total+'</td>'
-          + '</tr>';
-      });
-      html += '</tbody></table></div>';
+  // Tab switch helper
+  window.gshTabSwitch = function(tab) {
+    ['snap','prod','wh','crit'].forEach(function(t) {
+      var b = document.getElementById('gshTab_'+t);
+      if (b) { b.style.background = t===tab ? 'var(--ok)' : 'transparent'; b.style.color = t===tab ? 'white' : 'var(--dim)'; }
     });
+    var panes = ['snap','prod','wh','crit'];
+    panes.forEach(function(t) {
+      var el = document.getElementById('gshPane_'+t);
+      if (el) el.style.display = t===tab ? '' : 'none';
+    });
+  };
 
-    document.getElementById('gsheetsHistoryContent').innerHTML = html;
+  var contentEl = document.getElementById('gsheetsHistoryContent');
+
+  try {
+    // Загружаем все 4 листа параллельно
+    var [snapData, prodData, whData, critData] = await Promise.all([
+      sheetsRequest('GET', '/values/snapshots!A:L').catch(function(){ return {values:[]}; }),
+      sheetsRequest('GET', '/values/products!A:Q').catch(function(){ return {values:[]}; }),
+      sheetsRequest('GET', '/values/warehouses!A:M').catch(function(){ return {values:[]}; }),
+      sheetsRequest('GET', '/values/critical!A:I').catch(function(){ return {values:[]}; }),
+    ]);
+
+    var snapRows = (snapData.values||[]).slice(1);
+    var prodRows = (prodData.values||[]).slice(1);
+    var whRows   = (whData.values||[]).slice(1);
+    var critRows = (critData.values||[]).slice(1);
+
+    // ── Pane 1: Сводка ──
+    function buildSnapPane() {
+      if (!snapRows.length) return '<div style="text-align:center;padding:40px;color:var(--dim)">Нет данных.<br>Нажми «💾 Сохранить» чтобы записать первый снапшот.</div>';
+      var byMp = {};
+      snapRows.forEach(function(r) {
+        var mp = r[2]||'';
+        if (!byMp[mp]) byMp[mp] = [];
+        byMp[mp].push({date:r[0],time:r[1],total:+r[3]||0,crit:+r[4]||0,warn:+r[5]||0,stock:+r[8]||0,sold:+r[9]||0});
+      });
+      var html = '';
+      Object.keys(byMp).forEach(function(mp) {
+        var entries = byMp[mp].slice().reverse();
+        var last = entries[0], prev = entries[1]||null;
+        function d(f) {
+          if (!prev) return '';
+          var dv = last[f]-prev[f];
+          if (!dv) return '<span style="color:var(--dim)"> ±0</span>';
+          var up = f==='crit'||f==='warn' ? dv<0 : dv>0;
+          return '<span style="color:'+(up?'var(--ok)':'var(--crit)')+'">'+(dv>0?'+':'')+dv+'</span>';
+        }
+        html += '<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--market)">'+mp+'</div>'
+          + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">'
+          + '<div style="background:var(--s2);border-radius:9px;padding:11px"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">КРИТИЧНО</div><div style="font-size:22px;font-weight:800;color:var(--crit)">'+last.crit+d('crit')+'</div></div>'
+          + '<div style="background:var(--s2);border-radius:9px;padding:11px"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">ВНИМАНИЕ</div><div style="font-size:22px;font-weight:800;color:var(--warn)">'+last.warn+d('warn')+'</div></div>'
+          + '<div style="background:var(--s2);border-radius:9px;padding:11px"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">ОСТАТОК, шт</div><div style="font-size:22px;font-weight:800;color:var(--blue)">'+fmtNum(last.stock)+d('stock')+'</div></div>'
+          + '<div style="background:var(--s2);border-radius:9px;padding:11px"><div style="font-size:10px;color:var(--dim);margin-bottom:3px">ПРОДАЖИ, шт</div><div style="font-size:22px;font-weight:800;color:var(--ok)">'+fmtNum(last.sold)+d('sold')+'</div></div>'
+          + '</div>'
+          + '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--s2)">'
+          + '<th style="padding:6px 10px;text-align:left;color:var(--dim)">Дата</th>'
+          + '<th style="padding:6px 10px;text-align:right;color:var(--dim)">Критично</th><th style="padding:6px 10px;text-align:right;color:var(--dim)">Внимание</th>'
+          + '<th style="padding:6px 10px;text-align:right;color:var(--dim)">Остаток</th><th style="padding:6px 10px;text-align:right;color:var(--dim)">Продажи</th><th style="padding:6px 10px;text-align:right;color:var(--dim)">SKU</th>'
+          + '</tr></thead><tbody>';
+        entries.slice(0,30).forEach(function(e){
+          html += '<tr style="border-bottom:1px solid var(--border)">'
+            + '<td style="padding:6px 10px;color:var(--dim)">'+e.date+' '+e.time+'</td>'
+            + '<td style="padding:6px 10px;text-align:right;color:var(--crit);font-weight:700">'+e.crit+'</td>'
+            + '<td style="padding:6px 10px;text-align:right;color:var(--warn);font-weight:700">'+e.warn+'</td>'
+            + '<td style="padding:6px 10px;text-align:right;color:var(--blue)">'+fmtNum(e.stock)+'</td>'
+            + '<td style="padding:6px 10px;text-align:right;color:var(--ok)">'+fmtNum(e.sold)+'</td>'
+            + '<td style="padding:6px 10px;text-align:right;color:var(--dim)">'+e.total+'</td></tr>';
+        });
+        html += '</tbody></table></div>';
+      });
+      return html;
+    }
+
+    // ── Универсальная таблица для товаров/складов/критичных ──
+    function buildTablePane(rows, headers, colFns) {
+      if (!rows.length) return '<div style="text-align:center;padding:40px;color:var(--dim)">Нет данных</div>';
+      // Фильтр по МП
+      var mps = [...new Set(rows.map(function(r){return r[1]||'';}))];
+      var filterId = 'gshFilter_'+Math.random().toString(36).slice(2);
+      var html = '<div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">'
+        + '<select id="'+filterId+'" onchange="gshFilterTable(\''+filterId+'\')" style="background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:6px 10px">'
+        + '<option value="">Все МП</option>'
+        + mps.map(function(m){return '<option>'+m+'</option>';}).join('')
+        + '</select>'
+        + '<span style="font-size:11px;color:var(--dim);align-self:center">'+rows.length+' строк · последние 90 дней</span>'
+        + '</div>'
+        + '<div style="overflow-x:auto"><table id="tbl_'+filterId+'" style="width:100%;border-collapse:collapse;font-size:11px">'
+        + '<thead><tr style="background:var(--s2);position:sticky;top:0">'
+        + headers.map(function(h){return '<th style="padding:6px 8px;text-align:left;color:var(--dim);font-weight:600;white-space:nowrap">'+h+'</th>';}).join('')
+        + '</tr></thead><tbody>'
+        + rows.slice(-200).reverse().map(function(r){
+            return '<tr style="border-bottom:1px solid var(--border)">'
+              + colFns.map(function(fn,i){return '<td style="padding:5px 8px;white-space:nowrap">'+fn(r[i]||'',r)+'</td>';}).join('')
+              + '</tr>';
+          }).join('')
+        + '</tbody></table></div>';
+      return html;
+    }
+
+    window.gshFilterTable = function(filterId) {
+      var val = document.getElementById(filterId).value.toLowerCase();
+      var tbl = document.getElementById('tbl_'+filterId);
+      if (!tbl) return;
+      Array.from(tbl.querySelectorAll('tbody tr')).forEach(function(row) {
+        var cells = row.querySelectorAll('td');
+        var mp = cells[1] ? cells[1].textContent.toLowerCase() : '';
+        row.style.display = (!val || mp.includes(val)) ? '' : 'none';
+      });
+    };
+
+    var dimStyle  = 'color:var(--dim)';
+    var critStyle = 'color:var(--crit);font-weight:700';
+    var warnStyle = 'color:var(--warn);font-weight:700';
+    var okStyle   = 'color:var(--ok)';
+    var blueStyle = 'color:var(--blue)';
+
+    function statusCell(v) {
+      if (!v) return '<span style="color:var(--dim)">—</span>';
+      var col = v.includes('Критично')||v.includes('остатка') ? 'var(--crit)' : v.includes('Внимание') ? 'var(--warn)' : v.includes('Норма') ? 'var(--ok)' : 'var(--dim)';
+      return '<span style="color:'+col+'">'+v+'</span>';
+    }
+    function numCell(v){ return v ? '<span style="color:var(--blue)">'+fmtNum(+v||0)+'</span>' : '<span style="color:var(--dim)">—</span>'; }
+    function dimCell(v){ return '<span style="color:var(--dim)">'+v+'</span>'; }
+    function boldCell(v){ return '<strong>'+v+'</strong>'; }
+
+    var prodColFns = [dimCell,dimCell,dimCell,dimCell,dimCell,boldCell,dimCell,dimCell,dimCell,dimCell,numCell,numCell,numCell,numCell,statusCell,dimCell,dimCell];
+    var whColFns   = [dimCell,dimCell,dimCell,dimCell,dimCell,dimCell,boldCell,dimCell,numCell,numCell,numCell,statusCell,dimCell];
+    var critColFns = [dimCell,dimCell,dimCell,dimCell,boldCell,numCell,numCell,numCell,statusCell];
+
+    var prodHeaders  = ['Дата','МП','Штрихкод','Код 1С','Бренд','Имя','Группа','Капс.','Кат.','Полн. назв.','Остаток','Продажи','Уход./д','Дней','Статус','Себест.ед','Себест.ост.'];
+    var whHeaders    = ['Дата','МП','Кластер','Склад','Код 1С','Штрихкод','Имя','Кат.','Остаток','Уход./д','Дней','Статус','Себест.ост.'];
+    var critHeaders  = ['Дата','МП','Штрихкод','Код 1С','Имя','Остаток','Прод./д','Дней','Статус'];
+
+    contentEl.innerHTML =
+      '<div id="gshPane_snap">'+buildSnapPane()+'</div>'
+      + '<div id="gshPane_prod" style="display:none">'+buildTablePane(prodRows, prodHeaders, prodColFns)+'</div>'
+      + '<div id="gshPane_wh"   style="display:none">'+buildTablePane(whRows,   whHeaders,   whColFns)+'</div>'
+      + '<div id="gshPane_crit" style="display:none">'+buildTablePane(critRows, critHeaders, critColFns)+'</div>';
+
   } catch(e) {
-    document.getElementById('gsheetsHistoryContent').innerHTML =
-      '<div style="color:var(--crit);padding:20px">Ошибка: ' + e.message + '</div>';
+    contentEl.innerHTML = '<div style="color:var(--crit);padding:20px">Ошибка: ' + e.message + '</div>';
   }
 }
 
@@ -7139,3 +7273,4 @@ init();
 </script>
 </body>
 </html>
+
