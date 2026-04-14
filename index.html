@@ -310,9 +310,16 @@ async function apiFetch(path){
   const base=document.getElementById('baseUrl').value.trim();
   const enc=path.replace(/[а-яёА-ЯЁ]+/g,w=>encodeURIComponent(w));
   const sep=enc.includes('?')?'&':'?';
-  const url=wb+'/api/'+enc+sep+'$format=json';
+  // Передаём auth и base и в заголовках и в query-параметрах — на случай если браузер обрежет заголовки
+  const url=wb+'/api/'+enc+sep+'$format=json'
+    +'&_auth='+encodeURIComponent('Basic '+creds)
+    +'&_base='+encodeURIComponent(base);
   const resp=await fetch(url,{
-    headers:{'X-1C-Auth':'Basic '+creds,'X-1C-BaseUrl':base,'Accept':'application/json'}
+    headers:{
+      'X-1C-Auth':'Basic '+creds,
+      'X-1C-BaseUrl':base,
+      'Accept':'application/json'
+    }
   });
   if(!resp.ok){const t=await resp.text().catch(()=>'');throw new Error(`HTTP ${resp.status}\n${t.slice(0,400)}`)}
   return resp.json();
