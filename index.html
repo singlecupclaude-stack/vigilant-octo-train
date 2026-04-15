@@ -331,8 +331,24 @@ async function loadFromSheet(){
       if(data[k]!==undefined&&data[k]!==null) data[k]=String(data[k]);
     });
     render(data);
+    function parseSheetDateLocal(v){
+      if(!v) return null;
+      if(typeof v==='string'&&v.includes('T')) return new Date(v);
+      if(typeof v==='string'&&v.includes('-')) return new Date(v);
+      if(typeof v==='number'||(!isNaN(+v)&&String(v).length>4)){
+        return new Date(Math.round((+v-25569)*86400*1000));
+      }
+      return new Date(v);
+    }
+    function fmtDateLocal(v){
+      const d=parseSheetDateLocal(v);
+      if(!d||isNaN(d)) return String(v||'—');
+      return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+    }
     const updStr=data.updated?new Date(data.updated).toLocaleString('ru-RU'):'—';
-    document.getElementById('lastUpd').textContent=`Из таблицы: ${updStr} · ${data.from||''} — ${data.to||''}`;
+    const fromStr=fmtDateLocal(data.from);
+    const toStr=fmtDateLocal(data.to);
+    document.getElementById('lastUpd').textContent=`Синхронизировано: ${updStr} · Период: ${fromStr} — ${toStr}`;
     setSt('success','Данные загружены из таблицы');
   }catch(e){
     setSt('error','Ошибка загрузки из таблицы',e.message);
@@ -425,8 +441,29 @@ function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProf
   document.getElementById('kRevNetS').textContent='без НДС';
   document.getElementById('kTotalExpS').textContent=PCT(totalExp,revNet)+' от выручки';
   document.getElementById('kOpProfitS').textContent=opProfit>=0?'прибыль':'убыток';
-  const fmt2=s=>{const[y,m]=s.split('-');return new Date(+y,+m-1).toLocaleString('ru-RU',{month:'long',year:'numeric'})};
-  document.getElementById('plPeriod').textContent=from&&to?(from.slice(0,7)===to.slice(0,7)?fmt2(from):from+' — '+to):'';
+  // from/to могут прийти как "2025-11-01" или как число (Excel serial) из Sheets
+  function parseSheetDate(v){
+    if(!v) return null;
+    if(typeof v==='string'&&v.includes('-')) return new Date(v);
+    // Excel serial: дни с 30.12.1899
+    if(typeof v==='number'||(!isNaN(+v)&&String(v).length>4)){
+      return new Date(Math.round((+v-25569)*86400*1000));
+    }
+    return new Date(v);
+  }
+  function fmtDate(v){
+    const d=parseSheetDate(v);
+    if(!d||isNaN(d)) return String(v||'');
+    return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
+  }
+  function fmtMonth(v){
+    const d=parseSheetDate(v);
+    if(!d||isNaN(d)) return String(v||'');
+    return d.toLocaleString('ru-RU',{month:'long',year:'numeric'});
+  }
+  const fromD=parseSheetDate(from),toD=parseSheetDate(to);
+  const sameMonth=fromD&&toD&&fromD.getMonth()===toD.getMonth()&&fromD.getFullYear()===toD.getFullYear();
+  document.getElementById('plPeriod').textContent=sameMonth?fmtMonth(from):fmtDate(from)+' — '+fmtDate(to);
   const rows=[
     ['section','','Доходы'],
     ['row','90.01','Выручка с НДС',revGross,revGross,'#4f8ef7',''],
