@@ -250,13 +250,14 @@ function setView(v){
 
 /* ── PERSIST SETTINGS ── */
 function saveAndCheck(){
-  const v=document.getElementById('proxyUrl').value.trim();
+  let v=document.getElementById('proxyUrl').value.trim().replace(/\/+$/,'');
+  document.getElementById('proxyUrl').value=v;
   if(v) localStorage.setItem('plProxy',v);
   checkProxy();
 }
 (()=>{
   const p=localStorage.getItem('plProxy');
-  if(p) document.getElementById('proxyUrl').value=p;
+  if(p) document.getElementById('proxyUrl').value=p.replace(/\/+$/,'');
   const u=localStorage.getItem('plBaseUrl');
   if(u) document.getElementById('baseUrl').value=u;
   const l=localStorage.getItem('plLogin');
@@ -268,7 +269,7 @@ document.getElementById('login').addEventListener('input',e=>localStorage.setIte
 
 /* ── PROXY CHECK ── */
 async function checkProxy(){
-  const url=(document.getElementById('proxyUrl').value||'').trim();
+  const url=(document.getElementById('proxyUrl').value||'').trim().replace(/\/+$/,'');
   const dot=document.getElementById('proxyDot');
   if(!url){dot.className='proxy-dot';return;}
   dot.className='proxy-dot';
@@ -347,19 +348,16 @@ async function apiFetch(path){
   const login=document.getElementById('login').value.trim();
   const pw=document.getElementById('password').value.trim();
   if(!login||!pw) throw new Error('Не заполнен логин или пароль');
-  const creds=btoa(unescape(encodeURIComponent(login+':'+pw)));
   const base=document.getElementById('baseUrl').value.trim();
   if(!base) throw new Error('Не заполнен URL базы 1С');
+  // Передаём credentials в query params — без кастомных заголовков (обходим CORS preflight)
+  const creds=btoa(unescape(encodeURIComponent(login+':'+pw)));
   const enc=path.replace(/[а-яёА-ЯЁ]+/g,w=>encodeURIComponent(w));
   const sep=enc.includes('?')?'&':'?';
-  const url=wb+'/api/'+enc+sep+'$format=json';
-  const resp=await fetch(url,{
-    headers:{
-      'X-1C-Auth':'Basic '+creds,
-      'X-1C-BaseUrl':base,
-      'Accept':'application/json'
-    }
-  });
+  const url=wb+'/api/'+enc+sep+'$format=json'
+    +'&_a='+encodeURIComponent(creds)
+    +'&_b='+encodeURIComponent(base);
+  const resp=await fetch(url, {signal: AbortSignal.timeout(20000)});
   if(!resp.ok){const t=await resp.text().catch(()=>'');throw new Error(`HTTP ${resp.status}\n${t.slice(0,400)}`)}
   return resp.json();
 }
