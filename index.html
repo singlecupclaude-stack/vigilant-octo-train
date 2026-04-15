@@ -306,7 +306,7 @@ async function debugScript(){
   const base=document.getElementById('baseUrl').value.trim();
   const login=document.getElementById('login').value.trim();
   const pw=document.getElementById('password').value.trim();
-  const creds=btoa(unescape(encodeURIComponent(login+':'+pw)));
+  const creds=btoa(login+':'+pw);
 
   setSt('loading','Диагностика соединения...');
   const results=[];
@@ -374,7 +374,7 @@ async function apiFetch(path){
   const login=document.getElementById('login').value.trim();
   const pw=document.getElementById('password').value.trim();
   if(!login||!pw) throw new Error('Не заполнен логин или пароль');
-  const creds=btoa(unescape(encodeURIComponent(login+':'+pw)));
+  const creds=btoa(login+':'+pw);
   const base=document.getElementById('baseUrl').value.trim();
   if(!base) throw new Error('Не заполнен URL базы 1С');
 
