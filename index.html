@@ -191,8 +191,8 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
            oninput="saveAndCheck()">
   </div>
   <div class="btn-row">
-    <button class="btn btn-p" id="loadBtn2" onclick="loadData()" style="flex:1">Обновить из 1С → Таблица</button>
-    <button class="btn btn-g" onclick="loadFromSheet()" title="Показать последние данные из таблицы">📋 Из таблицы</button>
+    <button class="btn btn-p" id="loadBtn2" onclick="loadFromSheet()" style="flex:1">🔄 Загрузить из таблицы</button>
+    <button class="btn btn-g" onclick="loadData()" title="Только для владельца: синхронизировать 1С → Таблица" style="font-size:11px;opacity:.7">⚙️ Синхр. 1С</button>
   </div>
 </div>
 
@@ -317,33 +317,41 @@ async function loadFromSheet(){
     const data={};
     rows.forEach(r=>{
       const key=r.c[0]&&r.c[0].v;
-      const val=r.c[1]&&r.c[1].v;
-      if(key) data[key]=val;
+      let val=r.c[1]&&r.c[1].v;
+      // gviz возвращает числа как числа, даты как строки — приводим всё к нужному типу
+      if(val!==null&&val!==undefined) data[key]=val;
     });
-    if(!data.revNet){setSt('error','Данные в таблице повреждены или пусты');return;}
+    // from/to могут прийти как "2025-11-01" или Date(2025,10,1) — нормализуем
+    if(data.from&&typeof data.from!=='string') data.from=String(data.from);
+    if(data.to&&typeof data.to!=='string') data.to=String(data.to);
+    console.log('Sheet data raw:', JSON.stringify(data));
+    if(!data.revNet){setSt('error','Данные в таблице повреждены или пусты. Проверьте консоль.');return;}
+    // Нормализуем строковые поля
+    ['from','to','updated'].forEach(k=>{
+      if(data[k]!==undefined&&data[k]!==null) data[k]=String(data[k]);
+    });
     render(data);
-    document.getElementById('lastUpd').textContent=`Из таблицы: ${new Date(data.updated).toLocaleString('ru-RU')} · ${data.from} — ${data.to}`;
+    const updStr=data.updated?new Date(data.updated).toLocaleString('ru-RU'):'—';
+    document.getElementById('lastUpd').textContent=`Из таблицы: ${updStr} · ${data.from||''} — ${data.to||''}`;
     setSt('success','Данные загружены из таблицы');
   }catch(e){
     setSt('error','Ошибка загрузки из таблицы',e.message);
   }
 }
 
-/* ── ОБНОВИТЬ ИЗ 1С → ТАБЛИЦА (через Apps Script + JSONP trick) ── */
+/* ── ОБНОВИТЬ ВРУЧНУЮ (только для владельца скрипта) ── */
 async function loadData(){
   const scriptUrl=(document.getElementById('proxyUrl').value||'').trim().replace(/\/$/,'');
   if(!scriptUrl){setSt('error','Не указан Apps Script URL');return;}
+  const from=document.getElementById('dateFrom').value;
+  const to=document.getElementById('dateTo').value;
   const login=document.getElementById('login').value.trim();
   const pw=document.getElementById('password').value.trim();
   const base=document.getElementById('baseUrl').value.trim();
-  const from=document.getElementById('dateFrom').value;
-  const to=document.getElementById('dateTo').value;
-  if(!login||!pw){setSt('error','Не заполнен логин или пароль');return;}
-  if(!base){setSt('error','Не заполнен URL базы 1С');return;}
+  if(!login||!pw||!base){setSt('error','Заполните логин, пароль и URL базы');return;}
 
   ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=true);
-  document.getElementById('placeholder').style.display='none';
-  setSt('loading','Запрос к 1С через Apps Script...<br><small>Это может занять 30–60 секунд</small>');
+  setSt('loading','Запуск синхронизации с 1С...');
 
   const auth=btoa(login+':'+pw);
   const syncUrl=scriptUrl+'?action=sync'
@@ -353,49 +361,20 @@ async function loadData(){
     +'&to='+encodeURIComponent(to);
 
   try{
-    // Используем no-cors + потом читаем из таблицы
-    // Сначала пробуем обычный fetch
-    let data=null;
-    try{
-      const resp=await fetch(syncUrl,{signal:AbortSignal.timeout(120000)});
-      const text=await resp.text();
-      // Apps Script может вернуть HTML при редиректе — проверяем
-      if(text.trim().startsWith('{')){
-        data=JSON.parse(text);
-      }
-    }catch(fetchErr){
-      console.warn('Direct fetch failed:',fetchErr.message);
+    // Открываем Apps Script в новой вкладке — он выполнится и запишет в таблицу
+    const win=window.open(syncUrl,'_blank');
+    if(!win){
+      setSt('error','Браузер заблокировал всплывающее окно. Разрешите всплывающие окна для этого сайта.');
+      ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=false);
+      return;
     }
-
-    if(data&&data.ok){
-      // Данные вернулись напрямую — рендерим
-      render(data);
-      document.getElementById('lastUpd').textContent=`Обновлено: ${new Date().toLocaleString('ru-RU')} · ${from} — ${to}`;
-      setSt('success',`Готово · данные записаны в таблицу`);
-    } else {
-      // Прямой fetch заблокирован CORS — запускаем через img/script trick
-      // и ждём пока данные появятся в таблице
-      setSt('loading','Синхронизация запущена, ждём запись в таблицу...');
-      await triggerViaImg(syncUrl);
-      // Даём Apps Script 45 секунд на выполнение
-      await waitAndLoad(45);
-    }
+    setSt('loading','Синхронизация запущена, ожидаем данные в таблице...');
+    await waitAndLoad(90);
   }catch(e){
     setSt('error','Ошибка',e.message);
-    document.getElementById('placeholder').style.display='block';
   }finally{
     ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=false);
   }
-}
-
-// Запускаем Apps Script через <img> тег (обходим CORS, fire-and-forget)
-function triggerViaImg(url){
-  return new Promise(resolve=>{
-    const img=new Image();
-    img.onload=img.onerror=()=>resolve();
-    img.src=url;
-    setTimeout(resolve,3000); // максимум 3 сек ждём ответа img
-  });
 }
 
 // Опрашиваем таблицу каждые 5 секунд пока не появятся свежие данные
