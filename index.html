@@ -305,11 +305,12 @@ function setSt(type,msg,detail){
 async function loadFromSheet(){
   setSt('loading','Загрузка из таблицы...');
   try{
-    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&_=${Date.now()}`;
     const resp=await fetch(url);
     const text=await resp.text();
-    // Google возвращает /*O_o*/ google.visualization.Query.setResponse({...});
-    const json=JSON.parse(text.replace(/^.*?(\{)/,'$1').replace(/\);?\s*$/,''));
+    const match=text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);?\s*$/);
+    if(!match) throw new Error('Bad Google response: '+text.slice(0,120));
+    const json=JSON.parse(match[1]);
     const rows=json.table.rows;
     if(!rows||rows.length===0){setSt('error','В таблице нет данных. Сначала нажмите «Обновить из 1С»');return;}
     // Парсим key-value пары
@@ -409,7 +410,9 @@ async function waitAndLoad(maxSeconds){
       const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&_=${Date.now()}`;
       const resp=await fetch(url);
       const text=await resp.text();
-      const json=JSON.parse(text.replace(/^.*?(\{)/,'$1').replace(/\);?\s*$/,''));
+      const match2=text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);?\s*$/);
+      if(!match2) continue;
+      const json=JSON.parse(match2[1]);
       const rows=json.table.rows;
       if(!rows||rows.length===0) continue;
       const data={};
