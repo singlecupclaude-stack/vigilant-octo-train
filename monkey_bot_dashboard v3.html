@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MONKEY.BOT</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080b10;--s1:#0e1218;--s2:#141920;--s3:#1c2330;--border:#242d3a;
+  --ok:#3ecf74;--warn:#f0b429;--crit:#e05252;--blue:#4f9cf9;
+  --text:#e8edf5;--dim:#5a6880;
+  --mono:'JetBrains Mono',monospace;--sans:'Manrope',sans-serif;--display:'Bebas Neue',sans-serif;
+  --ozon:#005bff;--ozon-d:rgba(0,91,255,.12);
+  --wb:#cb11ab;  --wb-d:rgba(203,17,171,.12);
+  --ym:#fc3f1d;  --ym-d:rgba(252,63,29,.12);
+  --sber:#21a038;--sber-d:rgba(33,160,56,.12);
+  --mk:#f5a623;  --mk-d:rgba(245,166,35,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 50% 40% at 15% 85%,rgba(245,166,35,.04),transparent 60%),
+             radial-gradient(ellipse 40% 50% at 85% 15%,rgba(0,91,255,.04),transparent 60%);
+}
+
+/* ── LOGIN ── */
+.login-overlay{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;z-index:1000;overflow:hidden;
+  transition:opacity .45s,transform .45s;
+}
+.login-overlay.hide{opacity:0;pointer-events:none;transform:scale(.97);}
+.login-monkey{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.login-monkey svg{
+  width:min(600px,85vw);height:min(600px,85vh);opacity:.07;
+  mask-image:radial-gradient(ellipse 52% 52% at 50% 50%,black 28%,transparent 72%);
+}
+.login-box{
+  background:rgba(14,18,24,.92);border:1px solid var(--border);border-radius:18px;
+  padding:48px 40px;width:400px;text-align:center;position:relative;z-index:2;
+  backdrop-filter:blur(10px);
+  box-shadow:0 0 80px rgba(245,166,35,.06),0 32px 64px rgba(0,0,0,.5);
+}
+.l-logo{font-family:var(--display);font-size:46px;letter-spacing:5px;margin-bottom:2px;}
+.l-logo .mk{color:var(--mk);}
+.l-sub{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;margin-bottom:32px;}
+
+/* BD upload on login */
+.l-bd-area{
+  background:var(--s2);border:1px dashed var(--border);border-radius:10px;
+  padding:16px;margin-bottom:20px;cursor:pointer;transition:all .2s;position:relative;
+}
+.l-bd-area:hover,.l-bd-area.dragover{border-color:var(--mk);background:var(--mk-d);}
+.l-bd-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.l-bd-label{font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:block;}
+.l-bd-status{font-family:var(--mono);font-size:12px;color:var(--dim);}
+.l-bd-status.loaded{color:var(--ok);}
+
+.l-field{margin-bottom:14px;text-align:left;}
+.l-field label{display:block;font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
+.l-field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:15px;padding:12px 14px;outline:none;transition:border-color .2s;}
+.l-field input:focus{border-color:var(--mk);}
+.l-err{font-family:var(--mono);font-size:12px;color:var(--crit);margin-bottom:12px;min-height:18px;}
+.l-btn{width:100%;background:var(--mk);color:#080b10;border:none;border-radius:8px;font-family:var(--display);font-size:22px;letter-spacing:3px;padding:13px;cursor:pointer;transition:opacity .2s,box-shadow .2s;}
+.l-btn:hover{opacity:.88;box-shadow:0 0 24px rgba(245,166,35,.3);}
+.l-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── APP ── */
+.app{display:none;flex-direction:column;min-height:100vh;position:relative;z-index:1;}
+.app.visible{display:flex;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 24px;border-bottom:1px solid var(--border);background:var(--s1);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
+.logo{font-family:var(--display);font-size:22px;letter-spacing:3px;flex-shrink:0;}
+.logo .mk{color:var(--mk);}
+.tab-row{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px;}
+.tb{font-family:var(--sans);font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--dim);}
+.tb.active{background:var(--mk);color:#080b10;}
+.tb:not(.active):hover{background:var(--s3);color:var(--text);}
+.topbar-r{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.db-pill{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:20px;display:flex;align-items:center;gap:6px;border:1px solid rgba(62,207,116,.3);background:rgba(62,207,116,.07);color:var(--ok);}
+.db-pill.nobd{border-color:rgba(224,82,82,.3);background:rgba(224,82,82,.07);color:var(--crit);}
+.db-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.user-chip{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);color:var(--dim);background:var(--s2);}
+.user-chip .crown{color:var(--mk);}
+.logout-btn{background:none;border:1px solid var(--border);color:var(--dim);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--sans);}
+.logout-btn:hover{color:var(--crit);border-color:var(--crit);}
+
+/* ── CONTENT ── */
+.content{padding:24px;flex:1;}
+.panel{display:none;flex-direction:column;gap:20px;}
+.panel.active{display:flex;}
+
+/* ── MENU ── */
+.menu-wrap{max-width:500px;margin:0 auto;display:flex;flex-direction:column;gap:12px;}
+.menu-title{font-family:var(--display);font-size:30px;letter-spacing:3px;text-align:center;color:var(--mk);margin-bottom:4px;}
+.menu-sub{text-align:center;font-size:13px;color:var(--dim);margin-bottom:20px;}
+.menu-btn{width:100%;padding:16px 22px;border-radius:14px;border:1px solid var(--border);background:var(--s1);color:var(--text);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:14px;}
+.menu-btn:hover{border-color:var(--mk);background:var(--mk-d);transform:translateX(3px);}
+.menu-btn .bi{font-size:22px;flex-shrink:0;}
+.menu-btn .bt{flex:1;}
+.menu-btn .ba{color:var(--dim);font-size:18px;transition:transform .2s;}
+.menu-btn:hover .ba{transform:translateX(4px);color:var(--mk);}
+.admin-btn{border-color:rgba(245,166,35,.2) !important;}
+
+/* ── STEPS ── */
+.back-btn{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--dim);font-family:var(--sans);font-size:13px;cursor:pointer;padding:4px 0;margin-bottom:16px;transition:color .2s;}
+.back-btn:hover{color:var(--mk);}
+.step-title{font-family:var(--display);font-size:24px;letter-spacing:2px;margin-bottom:6px;}
+.step-sub{font-size:12px;color:var(--dim);margin-bottom:20px;line-height:1.6;}
+
+/* ── PLATFORMS ── */
+.plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:500px;}
+.plat-btn{padding:18px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--pc) 20%,var(--border));background:var(--s1);cursor:pointer;transition:all .2s;text-align:left;display:flex;flex-direction:column;gap:6px;}
+.plat-btn:hover{transform:translateY(-2px);border-color:var(--pc);background:var(--pd);box-shadow:0 8px 24px rgba(0,0,0,.25);}
+.plat-btn .pi{font-size:26px;}
+.plat-btn .pn{font-family:var(--display);font-size:22px;letter-spacing:2px;color:var(--pc);}
+.plat-btn .ps{font-size:11px;color:var(--dim);}
+.p-ozon{--pc:var(--ozon);--pd:var(--ozon-d);}
+.p-wb  {--pc:var(--wb);  --pd:var(--wb-d);}
+.p-ym  {--pc:var(--ym);  --pd:var(--ym-d);}
+.p-sber{--pc:var(--sber);--pd:var(--sber-d);}
+
+.ozon-types{display:flex;flex-direction:column;gap:10px;max-width:500px;}
+.ozon-types .plat-btn{flex-direction:row;align-items:center;gap:16px;}
+
+/* ── DROP ZONE ── */
+.dz{border:2px dashed var(--border);border-radius:16px;padding:44px 30px;text-align:center;cursor:pointer;transition:all .2s;background:var(--s1);position:relative;max-width:500px;}
+.dz:hover,.dz.dragover{border-color:var(--mk);background:var(--mk-d);}
+.dz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz-icon{font-size:48px;margin-bottom:12px;display:block;}
+.dz-title{font-family:var(--display);font-size:22px;letter-spacing:2px;margin-bottom:6px;}
+.dz-sub{font-size:12px;color:var(--dim);}
+.dz-chosen{font-family:var(--mono);font-size:12px;color:var(--mk);margin-top:12px;display:none;}
+.proc-btn{max-width:500px;width:100%;margin-top:14px;padding:15px;background:var(--mk);color:#080b10;border:none;border-radius:10px;font-family:var(--display);font-size:22px;letter-spacing:3px;cursor:pointer;transition:all .2s;display:none;}
+.proc-btn:hover{opacity:.88;box-shadow:0 0 20px rgba(245,166,35,.3);}
+.proc-btn.show{display:block;}
+.proc-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── MULTI DROP ── */
+.multi-dz{border:2px dashed var(--border);border-radius:14px;padding:28px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--s1);position:relative;max-width:560px;}
+.multi-dz:hover,.multi-dz.dragover{border-color:var(--mk);background:var(--mk-d);}
+.multi-dz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.files-list{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-width:560px;}
+.fc{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;}
+.fc-name{flex:1;font-family:var(--mono);color:var(--mk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fc-mp{font-size:9px;padding:2px 7px;border-radius:4px;font-family:var(--mono);letter-spacing:.5px;flex-shrink:0;}
+.fc-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:18px;padding:0 2px;line-height:1;transition:color .2s;flex-shrink:0;}
+.fc-rm:hover{color:var(--crit);}
+.badge-ozon{background:var(--ozon-d);color:var(--ozon);}
+.badge-wb  {background:var(--wb-d);  color:var(--wb);}
+.badge-ym  {background:var(--ym-d);  color:var(--ym);}
+.badge-sber{background:var(--sber-d);color:var(--sber);}
+.badge-unk {background:rgba(240,180,41,.1);color:var(--warn);}
+
+/* ── RESULT ── */
+.result-card{max-width:500px;background:var(--s1);border:1px solid rgba(62,207,116,.3);border-radius:16px;padding:28px;text-align:center;}
+.rc-icon{font-size:52px;margin-bottom:12px;display:block;}
+.rc-title{font-family:var(--display);font-size:24px;letter-spacing:2px;color:var(--ok);margin-bottom:8px;}
+.rc-sub{font-size:12px;color:var(--dim);margin-bottom:22px;line-height:1.6;}
+.dl-btn{display:inline-flex;align-items:center;gap:10px;background:var(--ok);color:#080b10;border:none;border-radius:10px;font-family:var(--display);font-size:20px;letter-spacing:2px;padding:13px 28px;cursor:pointer;text-decoration:none;transition:opacity .2s;margin:4px;}
+.dl-btn:hover{opacity:.88;}
+.dl-btn.zip{background:var(--blue);}
+.new-btn{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:none;border:1px solid var(--border);color:var(--dim);border-radius:10px;font-family:var(--sans);font-size:13px;font-weight:600;padding:10px 20px;cursor:pointer;transition:all .2s;}
+.new-btn:hover{border-color:var(--mk);color:var(--mk);}
+
+/* ── DB PANEL ── */
+.db-section{max-width:560px;display:flex;flex-direction:column;gap:16px;}
+.db-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.db-card-title{font-family:var(--display);font-size:18px;letter-spacing:2px;margin-bottom:14px;}
+.db-row-item{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(36,45,58,.5);gap:12px;}
+.db-row-item:last-child{border:none;}
+.db-k{font-size:11px;color:var(--dim);flex-shrink:0;}
+.db-v{font-family:var(--mono);font-size:12px;text-align:right;}
+.col-tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;}
+.col-tag{font-family:var(--mono);font-size:9px;background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;color:var(--dim);}
+.db-action{width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--s1);color:var(--text);font-family:var(--display);font-size:20px;letter-spacing:2px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;}
+.db-action:hover{border-color:var(--mk);color:var(--mk);background:var(--mk-d);}
+.db-action.primary{background:var(--mk);color:#080b10;border-color:var(--mk);}
+.db-action.primary:hover{opacity:.88;}
+.no-access{text-align:center;padding:48px;color:var(--dim);}
+
+/* ── SPINNER ── */
+.spin-ov{position:fixed;inset:0;background:rgba(8,11,16,.75);z-index:5000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;backdrop-filter:blur(4px);}
+.spin-ov.show{display:flex;}
+.spin{width:48px;height:48px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--mk);animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin-txt{font-family:var(--mono);font-size:13px;color:var(--dim);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none;max-width:360px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok {border-color:rgba(62,207,116,.3);color:var(--ok);}
+.toast.err{border-color:rgba(224,82,82,.3);color:var(--crit);}
+.toast.inf{border-color:rgba(79,156,249,.3);color:var(--blue);}
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN ════ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-monkey">
+    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" fill="#f5a623">
+      <ellipse cx="200" cy="230" rx="90" ry="80"/>
+      <ellipse cx="200" cy="160" rx="70" ry="65"/>
+      <ellipse cx="130" cy="165" rx="30" ry="28"/>
+      <ellipse cx="270" cy="165" rx="30" ry="28"/>
+      <ellipse cx="130" cy="165" rx="18" ry="17" fill="rgba(245,166,35,.35)"/>
+      <ellipse cx="270" cy="165" rx="18" ry="17" fill="rgba(245,166,35,.35)"/>
+      <ellipse cx="200" cy="175" rx="45" ry="38" fill="rgba(245,166,35,.25)"/>
+      <circle cx="182" cy="155" r="9" fill="rgba(8,11,16,.8)"/>
+      <circle cx="218" cy="155" r="9" fill="rgba(8,11,16,.8)"/>
+      <circle cx="184" cy="153" r="3" fill="rgba(245,166,35,.9)"/>
+      <circle cx="220" cy="153" r="3" fill="rgba(245,166,35,.9)"/>
+      <ellipse cx="115" cy="250" rx="22" ry="55" transform="rotate(-15 115 250)"/>
+      <ellipse cx="285" cy="250" rx="22" ry="55" transform="rotate(15 285 250)"/>
+      <ellipse cx="170" cy="310" rx="22" ry="50"/>
+      <ellipse cx="230" cy="310" rx="22" ry="50"/>
+      <path d="M285 260 Q340 220 360 180 Q370 150 350 140" stroke="#f5a623" stroke-width="14" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="login-box">
+    <div class="l-logo"><span class="mk">MONKEY</span>🐒<span class="mk">BOT</span></div>
+    <div class="l-sub">система сборки заказов · v2.0</div>
+
+
+
+    <div class="l-field">
+      <label>Логин</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="off">
+    </div>
+    <div class="l-field">
+      <label>Пароль</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="l-err" id="loginErr"></div>
+    <button class="l-btn" id="loginBtn" onclick="doLogin()">ВОЙТИ</button>
+  </div>
+</div>
+
+<!-- ════ APP ════ -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="logo">🐒 <span class="mk">MONKEY</span>.BOT</div>
+    <div class="tab-row">
+      <button class="tb active" onclick="showTab('order',this)">Создать заказ</button>
+      <button class="tb" onclick="showTab('obsh',this)">Общая сборка</button>
+      <button class="tb" id="dbTabBtn" onclick="showTab('db',this)">База данных</button>
+    </div>
+    <div class="topbar-r">
+      <div class="db-pill" id="dbPill"><span class="db-dot"></span><span id="dbPillTxt">—</span></div>
+      <div class="user-chip" id="userChip">—</div>
+      <button class="logout-btn" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ TAB: ORDER ══ -->
+    <div class="panel active" id="tab-order">
+
+      <!-- step-menu -->
+      <div id="step-menu" class="menu-wrap">
+        <div class="menu-title">🐒 ЧЕМ ЗАЙМЁМСЯ?</div>
+        <div class="menu-sub">Выберите действие</div>
+        <button class="menu-btn" onclick="goStep('platform')">
+          <span class="bi">📦</span><span class="bt">Создать заказ</span><span class="ba">›</span>
+        </button>
+        <button class="menu-btn admin-btn" id="menuGetDb" onclick="adminGetDb()">
+          <span class="bi">📊</span><span class="bt">Получить базу данных</span><span class="ba">›</span>
+        </button>
+        <button class="menu-btn admin-btn" id="menuUpdateDb" onclick="showTab('db',document.querySelectorAll('.tb')[2])">
+          <span class="bi">🔄</span><span class="bt">Обновить базу данных</span><span class="ba">›</span>
+        </button>
+      </div>
+
+      <!-- step-platform -->
+      <div id="step-platform" style="display:none">
+        <button class="back-btn" onclick="goStep('menu')">← Назад</button>
+        <div class="step-title">ВЫБОР ПЛОЩАДКИ</div>
+        <div class="step-sub">На какую платформу формируем поставку?</div>
+        <div class="plat-grid">
+          <button class="plat-btn p-ozon" onclick="selectPlat('ozon')">
+            <span class="pi">🔵</span><span class="pn">OZON</span><span class="ps">Коробами или паллетами</span>
+          </button>
+          <button class="plat-btn p-wb" onclick="selectPlat('wb')">
+            <span class="pi">🟣</span><span class="pn">WILDBERRIES</span><span class="ps">ШК + итоговый заказ</span>
+          </button>
+          <button class="plat-btn p-ym" onclick="selectPlat('ym')">
+            <span class="pi">🔴</span><span class="pn">Я.МАРКЕТ</span><span class="ps">Поставка с артикулами</span>
+          </button>
+          <button class="plat-btn p-sber" onclick="selectPlat('sber')">
+            <span class="pi">🟢</span><span class="pn">СБЕР</span><span class="ps">3-листовой Excel</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- step-ozon-type -->
+      <div id="step-ozon-type" style="display:none">
+        <button class="back-btn" onclick="goStep('platform')">← Назад</button>
+        <div class="step-title">ТИП ПОСТАВКИ OZON</div>
+        <div class="step-sub">Выберите формат отгрузки</div>
+        <div class="ozon-types">
+          <button class="plat-btn p-ozon" onclick="selectSubtype('OzonBox')">
+            <span class="pi">📦</span>
+            <div><div class="pn">ПОСТАВКА КОРОБАМИ</div><div class="ps">ШК_*.xlsx + Заказ_*_коробы.xlsx</div></div>
+          </button>
+          <button class="plat-btn p-ozon" onclick="selectSubtype('OzonPalette')">
+            <span class="pi">🗃️</span>
+            <div><div class="pn">ПОСТАВКА ПАЛЛЕТАМИ</div><div class="ps">palette_*.xlsx + Заказ_*_палеты.xlsx</div></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- step-upload -->
+      <div id="step-upload" style="display:none">
+        <button class="back-btn" id="uploadBackBtn" onclick="uploadBack()">← Назад</button>
+        <div class="step-title" id="uploadTitle">ЗАГРУЗКА ФАЙЛА</div>
+        <div class="step-sub" id="uploadSub">Прикрепите Excel-файл сборки заказа (формат 1С)</div>
+        <div class="dz" id="dropZone"
+             ondragover="dzOver(event,true)" ondragleave="dzOver(event,false)" ondrop="dzDrop(event)">
+          <input type="file" accept=".xlsx,.xls" id="fileInput" onchange="fileChosen(this)">
+          <span class="dz-icon">📂</span>
+          <div class="dz-title">ПЕРЕТАЩИТЕ ФАЙЛ</div>
+          <div class="dz-sub">или нажмите для выбора · .xlsx / .xls</div>
+          <div class="dz-chosen" id="dzChosen"></div>
+        </div>
+        <button class="proc-btn" id="procBtn" onclick="processOrder()">ОБРАБОТАТЬ →</button>
+      </div>
+
+      <!-- step-result -->
+      <div id="step-result" style="display:none">
+        <div class="result-card">
+          <span class="rc-icon">✅</span>
+          <div class="rc-title">ГОТОВО!</div>
+          <div class="rc-sub" id="rcSub">Файлы готовы к скачиванию</div>
+          <div id="dlBtns"></div>
+          <br>
+          <button class="new-btn" onclick="goStep('menu')">🏠 В главное меню</button>
+        </div>
+      </div>
+
+    </div><!-- /tab-order -->
+
+    <!-- ══ TAB: OBSH ══ -->
+    <div class="panel" id="tab-obsh">
+      <div style="max-width:560px">
+        <div class="step-title">ОБЩАЯ СБОРКА</div>
+        <div class="step-sub">Загрузите файлы для нескольких площадок. Имена должны содержать: <strong>Ozon</strong>, <strong>WildBerries</strong> (или <strong>WB</strong>), <strong>YM</strong>, <strong>SBER</strong>.</div>
+        <div class="multi-dz" id="multiDz"
+             ondragover="mdOver(event,true)" ondragleave="mdOver(event,false)" ondrop="mdDrop(event)">
+          <input type="file" accept=".xlsx,.xls" multiple id="multiInput" onchange="mdAdd(this.files)">
+          <span class="dz-icon" style="font-size:36px">📁</span>
+          <div class="dz-title" style="font-size:18px">ДОБАВИТЬ ФАЙЛЫ</div>
+          <div class="dz-sub">Несколько файлов · перетащите или нажмите</div>
+        </div>
+        <div class="files-list" id="filesList"></div>
+        <button class="proc-btn" id="obshBtn" onclick="processObsh()" style="max-width:560px">
+          ✅ СДЕЛАТЬ ОБЩУЮ СБОРКУ →
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: DB ══ -->
+    <div class="panel" id="tab-db">
+      <div class="db-section" id="dbSection"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Spinner -->
+<div class="spin-ov" id="spinner">
+  <div class="spin"></div>
+  <div class="spin-txt" id="spinTxt">Обработка…</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- SheetJS + JSZip -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+
+// ── ВСТРОЕННАЯ БАЗА ДАННЫХ ──
+var BD_B64 = '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';
+
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+var S = {
+  user: null,
+  isAdmin: false,
+  bdRows: null,       // Array of objects — загруженная БД
+  bdName: null,
+  platform: null,
+  orderFile: null,
+  orderFileName: '',
+  obshFiles: []       // [{name, data: ArrayBuffer}]
+};
+
+// Учётные данные (менять здесь)
+var USERS = {Singlecup:{pass:'Coffeepod',admin:true}};
+
+// БД загружается автоматически из встроенных данных
+
+// ════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════
+function doLogin(){
+  if(!S.bdRows) loadBuiltinBd();
+  var u = document.getElementById('loginUser').value.trim();
+  var p = document.getElementById('loginPass').value;
+  var err = document.getElementById('loginErr');
+  var acc = USERS[u];
+  if(!acc || acc.pass !== p){ err.textContent='Неверный логин или пароль'; return; }
+  // БД загружается автоматически
+  S.user = u; S.isAdmin = acc.admin;
+  sessionStorage.setItem('mb',JSON.stringify({u:u,a:acc.admin}));
+  err.textContent='';
+  showApp();
+}
+
+function doLogout(){
+  sessionStorage.removeItem('mb');
+  S.user=null; S.isAdmin=false;
+  document.getElementById('app').classList.remove('visible');
+  var ov=document.getElementById('loginOverlay');
+  ov.style.display='flex'; ov.classList.remove('hide');
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
+function loadBuiltinBd(){
+  try{
+    var binStr = atob(BD_B64);
+    var bytes = new Uint8Array(binStr.length);
+    for(var i=0;i<binStr.length;i++) bytes[i]=binStr.charCodeAt(i);
+    var wb = XLSX.read(bytes.buffer,{type:'array'});
+    var ws = wb.Sheets[wb.SheetNames[0]];
+    S.bdRows = XLSX.utils.sheet_to_json(ws,{defval:''});
+    S.bdName = 'БД кофе.xlsx';
+  }catch(e){ console.error('BD load error',e); }
+}
+
+function showApp(){
+  document.getElementById('loginOverlay').classList.add('hide');
+  setTimeout(function(){
+    document.getElementById('loginOverlay').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    if(!S.bdRows) loadBuiltinBd();
+    document.getElementById('userChip').innerHTML=(S.isAdmin?'<span class="crown">👑</span> ':'')+S.user;
+    ['menuGetDb','menuUpdateDb'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.style.display=S.isAdmin?'':'none';
+    });
+    updateDbPill();
+    renderDbSection();
+  },450);
+}
+
+// Session restore — без БД нельзя, нужна повторная загрузка
+(function(){
+  var s=sessionStorage.getItem('mb');
+  // We intentionally don't auto-restore without BD file present
+})();
+
+// ════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════
+function showTab(id,btn){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='db') renderDbSection();
+}
+
+// ════════════════════════════════════════════
+//  ORDER FLOW
+// ════════════════════════════════════════════
+function goStep(name){
+  ['menu','platform','ozon-type','upload','result'].forEach(function(s){
+    var el=document.getElementById('step-'+s);
+    if(el) el.style.display='none';
+  });
+  document.getElementById('step-'+name).style.display='';
+}
+
+function selectPlat(mp){
+  if(mp==='ozon'){goStep('ozon-type');return;}
+  S.platform={wb:'WildBerries',ym:'YM',sber:'SBER'}[mp];
+  prepUpload();
+}
+function selectSubtype(t){ S.platform=t; prepUpload(); }
+function uploadBack(){
+  S.orderFile=null; resetDz();
+  if(S.platform==='OzonBox'||S.platform==='OzonPalette') goStep('ozon-type');
+  else goStep('platform');
+}
+
+var PLAT_LABELS={
+  OzonBox:{title:'OZON — КОРОБАМИ',sub:'Загрузите файл сборки заказа (короба)'},
+  OzonPalette:{title:'OZON — ПАЛЛЕТАМИ',sub:'Загрузите файл сборки заказа (паллеты)'},
+  WildBerries:{title:'WILDBERRIES',sub:'Загрузите файл сборки заказа WildBerries'},
+  YM:{title:'ЯНДЕКС.МАРКЕТ',sub:'Загрузите файл сборки заказа Яндекс.Маркет'},
+  SBER:{title:'СБЕР',sub:'Загрузите файл сборки заказа Сбер'}
+};
+function prepUpload(){
+  var l=PLAT_LABELS[S.platform]||{};
+  document.getElementById('uploadTitle').textContent=l.title||'ЗАГРУЗКА';
+  document.getElementById('uploadSub').textContent=l.sub||'';
+  resetDz(); goStep('upload');
+}
+function resetDz(){
+  S.orderFile=null;
+  document.getElementById('dzChosen').style.display='none';
+  document.getElementById('procBtn').classList.remove('show');
+  document.getElementById('fileInput').value='';
+}
+
+function dzOver(e,on){e.preventDefault();document.getElementById('dropZone').classList.toggle('dragover',on);}
+function dzDrop(e){
+  e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');
+  if(e.dataTransfer.files[0]) setOrderFile(e.dataTransfer.files[0]);
+}
+function fileChosen(inp){if(inp.files[0])setOrderFile(inp.files[0]);}
+function setOrderFile(f){
+  S.orderFile=f; S.orderFileName=f.name.replace(/\.[^.]+$/,'').replace('Сборка_заказа_','');
+  var ch=document.getElementById('dzChosen');
+  ch.textContent='📎 '+f.name+' ('+(f.size/1024).toFixed(0)+' KB)';
+  ch.style.display='block';
+  document.getElementById('procBtn').classList.add('show');
+}
+
+async function processOrder(){
+  if(!S.orderFile){toast('Выберите файл','err');return;}
+  if(!S.bdRows){toast('БД не загружена','err');return;}
+  showSpinner('Обрабатываем '+S.platform+'…');
+  try{
+    var buf=await S.orderFile.arrayBuffer();
+    var result=runPipeline(S.platform,buf,S.bdRows);
+    renderResult(result,S.orderFileName);
+    goStep('result');
+    toast('✅ Обработка завершена!','ok');
+  }catch(e){
+    toast('❌ '+e.message,'err');
+    console.error(e);
+  }finally{hideSpinner();}
+}
+
+// ════════════════════════════════════════════
+//  BUSINESS LOGIC (port from business_logik.py)
+// ════════════════════════════════════════════
+
+/** Читает входной файл заказа.
+ *  Строка 0 = мусорные заголовки (pandas columns),
+ *  Строка 1 = реальные названия колонок,
+ *  Строки 2+ = данные.
+ *  sheet_to_json с header:1 даёт числовые ключи → берём строку [1] как заголовок.
+ */
+function parseOrderFile(buf){
+  var wb=XLSX.read(buf,{type:'array'});
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  // raw[0] = числовые индексы (строка 0 файла — мусорные заголовки от pandas/1C)
+  // raw[1] = реальные названия колонок
+  // raw[2+] = данные
+  if(raw.length<3) throw new Error('Файл пустой или неверного формата');
+  var headers=raw[1]; // реальная шапка
+  var rows=[];
+  for(var i=2;i<raw.length;i++){
+    var row={};
+    headers.forEach(function(h,j){ row[h]=raw[i][j]!==undefined?String(raw[i][j]):''; });
+    // фильтрация пустых Код 1С
+    if(row['Код 1С']&&row['Код 1С'].trim()!==''&&row['Код 1С']!=='nan') rows.push(row);
+  }
+  if(!rows.length) throw new Error('Нет данных после фильтрации (проверьте колонку «Код 1С»)');
+  return rows;
+}
+
+/** Левый JOIN по Код 1С */
+function mergeOnKod1c(orderRows, bdRows){
+  var bdMap={};
+  bdRows.forEach(function(r){ bdMap[String(r['Код 1С']||'').trim()]=r; });
+  var result=[];
+  orderRows.forEach(function(row){
+    var bd=bdMap[String(row['Код 1С']||'').trim()];
+    if(!bd){ console.warn('Нет в БД: '+row['Код 1С']); return; }
+    var merged=Object.assign({},row);
+    Object.keys(bd).forEach(function(k){
+      // суффикс _bd для дублирующихся ключей (аналог _y в pandas)
+      merged[k+'_bd']=bd[k];
+      if(!(k in row)) merged[k]=bd[k];
+    });
+    result.push(merged);
+  });
+  if(!result.length) throw new Error('Нет совпадений по «Код 1С» между файлом и БД. Проверьте базу.');
+  return result;
+}
+
+function toInt(v){ return parseInt(String(v).replace(',','.').trim())||0; }
+function toFloat(v){ return parseFloat(String(v).replace(',','.').trim())||0; }
+
+/* ── WB ── */
+function wb_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+
+  // Файл 1: Заказ (Баркод, Количество, Наименование)
+  var final1=merged.map(function(r){return{
+    'Баркод': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Количество': r['Итого кол-во']||'',
+    'Наименование': r['Короткое наименование_bd']||r['Короткое наименование']||''
+  };});
+
+  // Файл 2: ШК по коробам (каждый короб — отдельная строка)
+  var final2=[];
+  merged.forEach(function(r){
+    var numBoxes=toInt(r['Кол-во коробов']);
+    var boxItems=toFloat(r['Кратность короба_bd']||r['Кратность короба']);
+    for(var i=0;i<numBoxes;i++){
+      final2.push({
+        'ШК единицы товара': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+        'Кол-во товаров': Math.round(boxItems),
+        'ШК короба': '',
+        'Кол-во коробов': 1,
+        'Срок годности': '',
+        'Группа товаров': r['Группа товаров_bd']||r['Группа товаров']||'',
+        'Наименование': r['Короткое наименование_bd']||r['Короткое наименование']||''
+      });
+    }
+  });
+  return {type:'wb',files:[{name:'ШК',data:final2},{name:'Заказ',data:final1}]};
+}
+
+/* ── OZON КОРОБАМИ ── */
+function ozon_box_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+
+  // SK_FILE: артикул, имя, количество
+  var skFile=res.map(function(r){return{
+    'артикул': r['Код 1С'],
+    'имя (необязательно)': r['Короткое наименование']||'',
+    'количество': r['Итого кол-во']||''
+  };});
+
+  var final2=[];
+  merged.forEach(function(r){
+    var numBoxes=toInt(r['Кол-во коробов']);
+    var boxItems=toFloat(r['Кратность короба_bd']||r['Кратность короба']);
+    for(var i=0;i<numBoxes;i++){
+      final2.push({
+        'ШК товара': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+        'Артикул товара': r['Код 1С'],
+        'Кол-во товаров': boxItems,
+        'Зона размещения': '',
+        'Срок годности ДО в формате YYYY-MM-DD (не более 1 СГ на 1 SKU в 1 ГМ)': '',
+        'ШК ГМ': '',
+        'Тип ГМ (не обязательно)': '',
+        'Наименование': r['Короткое наименование_bd']||r['Короткое наименование']||''
+      });
+    }
+  });
+  return {type:'ozon_box',files:[{name:'ШК',data:final2},{name:'Заказ',data:skFile}]};
+}
+
+/* ── OZON ПАЛЛЕТАМИ ── */
+function ozon_palette_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+
+  var skFile=res.map(function(r){return{
+    'артикул': r['Код 1С'],
+    'имя (необязательно)': r['Короткое наименование']||'',
+    'количество': r['Итого кол-во']||''
+  };});
+
+  var shk=merged.map(function(r){return{
+    'ШК товара': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Артикул товара': r['Код 1С'],
+    'Кол-во товаров': r['Итого кол-во']||'',
+    'Зона размещения': '',
+    'Срок годности ДО в формате YYYY-MM-DD (не более 1 СГ на 1 SKU в 1 ГМ)': '',
+    'ШК ГМ': '',
+    'Тип ГМ (не обязательно)': '',
+    'Наименование': r['Короткое наименование_bd']||r['Короткое наименование']||''
+  };});
+  return {type:'ozon_palette',files:[{name:'palette',data:shk},{name:'Заказ',data:skFile}]};
+}
+
+/* ── YM ── */
+function ym_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+  var final=merged.map(function(r){return{
+    'Ваш SKU': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Название товара': r['Короткое наименование_bd']||r['Короткое наименование']||'',
+    'Штрихкоды': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Количество товаров в поставке': r['Итого кол-во']||'',
+    'Объявленная ценность одного товара, руб.': '',
+    'Сколько мест занимает один товар': '',
+    'Комментарий для склада': ''
+  };});
+  return {type:'ym',files:[{name:'Заказ',data:final}]};
+}
+
+/* ── SBER ── */
+function sber_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+  var final=merged.map(function(r){return{
+    'Артикул товара продавца': r['Код 1С'],
+    'Наименование товара': r['Короткое наименование_bd']||r['Короткое наименование']||'',
+    'Штрихкод': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Необходимость маркировки': 'нет',
+    'План поставки (шт.)': r['Итого кол-во']||'',
+    'Максимальный план поставки (шт.)': 40,
+    'Бренд': r['Бренд_bd']||r['Бренд']||'',
+    'ТН ВЭД': '',
+    'Комментарии': '',
+    'Цена': 1
+  };});
+  return {type:'sber',files:[{name:'Заказ',data:final,multisheet:true}]};
+}
+
+/* ── DISPATCHER ── */
+function runPipeline(platform,orderBuf,bdRows){
+  switch(platform){
+    case 'WildBerries':  return wb_sborka(orderBuf,bdRows);
+    case 'OzonBox':      return ozon_box_sborka(orderBuf,bdRows);
+    case 'OzonPalette':  return ozon_palette_sborka(orderBuf,bdRows);
+    case 'YM':           return ym_sborka(orderBuf,bdRows);
+    case 'SBER':         return sber_sborka(orderBuf,bdRows);
+    default: throw new Error('Неизвестная площадка: '+platform);
+  }
+}
+
+// ════════════════════════════════════════════
+//  EXCEL WRITER
+// ════════════════════════════════════════════
+function rowsToWb(rows){
+  var ws=XLSX.utils.json_to_sheet(rows);
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Лист1');
+  return wb;
+}
+
+function sberToWb(rows){
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([]),'Инструкция');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Товары, доступные для поставки');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([]),'Недоступные для поставки товары');
+  return wb;
+}
+
+function wbToBlob(wb){
+  var buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+  return new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+function renderResult(result,baseName){
+  var btns=document.getElementById('dlBtns');
+  var sub=document.getElementById('rcSub');
+  btns.innerHTML='';
+
+  var PREFIX_MAP={
+    wb:       function(n){return n==='ШК'?'ШК_'+baseName+'.xlsx':'Заказ_'+baseName+'.xlsx';},
+    ozon_box: function(n){return n==='ШК'?'ШК_'+baseName+'.xlsx':'Заказ_'+baseName+'_коробы.xlsx';},
+    ozon_palette:function(n){return n==='palette'?'palette_'+baseName+'.xlsx':'Заказ_'+baseName+'_палеты.xlsx';},
+    ym:       function(n){return 'Заказ_'+baseName+'.xlsx';},
+    sber:     function(n){return 'Заказ_'+baseName+'.xlsx';}
+  };
+
+  if(result.files.length===1){
+    var f=result.files[0];
+    var fn=PREFIX_MAP[result.type](f.name);
+    var wb=f.multisheet?sberToWb(f.data):rowsToWb(f.data);
+    var url=URL.createObjectURL(wbToBlob(wb));
+    btns.innerHTML='<a class="dl-btn" href="'+url+'" download="'+fn+'">⬇ СКАЧАТЬ '+fn+'</a>';
+    sub.textContent='Файл «'+fn+'» готов';
+  } else {
+    // Несколько файлов → предлагаем скачать по одному + ZIP
+    var links='';
+    var zippedFiles=[];
+    result.files.forEach(function(f){
+      var fn=PREFIX_MAP[result.type](f.name);
+      var wb2=rowsToWb(f.data);
+      var blob2=wbToBlob(wb2);
+      var url2=URL.createObjectURL(blob2);
+      links+='<a class="dl-btn" href="'+url2+'" download="'+fn+'">⬇ '+fn+'</a> ';
+      zippedFiles.push({name:fn,wb:wb2});
+    });
+    // ZIP кнопка
+    var zipId='zipBtn_'+Date.now();
+    links+='<button class="dl-btn zip" id="'+zipId+'" onclick="downloadZip(this,\''+baseName+'\')">📦 ZIP все</button>';
+    // Сохраняем данные для zip
+    window['_zipData_'+zipId]=zippedFiles;
+    btns.innerHTML=links;
+    sub.textContent=result.files.length+' файла готовы к скачиванию';
+  }
+}
+
+function downloadZip(btn,baseName){
+  var zipId=btn.id;
+  var files=window['_zipData_'+zipId];
+  if(!files) return;
+  btn.textContent='⏳ Архивирую…'; btn.disabled=true;
+  var zip=new JSZip();
+  files.forEach(function(f){
+    var buf=XLSX.write(f.wb,{type:'array',bookType:'xlsx'});
+    zip.file(f.name,buf);
+  });
+  zip.generateAsync({type:'blob'}).then(function(content){
+    var url=URL.createObjectURL(content);
+    var a=document.createElement('a');
+    a.href=url; a.download=baseName+'_результат.zip';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    btn.textContent='📦 ZIP все'; btn.disabled=false;
+  });
+}
+
+// ════════════════════════════════════════════
+//  ОБЩАЯ СБОРКА
+// ════════════════════════════════════════════
+var MP_KW={Ozon:'badge-ozon',WildBerries:'badge-wb',WB:'badge-wb',YM:'badge-ym',SBER:'badge-sber',Sber:'badge-sber'};
+var BADGE_LBL={'badge-ozon':'OZON','badge-wb':'WB','badge-ym':'YM','badge-sber':'SBER'};
+function detectMp(name){ for(var k in MP_KW){ if(name.includes(k)) return MP_KW[k]; } return null; }
+
+function mdOver(e,on){e.preventDefault();document.getElementById('multiDz').classList.toggle('dragover',on);}
+function mdDrop(e){e.preventDefault();document.getElementById('multiDz').classList.remove('dragover');mdAddFiles(e.dataTransfer.files);}
+function mdAdd(files){mdAddFiles(files); document.getElementById('multiInput').value='';}
+
+function mdAddFiles(files){
+  Array.from(files).forEach(function(f){
+    if(!S.obshFiles.find(function(x){return x.name===f.name;})){
+      var reader=new FileReader();
+      reader.onload=function(e){ S.obshFiles.push({name:f.name,buf:e.target.result}); renderFilesList(); };
+      reader.readAsArrayBuffer(f);
+    }
+  });
+}
+function mdRemove(name){ S.obshFiles=S.obshFiles.filter(function(x){return x.name!==name;}); renderFilesList(); }
+
+function renderFilesList(){
+  var el=document.getElementById('filesList');
+  var btn=document.getElementById('obshBtn');
+  if(!S.obshFiles.length){el.innerHTML='';btn.classList.remove('show');return;}
+  btn.classList.add('show');
+  el.innerHTML=S.obshFiles.map(function(f){
+    var mp=detectMp(f.name);
+    var tag=mp?'<span class="fc-mp '+mp+'">'+BADGE_LBL[mp]+'</span>':'<span class="fc-mp badge-unk">⚠ ?</span>';
+    return '<div class="fc"><span class="fc-name">📎 '+f.name+'</span>'+tag
+      +'<button class="fc-rm" onclick="mdRemove(\''+f.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" >×</button></div>';
+  }).join('');
+}
+
+async function processObsh(){
+  if(!S.obshFiles.length){toast('Добавьте файлы','err');return;}
+  showSpinner('Делаем общую сборку…');
+  try{
+    var mpGroups={Ozon:[],WildBerries:[],YM:[],SBER:[]};
+    var mpKw={Ozon:['Ozon'],WildBerries:['WildBerries','WB'],YM:['YM'],SBER:['SBER','Sber']};
+    S.obshFiles.forEach(function(f){
+      for(var mp in mpKw){
+        if(mpKw[mp].some(function(k){return f.name.includes(k);})){
+          mpGroups[mp].push(f); return;
+        }
+      }
+    });
+
+    var zip=new JSZip();
+    var allRows=[];
+
+    for(var mp in mpGroups){
+      var grp=mpGroups[mp];
+      if(!grp.length) continue;
+      var combined=[];
+      grp.forEach(function(f){
+        var wb=XLSX.read(f.buf,{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        if(raw.length<2) return;
+        var headers=raw[1] && raw[1].some(function(h){return h!=='';}) ? raw[1] : raw[0];
+        var startRow=headers===raw[1]?2:1;
+        for(var i=startRow;i<raw.length;i++){
+          var row={'Сборка':f.name,'Маркетплейс':mp};
+          headers.forEach(function(h,j){ if(h) row[h]=raw[i][j]; });
+          combined.push(row);
+        }
+      });
+      if(!combined.length) continue;
+      var wbOut=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wbOut,XLSX.utils.json_to_sheet(combined),'Лист1');
+      var buf=XLSX.write(wbOut,{type:'array',bookType:'xlsx'});
+      zip.file('Общая сборка '+mp+'.xlsx',buf);
+      allRows=allRows.concat(combined);
+    }
+
+    if(!allRows.length) throw new Error('Ни один файл не определён по площадке. Проверьте имена файлов.');
+
+    var fullWb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(fullWb,XLSX.utils.json_to_sheet(allRows),'Все площадки');
+    zip.file('full.xlsx',XLSX.write(fullWb,{type:'array',bookType:'xlsx'}));
+
+    var content=await zip.generateAsync({type:'blob'});
+    var url=URL.createObjectURL(content);
+    var a=document.createElement('a'); a.href=url; a.download='общая_сборка.zip';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    S.obshFiles=[]; renderFilesList();
+    toast('✅ Общая сборка готова! Скачивается архив.','ok');
+  }catch(e){
+    toast('❌ '+e.message,'err');
+    console.error(e);
+  }finally{hideSpinner();}
+}
+
+// ════════════════════════════════════════════
+//  БАЗА ДАННЫХ (в браузере — только скачать + обновить в памяти)
+// ════════════════════════════════════════════
+function updateDbPill(){
+  var pill=document.getElementById('dbPill');
+  var txt=document.getElementById('dbPillTxt');
+  if(S.bdRows){
+    pill.className='db-pill'; txt.textContent='БД: '+S.bdRows.length+' поз.';
+  }else{
+    pill.className='db-pill nobd'; txt.textContent='БД не загружена';
+  }
+}
+
+function renderDbSection(){
+  var el=document.getElementById('dbSection');
+  if(!S.isAdmin){
+    el.innerHTML='<div class="no-access"><div style="font-size:48px;margin-bottom:12px">🔒</div>'
+      +'<div style="font-family:var(--display);font-size:20px;letter-spacing:2px;color:var(--dim)">НЕТ ПРАВ</div>'
+      +'<div style="font-size:12px;color:var(--dim);margin-top:8px">Управление БД доступно только администраторам.</div></div>';
+    return;
+  }
+
+  var cols=(S.bdRows&&S.bdRows.length)?Object.keys(S.bdRows[0]):[];
+  var colTags=cols.map(function(c){return '<span class="col-tag">'+c+'</span>';}).join('');
+  var rows=S.bdRows?S.bdRows.length:0;
+
+  el.innerHTML=
+    '<div class="db-card">'
+    +'<div class="db-card-title">📊 БД КОФЕ.XLSX — ТЕКУЩЕЕ СОСТОЯНИЕ</div>'
+    +'<div class="db-row-item"><span class="db-k">Статус</span><span class="db-v" style="color:var('+(S.bdRows?'--ok':'--crit')+')">'+( S.bdRows?'✅ Загружена':'❌ Не загружена')+'</span></div>'
+    +'<div class="db-row-item"><span class="db-k">Строк</span><span class="db-v">'+rows+'</span></div>'
+    +'<div class="db-row-item" style="align-items:flex-start"><span class="db-k">Колонки</span><div class="col-tags">'+colTags+'</div></div>'
+    +'</div>'
+
+    +'<button class="db-action primary" onclick="adminGetDb()">⬇ СКАЧАТЬ БД КОФЕ.XLSX</button>'
+
+    +'<div class="db-card">'
+    +'<div class="db-card-title" style="margin-bottom:10px">🔄 ОБНОВИТЬ БД</div>'
+    +'<div class="step-sub" style="margin-bottom:14px">Загрузите Excel с новыми позициями. Дубли по «Код 1С» обновятся (keep=last). Изменения действуют в текущей сессии.</div>'
+    +'<div class="dz" style="padding:24px" id="dbDz"'
+    +' ondragover="event.preventDefault();this.classList.add(\'dragover\')" ondragleave="this.classList.remove(\'dragover\')" ondrop="dbFileDrop(event)">'
+    +'<input type="file" accept=".xlsx,.xls" id="dbFileInput" onchange="dbFileChosen(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">'
+    +'<span class="dz-icon" style="font-size:32px">📂</span>'
+    +'<div class="dz-sub">Перетащите или нажмите</div>'
+    +'<div class="dz-chosen" id="dbDzChosen" style="display:none"></div>'
+    +'</div>'
+    +'<button class="db-action" id="dbUpdateBtn" onclick="applyDbUpdate()" style="margin-top:12px;display:none">🔄 ПРИМЕНИТЬ ОБНОВЛЕНИЕ →</button>'
+    +'</div>';
+}
+
+var _dbUpdateBuf=null;
+function dbFileDrop(e){e.preventDefault();document.getElementById('dbDz').classList.remove('dragover');if(e.dataTransfer.files[0])setDbFile(e.dataTransfer.files[0]);}
+function dbFileChosen(inp){if(inp.files[0])setDbFile(inp.files[0]);}
+function setDbFile(f){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    _dbUpdateBuf=e.target.result;
+    var ch=document.getElementById('dbDzChosen');
+    if(ch){ch.textContent='📎 '+f.name;ch.style.display='block';}
+    var btn=document.getElementById('dbUpdateBtn');
+    if(btn) btn.style.display='';
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function applyDbUpdate(){
+  if(!_dbUpdateBuf){toast('Выберите файл','err');return;}
+  showSpinner('Обновляем базу данных…');
+  setTimeout(function(){
+    try{
+      var wb=XLSX.read(_dbUpdateBuf,{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var newRows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      // Объединяем: existing + new, dedup по Код 1С keep=last
+      var combined=(S.bdRows||[]).concat(newRows);
+      var seen={};
+      var deduped=[];
+      for(var i=combined.length-1;i>=0;i--){
+        var k=String(combined[i]['Код 1С']||'').trim();
+        if(k&&k!=='nan'&&!seen[k]){seen[k]=1;deduped.unshift(combined[i]);}
+      }
+      var before=S.bdRows?S.bdRows.length:0;
+      S.bdRows=deduped;
+      updateDbPill();
+      renderDbSection();
+      toast('✅ БД обновлена: '+deduped.length+' строк (было '+before+', добавлено '+newRows.length+')','ok');
+    }catch(e){
+      toast('❌ '+e.message,'err');
+    }finally{hideSpinner();}
+  },50);
+}
+
+function adminGetDb(){
+  if(!S.isAdmin){toast('Нет прав','err');return;}
+  if(!S.bdRows){toast('БД не загружена','err');return;}
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.bdRows),'БД');
+  var blob=wbToBlob(wb);
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download='БД кофе.xlsx';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ════════════════════════════════════════════
+//  UI HELPERS
+// ════════════════════════════════════════════
+function showSpinner(txt){ document.getElementById('spinTxt').textContent=txt||'Обработка…'; document.getElementById('spinner').classList.add('show'); }
+function hideSpinner(){ document.getElementById('spinner').classList.remove('show'); }
+
+var _toastTimer;
+function toast(msg,type){
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show '+(type||'inf');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(function(){el.classList.remove('show');},4000);
+}
+</script>
+</body>
+</html>
