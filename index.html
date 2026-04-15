@@ -162,9 +162,7 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
   <div class="cfg-grid">
     <div class="fld" style="grid-column:1/-1">
       <label>URL базы 1С (OData)</label>
-      <input type="url" id="baseUrl"
-             value="https://terminal.scloud.ru/01/kbytqrf_base01/odata/standard.odata"
-             placeholder="https://terminal.scloud.ru/01/base/odata/standard.odata">
+      <input type="url" id="baseUrl" placeholder="https://terminal.scloud.ru/01/base/odata/standard.odata">
     </div>
     <div class="fld">
       <label>Логин</label>
@@ -182,17 +180,18 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
       <div class="fld"><label>Период по</label><input type="date" id="dateTo"   value="2025-11-30"></div>
     </div>
   </div>
-  <!-- Apps Script URL -->
+  <!-- Cloudflare Worker URL -->
   <div class="proxy-row">
     <span class="proxy-dot" id="proxyDot"></span>
-    <label>Apps Script URL</label>
+    <label>Worker URL</label>
     <input type="text" id="proxyUrl"
-           placeholder="https://script.google.com/macros/s/XXXX/exec"
+           placeholder="https://pl-proxy.YOUR.workers.dev"
+           value="https://1odata.singlecupclaude.workers.dev"
            oninput="saveAndCheck()">
   </div>
   <div class="btn-row">
-    <button class="btn btn-p" id="loadBtn2" onclick="loadFromSheet()" style="flex:1">🔄 Загрузить из таблицы</button>
-    <button class="btn btn-g" onclick="loadData()" title="Только для владельца: синхронизировать 1С → Таблица" style="font-size:11px;opacity:.7">⚙️ Синхр. 1С</button>
+    <button class="btn btn-g" style="font-size:12px" onclick="diagDepr()">Найти амортизацию</button>
+    <button class="btn btn-p" id="loadBtn2" onclick="loadData()">Загрузить из 1С</button>
   </div>
 </div>
 
@@ -237,9 +236,6 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
 </div>
 
 <script>
-const SHEET_ID = '1FUZWAMSEXWcdMn0lU2wc3VXYAHgr5Epf4fLfM2iEPnw';
-const SHEET_NAME = 'PL';
-
 /* ── VIEW ── */
 function setView(v){
   const b=document.getElementById('bodyEl');
@@ -276,7 +272,7 @@ async function checkProxy(){
   if(!url){dot.className='proxy-dot';return;}
   dot.className='proxy-dot';
   try{
-    const r=await fetch(url+'?action=health',{signal:AbortSignal.timeout(6000)});
+    const r=await fetch(url+'/health',{signal:AbortSignal.timeout(4000)});
     dot.className=r.ok?'proxy-dot ok':'proxy-dot err';
   }catch{dot.className='proxy-dot err';}
 }
@@ -301,139 +297,125 @@ function setSt(type,msg,detail){
   if(detail){d.style.display='block';d.textContent=detail}else d.style.display='none';
 }
 
-/* ── ЗАГРУЗИТЬ ИЗ ТАБЛИЦЫ (Google Sheets API, без CORS) ── */
-async function loadFromSheet(){
-  setSt('loading','Загрузка из таблицы...');
-  try{
-    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&_=${Date.now()}`;
-    const resp=await fetch(url);
-    const text=await resp.text();
-    const match=text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);?\s*$/);
-    if(!match) throw new Error('Bad Google response: '+text.slice(0,120));
-    const json=JSON.parse(match[1]);
-    const rows=json.table.rows;
-    if(!rows||rows.length===0){setSt('error','В таблице нет данных. Сначала нажмите «Обновить из 1С»');return;}
-    // Парсим key-value пары
-    const data={};
-    rows.forEach(r=>{
-      const key=r.c[0]&&r.c[0].v;
-      let val=r.c[1]&&r.c[1].v;
-      // gviz возвращает числа как числа, даты как строки — приводим всё к нужному типу
-      if(val!==null&&val!==undefined) data[key]=val;
-    });
-    // from/to могут прийти как "2025-11-01" или Date(2025,10,1) — нормализуем
-    if(data.from&&typeof data.from!=='string') data.from=String(data.from);
-    if(data.to&&typeof data.to!=='string') data.to=String(data.to);
-    console.log('Sheet data raw:', JSON.stringify(data));
-    if(!data.revNet){setSt('error','Данные в таблице повреждены или пусты. Проверьте консоль.');return;}
-    // Нормализуем строковые поля
-    ['from','to','updated'].forEach(k=>{
-      if(data[k]!==undefined&&data[k]!==null) data[k]=String(data[k]);
-    });
-    render(data);
-    function parseSheetDateLocal(v){
-      if(!v) return null;
-      if(typeof v==='string'&&v.includes('T')) return new Date(v);
-      if(typeof v==='string'&&v.includes('-')) return new Date(v);
-      if(typeof v==='number'||(!isNaN(+v)&&String(v).length>4)){
-        return new Date(Math.round((+v-25569)*86400*1000));
-      }
-      return new Date(v);
-    }
-    function fmtDateLocal(v){
-      const d=parseSheetDateLocal(v);
-      if(!d||isNaN(d)) return String(v||'—');
-      return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
-    }
-    const updStr=data.updated?new Date(data.updated).toLocaleString('ru-RU'):'—';
-    const fromStr=fmtDateLocal(data.from);
-    const toStr=fmtDateLocal(data.to);
-    document.getElementById('lastUpd').textContent=`Синхронизировано: ${updStr} · Период: ${fromStr} — ${toStr}`;
-    setSt('success','Данные загружены из таблицы');
-  }catch(e){
-    setSt('error','Ошибка загрузки из таблицы',e.message);
-  }
+/* ── API ── */
+function workerBase(){
+  return(document.getElementById('proxyUrl').value||'').trim().replace(/\/$/,'');
 }
-
-/* ── ОБНОВИТЬ ВРУЧНУЮ (только для владельца скрипта) ── */
-async function loadData(){
-  const scriptUrl=(document.getElementById('proxyUrl').value||'').trim().replace(/\/$/,'');
-  if(!scriptUrl){setSt('error','Не указан Apps Script URL');return;}
-  const from=document.getElementById('dateFrom').value;
-  const to=document.getElementById('dateTo').value;
+async function apiFetch(path){
+  const wb=workerBase();
+  if(!wb) throw new Error('Не указан Cloudflare Worker URL');
   const login=document.getElementById('login').value.trim();
   const pw=document.getElementById('password').value.trim();
+  const creds=btoa(unescape(encodeURIComponent(login+':'+pw)));
   const base=document.getElementById('baseUrl').value.trim();
-  if(!login||!pw||!base){setSt('error','Заполните логин, пароль и URL базы');return;}
+  const enc=path.replace(/[а-яёА-ЯЁ]+/g,w=>encodeURIComponent(w));
+  const sep=enc.includes('?')?'&':'?';
+  const url=wb+'/api/'+enc+sep+'$format=json';
+  const resp=await fetch(url,{
+    headers:{'X-1C-Auth':'Basic '+creds,'X-1C-BaseUrl':base,'Accept':'application/json'}
+  });
+  if(!resp.ok){const t=await resp.text().catch(()=>'');throw new Error(`HTTP ${resp.status}\n${t.slice(0,400)}`)}
+  return resp.json();
+}
+async function getKey(code){
+  const d=await apiFetch(`ChartOfAccounts_Хозрасчетный?$filter=Code eq '${code}'&$select=Ref_Key,Code`);
+  if(!d.value?.[0]) throw new Error(`Счёт ${code} не найден`);
+  return d.value[0].Ref_Key;
+}
+async function getKeySafe(code){try{return await getKey(code);}catch{return null;}}
+function buildQ(key,from,to,dr,cr){
+  return`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${key}''')?$select=${dr},${cr}`;
+}
+async function probeFields(from,to){
+  let fk=null;
+  for(const c of ['90.01.1','90.01','90.02.1','90.02']){fk=await getKeySafe(c);if(fk)break;}
+  if(!fk) throw new Error('Не удалось получить ключ счёта для probe');
+  const bq=`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${fk}''')`;
+  for(const [dr,cr] of [['СуммаTurnoverDr','СуммаTurnoverCr'],['СуммаОборотДт','СуммаОборотКт'],['AmountTurnoverDr','AmountTurnoverCr']]){
+    try{await apiFetch(`${bq}?$top=1&$select=${dr},${cr}`);return{dr,cr};}
+    catch(e){console.warn('Probe miss:',dr,e.message.slice(0,80));}
+  }
+  return null;
+}
 
-  ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=true);
-  setSt('loading','Запуск синхронизации с 1С...');
-
-  const auth=btoa(login+':'+pw);
-  const syncUrl=scriptUrl+'?action=sync'
-    +'&baseUrl='+encodeURIComponent(base)
-    +'&auth='+encodeURIComponent(auth)
-    +'&from='+encodeURIComponent(from)
-    +'&to='+encodeURIComponent(to);
-
+/* ── DIAG ── */
+async function findDeprAccounts(from,to,dr,cr){
+  const res=[];
+  for(const code of ['02','02.01','02.02','02.03','05','20','20.01','25','26','44','44.01','44.02']){
+    try{
+      const key=await getKeySafe(code);
+      if(!key){res.push({code,status:'не найден'});continue;}
+      const data=await apiFetch(buildQ(key,from,to,dr,cr));
+      const S=(rows,f)=>rows.reduce((a,r)=>a+(r[f]||0),0);
+      const da=S(data.value,dr),ca=S(data.value,cr);
+      if(da>0||ca>0)res.push({code,dr:Math.round(da),cr:Math.round(ca),status:'✓ есть обороты'});
+      else res.push({code,dr:0,cr:0,status:'нет оборотов'});
+    }catch(e){res.push({code,status:'ошибка: '+e.message.slice(0,50)});}
+  }
+  return res;
+}
+async function diagDepr(){
+  const from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
+  setSt('loading','Диагностика...');
   try{
-    // Открываем Apps Script в новой вкладке — он выполнится и запишет в таблицу
-    const win=window.open(syncUrl,'_blank');
-    if(!win){
-      setSt('error','Браузер заблокировал всплывающее окно. Разрешите всплывающие окна для этого сайта.');
-      ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=false);
-      return;
-    }
-    setSt('loading','Синхронизация запущена, ожидаем данные в таблице...');
-    await waitAndLoad(90);
+    const probe=await probeFields(from,to);
+    if(!probe) throw new Error('Не удалось определить поля');
+    const res=await findDeprAccounts(from,to,probe.dr,probe.cr);
+    const has=res.filter(r=>r.status.startsWith('✓'));
+    setSt('success',has.length?'Найдено: '+has.map(r=>r.code).join(', '):'Оборотов не найдено');
+    console.table(res);
+    alert('Диагностика амортизации:\n\n'+res.map(r=>`${r.code.padEnd(8)} ${r.status}${r.dr!==undefined?' | Дт:'+r.dr.toLocaleString('ru-RU')+' Кт:'+r.cr.toLocaleString('ru-RU'):''}`).join('\n'));
+  }catch(e){setSt('error','Ошибка',e.message);}
+}
+
+/* ── LOAD ── */
+async function loadData(){
+  const from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
+  ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=true);
+  document.getElementById('placeholder').style.display='none';
+  document.getElementById('content').style.display='none';
+  try{
+    setSt('loading','Получение плана счетов...');
+    const [k9001,k9001_1,k9001_2,k9002_1,k9002_2,k9003,k9007_1,k9007_2,k9008_1,k9008_2,k02_01,k02_03]=await Promise.all([
+      getKeySafe('90.01'),getKeySafe('90.01.1'),getKeySafe('90.01.2'),
+      getKeySafe('90.02.1'),getKeySafe('90.02.2'),getKeySafe('90.03'),
+      getKeySafe('90.07.1'),getKeySafe('90.07.2'),getKeySafe('90.08.1'),getKeySafe('90.08.2'),
+      getKeySafe('02.01'),getKeySafe('02.03'),
+    ]);
+    setSt('loading','Определение структуры регистра...');
+    const probe=await probeFields(from,to);
+    if(!probe) throw new Error('Не удалось определить поля регистра');
+    const{dr,cr}=probe;
+    const fQ=key=>key?apiFetch(buildQ(key,from,to,dr,cr)):Promise.resolve({value:[]});
+    setSt('loading','Загрузка оборотов...');
+    const [r9001,r9001_1,r9001_2,r9002_1,r9002_2,r9003,r9007_1,r9007_2,r9008_1,r9008_2,r02_01,r02_03]=await Promise.all([
+      fQ(k9001),fQ(k9001_1),fQ(k9001_2),fQ(k9002_1),fQ(k9002_2),fQ(k9003),
+      fQ(k9007_1),fQ(k9007_2),fQ(k9008_1),fQ(k9008_2),fQ(k02_01),fQ(k02_03),
+    ]);
+    const S=(rows,f)=>rows.reduce((a,r)=>a+(r[f]||0),0);
+    const revSub=S(r9001_1.value,cr)+S(r9001_2.value,cr);
+    const revGross=revSub>0?revSub:S(r9001.value,cr);
+    const nds=S(r9003.value,dr),revNet=revGross-nds;
+    const cost=S(r9002_1.value,dr)+S(r9002_2.value,dr);
+    const comm=S(r9007_1.value,dr)+S(r9007_2.value,dr);
+    const mgmt=S(r9008_1.value,dr)+S(r9008_2.value,dr);
+    const depr=S(r02_01.value,cr)+S(r02_03.value,cr);
+    const totalExp=cost+comm+mgmt,opProfit=revNet-totalExp;
+    const ndsRate=revGross?nds/revGross*100:0;
+    render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to});
+    document.getElementById('lastUpd').textContent=`Обновлено: ${new Date().toLocaleString('ru-RU')} · ${from} — ${to}`;
+    setSt('success',`Готово · ${new Date().toLocaleTimeString('ru-RU')}`);
   }catch(e){
-    setSt('error','Ошибка',e.message);
+    setSt('error','Ошибка загрузки данных',e.message);
+    document.getElementById('placeholder').style.display='block';
   }finally{
     ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=false);
   }
 }
 
-// Опрашиваем таблицу каждые 5 секунд пока не появятся свежие данные
-async function waitAndLoad(maxSeconds){
-  const now=Date.now();
-  let attempts=0;
-  while((Date.now()-now)<maxSeconds*1000){
-    attempts++;
-    setSt('loading',`Ожидание данных в таблице... (${Math.round((Date.now()-now)/1000)}с)`);
-    await new Promise(r=>setTimeout(r,5000));
-    try{
-      const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&_=${Date.now()}`;
-      const resp=await fetch(url);
-      const text=await resp.text();
-      const match2=text.match(/google\.visualization\.Query\.setResponse\(([\s\S]+?)\);?\s*$/);
-      if(!match2) continue;
-      const json=JSON.parse(match2[1]);
-      const rows=json.table.rows;
-      if(!rows||rows.length===0) continue;
-      const data={};
-      rows.forEach(r=>{const k=r.c[0]&&r.c[0].v,v=r.c[1]&&r.c[1].v;if(k)data[k]=v;});
-      if(!data.updated) continue;
-      // Проверяем что данные свежие (не старше 3 минут)
-      const updatedMs=new Date(data.updated).getTime();
-      if(Date.now()-updatedMs<180000){
-        render(data);
-        document.getElementById('lastUpd').textContent=`Обновлено: ${new Date(data.updated).toLocaleString('ru-RU')} · ${data.from} — ${data.to}`;
-        setSt('success','Готово · данные записаны в таблицу');
-        return;
-      }
-    }catch(e){console.warn('Poll error:',e.message);}
-  }
-  setSt('error','Таймаут. Попробуйте нажать «📋 Из таблицы» через минуту — данные могут ещё записываться');
-}
-
 /* ── RENDER ── */
 let barCI=null;
-function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to,margin}){
-  // Приводим к числам (из таблицы могут прийти строки)
-  revGross=+revGross||0;nds=+nds||0;ndsRate=+ndsRate||0;revNet=+revNet||0;
-  cost=+cost||0;comm=+comm||0;mgmt=+mgmt||0;depr=+depr||0;
-  totalExp=+totalExp||0;opProfit=+opProfit||0;
-
+function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to}){
   document.getElementById('kRevNet').textContent=FMT(revNet);
   document.getElementById('kTotalExp').textContent=FMT(totalExp);
   document.getElementById('kOpProfit').textContent=FMT(opProfit);
@@ -441,29 +423,8 @@ function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProf
   document.getElementById('kRevNetS').textContent='без НДС';
   document.getElementById('kTotalExpS').textContent=PCT(totalExp,revNet)+' от выручки';
   document.getElementById('kOpProfitS').textContent=opProfit>=0?'прибыль':'убыток';
-  // from/to могут прийти как "2025-11-01" или как число (Excel serial) из Sheets
-  function parseSheetDate(v){
-    if(!v) return null;
-    if(typeof v==='string'&&v.includes('-')) return new Date(v);
-    // Excel serial: дни с 30.12.1899
-    if(typeof v==='number'||(!isNaN(+v)&&String(v).length>4)){
-      return new Date(Math.round((+v-25569)*86400*1000));
-    }
-    return new Date(v);
-  }
-  function fmtDate(v){
-    const d=parseSheetDate(v);
-    if(!d||isNaN(d)) return String(v||'');
-    return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'});
-  }
-  function fmtMonth(v){
-    const d=parseSheetDate(v);
-    if(!d||isNaN(d)) return String(v||'');
-    return d.toLocaleString('ru-RU',{month:'long',year:'numeric'});
-  }
-  const fromD=parseSheetDate(from),toD=parseSheetDate(to);
-  const sameMonth=fromD&&toD&&fromD.getMonth()===toD.getMonth()&&fromD.getFullYear()===toD.getFullYear();
-  document.getElementById('plPeriod').textContent=sameMonth?fmtMonth(from):fmtDate(from)+' — '+fmtDate(to);
+  const fmt2=s=>{const[y,m]=s.split('-');return new Date(+y,+m-1).toLocaleString('ru-RU',{month:'long',year:'numeric'})};
+  document.getElementById('plPeriod').textContent=from.slice(0,7)===to.slice(0,7)?fmt2(from):from+' — '+to;
   const rows=[
     ['section','','Доходы'],
     ['row','90.01','Выручка с НДС',revGross,revGross,'#4f8ef7',''],
@@ -472,11 +433,11 @@ function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProf
     ['rowhl','','Выручка без НДС',revNet,revGross],
     ['section','','Расходы'],
     ['row','90.02','Себестоимость',cost,revNet,'#f7604f',''],
-    ['sub','','Доля в выручке',revNet?cost/revNet*100:0],
+    ['sub','','Доля в выручке',cost/revNet*100],
     ['row','90.07','Коммерческие расходы',comm,revNet,'#f7b84f',''],
-    ['sub','','Доля в выручке',revNet?comm/revNet*100:0],
+    ['sub','','Доля в выручке',comm/revNet*100],
     ['row','90.08','АУП расходы',mgmt,revNet,'#a78bfa',''],
-    ['sub','','Доля в выручке',revNet?mgmt/revNet*100:0],
+    ['sub','','Доля в выручке',mgmt/revNet*100],
     ['total','','Итого расходы',totalExp,revNet],
     ['result','','Операционная прибыль',opProfit,revNet],
     ['section','','Справочно'],
@@ -511,9 +472,6 @@ function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProf
   document.getElementById('content').style.display='block';
   document.getElementById('footer').style.display='block';
 }
-
-// Автозагрузка из таблицы при открытии страницы
-window.addEventListener('load',()=>{ setTimeout(loadFromSheet, 500); });
 </script>
 </body>
 </html>
