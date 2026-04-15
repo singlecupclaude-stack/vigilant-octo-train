@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MONKEY.BOT</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600;700&family=Manrope:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080b10;--s1:#0e1218;--s2:#141920;--s3:#1c2330;--border:#242d3a;
+  --ok:#3ecf74;--warn:#f0b429;--crit:#e05252;--blue:#4f9cf9;
+  --text:#e8edf5;--dim:#5a6880;
+  --mono:'JetBrains Mono',monospace;--sans:'Manrope',sans-serif;--display:'Bebas Neue',sans-serif;
+  --ozon:#005bff;--ozon-d:rgba(0,91,255,.12);
+  --wb:#cb11ab;  --wb-d:rgba(203,17,171,.12);
+  --ym:#fc3f1d;  --ym-d:rgba(252,63,29,.12);
+  --sber:#21a038;--sber-d:rgba(33,160,56,.12);
+  --mk:#f5a623;  --mk-d:rgba(245,166,35,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 50% 40% at 15% 85%,rgba(245,166,35,.04),transparent 60%),
+             radial-gradient(ellipse 40% 50% at 85% 15%,rgba(0,91,255,.04),transparent 60%);
+}
+
+/* ── LOGIN ── */
+.login-overlay{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;align-items:center;justify-content:center;z-index:1000;overflow:hidden;
+  transition:opacity .45s,transform .45s;
+}
+.login-overlay.hide{opacity:0;pointer-events:none;transform:scale(.97);}
+.login-monkey{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.login-monkey svg{
+  width:min(600px,85vw);height:min(600px,85vh);opacity:.07;
+  mask-image:radial-gradient(ellipse 52% 52% at 50% 50%,black 28%,transparent 72%);
+}
+.login-box{
+  background:rgba(14,18,24,.92);border:1px solid var(--border);border-radius:18px;
+  padding:48px 40px;width:400px;text-align:center;position:relative;z-index:2;
+  backdrop-filter:blur(10px);
+  box-shadow:0 0 80px rgba(245,166,35,.06),0 32px 64px rgba(0,0,0,.5);
+}
+.l-logo{font-family:var(--display);font-size:46px;letter-spacing:5px;margin-bottom:2px;}
+.l-logo .mk{color:var(--mk);}
+.l-sub{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;margin-bottom:32px;}
+
+/* BD upload on login */
+.l-bd-area{
+  background:var(--s2);border:1px dashed var(--border);border-radius:10px;
+  padding:16px;margin-bottom:20px;cursor:pointer;transition:all .2s;position:relative;
+}
+.l-bd-area:hover,.l-bd-area.dragover{border-color:var(--mk);background:var(--mk-d);}
+.l-bd-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.l-bd-label{font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;display:block;}
+.l-bd-status{font-family:var(--mono);font-size:12px;color:var(--dim);}
+.l-bd-status.loaded{color:var(--ok);}
+
+.l-field{margin-bottom:14px;text-align:left;}
+.l-field label{display:block;font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
+.l-field input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:15px;padding:12px 14px;outline:none;transition:border-color .2s;}
+.l-field input:focus{border-color:var(--mk);}
+.l-err{font-family:var(--mono);font-size:12px;color:var(--crit);margin-bottom:12px;min-height:18px;}
+.l-btn{width:100%;background:var(--mk);color:#080b10;border:none;border-radius:8px;font-family:var(--display);font-size:22px;letter-spacing:3px;padding:13px;cursor:pointer;transition:opacity .2s,box-shadow .2s;}
+.l-btn:hover{opacity:.88;box-shadow:0 0 24px rgba(245,166,35,.3);}
+.l-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── APP ── */
+.app{display:none;flex-direction:column;min-height:100vh;position:relative;z-index:1;}
+.app.visible{display:flex;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 24px;border-bottom:1px solid var(--border);background:var(--s1);position:sticky;top:0;z-index:50;flex-wrap:wrap;}
+.logo{font-family:var(--display);font-size:22px;letter-spacing:3px;flex-shrink:0;}
+.logo .mk{color:var(--mk);}
+.tab-row{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:3px;gap:2px;}
+.tb{font-family:var(--sans);font-size:12px;font-weight:700;padding:6px 16px;border-radius:6px;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--dim);}
+.tb.active{background:var(--mk);color:#080b10;}
+.tb:not(.active):hover{background:var(--s3);color:var(--text);}
+.topbar-r{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.db-pill{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:20px;display:flex;align-items:center;gap:6px;border:1px solid rgba(62,207,116,.3);background:rgba(62,207,116,.07);color:var(--ok);}
+.db-pill.nobd{border-color:rgba(224,82,82,.3);background:rgba(224,82,82,.07);color:var(--crit);}
+.db-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.user-chip{font-family:var(--mono);font-size:11px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);color:var(--dim);background:var(--s2);}
+.user-chip .crown{color:var(--mk);}
+.logout-btn{background:none;border:1px solid var(--border);color:var(--dim);padding:6px 12px;border-radius:8px;font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--sans);}
+.logout-btn:hover{color:var(--crit);border-color:var(--crit);}
+
+/* ── CONTENT ── */
+.content{padding:24px;flex:1;}
+.panel{display:none;flex-direction:column;gap:20px;}
+.panel.active{display:flex;}
+
+/* ── MENU ── */
+.menu-wrap{max-width:500px;margin:0 auto;display:flex;flex-direction:column;gap:12px;}
+.menu-title{font-family:var(--display);font-size:30px;letter-spacing:3px;text-align:center;color:var(--mk);margin-bottom:4px;}
+.menu-sub{text-align:center;font-size:13px;color:var(--dim);margin-bottom:20px;}
+.menu-btn{width:100%;padding:16px 22px;border-radius:14px;border:1px solid var(--border);background:var(--s1);color:var(--text);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;text-align:left;display:flex;align-items:center;gap:14px;}
+.menu-btn:hover{border-color:var(--mk);background:var(--mk-d);transform:translateX(3px);}
+.menu-btn .bi{font-size:22px;flex-shrink:0;}
+.menu-btn .bt{flex:1;}
+.menu-btn .ba{color:var(--dim);font-size:18px;transition:transform .2s;}
+.menu-btn:hover .ba{transform:translateX(4px);color:var(--mk);}
+.admin-btn{border-color:rgba(245,166,35,.2) !important;}
+
+/* ── STEPS ── */
+.back-btn{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--dim);font-family:var(--sans);font-size:13px;cursor:pointer;padding:4px 0;margin-bottom:16px;transition:color .2s;}
+.back-btn:hover{color:var(--mk);}
+.step-title{font-family:var(--display);font-size:24px;letter-spacing:2px;margin-bottom:6px;}
+.step-sub{font-size:12px;color:var(--dim);margin-bottom:20px;line-height:1.6;}
+
+/* ── PLATFORMS ── */
+.plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:500px;}
+.plat-btn{padding:18px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--pc) 20%,var(--border));background:var(--s1);cursor:pointer;transition:all .2s;text-align:left;display:flex;flex-direction:column;gap:6px;}
+.plat-btn:hover{transform:translateY(-2px);border-color:var(--pc);background:var(--pd);box-shadow:0 8px 24px rgba(0,0,0,.25);}
+.plat-btn .pi{font-size:26px;}
+.plat-btn .pn{font-family:var(--display);font-size:22px;letter-spacing:2px;color:var(--pc);}
+.plat-btn .ps{font-size:11px;color:var(--dim);}
+.p-ozon{--pc:var(--ozon);--pd:var(--ozon-d);}
+.p-wb  {--pc:var(--wb);  --pd:var(--wb-d);}
+.p-ym  {--pc:var(--ym);  --pd:var(--ym-d);}
+.p-sber{--pc:var(--sber);--pd:var(--sber-d);}
+
+.ozon-types{display:flex;flex-direction:column;gap:10px;max-width:500px;}
+.ozon-types .plat-btn{flex-direction:row;align-items:center;gap:16px;}
+
+/* ── DROP ZONE ── */
+.dz{border:2px dashed var(--border);border-radius:16px;padding:44px 30px;text-align:center;cursor:pointer;transition:all .2s;background:var(--s1);position:relative;max-width:500px;}
+.dz:hover,.dz.dragover{border-color:var(--mk);background:var(--mk-d);}
+.dz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz-icon{font-size:48px;margin-bottom:12px;display:block;}
+.dz-title{font-family:var(--display);font-size:22px;letter-spacing:2px;margin-bottom:6px;}
+.dz-sub{font-size:12px;color:var(--dim);}
+.dz-chosen{font-family:var(--mono);font-size:12px;color:var(--mk);margin-top:12px;display:none;}
+.proc-btn{max-width:500px;width:100%;margin-top:14px;padding:15px;background:var(--mk);color:#080b10;border:none;border-radius:10px;font-family:var(--display);font-size:22px;letter-spacing:3px;cursor:pointer;transition:all .2s;display:none;}
+.proc-btn:hover{opacity:.88;box-shadow:0 0 20px rgba(245,166,35,.3);}
+.proc-btn.show{display:block;}
+.proc-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── MULTI DROP ── */
+.multi-dz{border:2px dashed var(--border);border-radius:14px;padding:28px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--s1);position:relative;max-width:560px;}
+.multi-dz:hover,.multi-dz.dragover{border-color:var(--mk);background:var(--mk-d);}
+.multi-dz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.files-list{display:flex;flex-direction:column;gap:6px;margin-top:14px;max-width:560px;}
+.fc{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;}
+.fc-name{flex:1;font-family:var(--mono);color:var(--mk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fc-mp{font-size:9px;padding:2px 7px;border-radius:4px;font-family:var(--mono);letter-spacing:.5px;flex-shrink:0;}
+.fc-rm{background:none;border:none;color:var(--dim);cursor:pointer;font-size:18px;padding:0 2px;line-height:1;transition:color .2s;flex-shrink:0;}
+.fc-rm:hover{color:var(--crit);}
+.badge-ozon{background:var(--ozon-d);color:var(--ozon);}
+.badge-wb  {background:var(--wb-d);  color:var(--wb);}
+.badge-ym  {background:var(--ym-d);  color:var(--ym);}
+.badge-sber{background:var(--sber-d);color:var(--sber);}
+.badge-unk {background:rgba(240,180,41,.1);color:var(--warn);}
+
+/* ── RESULT ── */
+.result-card{max-width:500px;background:var(--s1);border:1px solid rgba(62,207,116,.3);border-radius:16px;padding:28px;text-align:center;}
+.rc-icon{font-size:52px;margin-bottom:12px;display:block;}
+.rc-title{font-family:var(--display);font-size:24px;letter-spacing:2px;color:var(--ok);margin-bottom:8px;}
+.rc-sub{font-size:12px;color:var(--dim);margin-bottom:22px;line-height:1.6;}
+.dl-btn{display:inline-flex;align-items:center;gap:10px;background:var(--ok);color:#080b10;border:none;border-radius:10px;font-family:var(--display);font-size:20px;letter-spacing:2px;padding:13px 28px;cursor:pointer;text-decoration:none;transition:opacity .2s;margin:4px;}
+.dl-btn:hover{opacity:.88;}
+.dl-btn.zip{background:var(--blue);}
+.new-btn{display:inline-flex;align-items:center;gap:8px;margin-top:12px;background:none;border:1px solid var(--border);color:var(--dim);border-radius:10px;font-family:var(--sans);font-size:13px;font-weight:600;padding:10px 20px;cursor:pointer;transition:all .2s;}
+.new-btn:hover{border-color:var(--mk);color:var(--mk);}
+
+/* ── DB PANEL ── */
+.db-section{max-width:560px;display:flex;flex-direction:column;gap:16px;}
+.db-card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.db-card-title{font-family:var(--display);font-size:18px;letter-spacing:2px;margin-bottom:14px;}
+.db-row-item{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(36,45,58,.5);gap:12px;}
+.db-row-item:last-child{border:none;}
+.db-k{font-size:11px;color:var(--dim);flex-shrink:0;}
+.db-v{font-family:var(--mono);font-size:12px;text-align:right;}
+.col-tags{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end;}
+.col-tag{font-family:var(--mono);font-size:9px;background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:2px 6px;color:var(--dim);}
+.db-action{width:100%;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--s1);color:var(--text);font-family:var(--display);font-size:20px;letter-spacing:2px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;}
+.db-action:hover{border-color:var(--mk);color:var(--mk);background:var(--mk-d);}
+.db-action.primary{background:var(--mk);color:#080b10;border-color:var(--mk);}
+.db-action.primary:hover{opacity:.88;}
+.no-access{text-align:center;padding:48px;color:var(--dim);}
+
+/* ── SPINNER ── */
+.spin-ov{position:fixed;inset:0;background:rgba(8,11,16,.75);z-index:5000;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;backdrop-filter:blur(4px);}
+.spin-ov.show{display:flex;}
+.spin{width:48px;height:48px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--mk);animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin-txt{font-family:var(--mono);font-size:13px;color:var(--dim);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(20px);opacity:0;transition:all .3s;pointer-events:none;max-width:360px;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok {border-color:rgba(62,207,116,.3);color:var(--ok);}
+.toast.err{border-color:rgba(224,82,82,.3);color:var(--crit);}
+.toast.inf{border-color:rgba(79,156,249,.3);color:var(--blue);}
+</style>
+</head>
+<body>
+
+<!-- ════ LOGIN ════ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-monkey">
+    <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" fill="#f5a623">
+      <ellipse cx="200" cy="230" rx="90" ry="80"/>
+      <ellipse cx="200" cy="160" rx="70" ry="65"/>
+      <ellipse cx="130" cy="165" rx="30" ry="28"/>
+      <ellipse cx="270" cy="165" rx="30" ry="28"/>
+      <ellipse cx="130" cy="165" rx="18" ry="17" fill="rgba(245,166,35,.35)"/>
+      <ellipse cx="270" cy="165" rx="18" ry="17" fill="rgba(245,166,35,.35)"/>
+      <ellipse cx="200" cy="175" rx="45" ry="38" fill="rgba(245,166,35,.25)"/>
+      <circle cx="182" cy="155" r="9" fill="rgba(8,11,16,.8)"/>
+      <circle cx="218" cy="155" r="9" fill="rgba(8,11,16,.8)"/>
+      <circle cx="184" cy="153" r="3" fill="rgba(245,166,35,.9)"/>
+      <circle cx="220" cy="153" r="3" fill="rgba(245,166,35,.9)"/>
+      <ellipse cx="115" cy="250" rx="22" ry="55" transform="rotate(-15 115 250)"/>
+      <ellipse cx="285" cy="250" rx="22" ry="55" transform="rotate(15 285 250)"/>
+      <ellipse cx="170" cy="310" rx="22" ry="50"/>
+      <ellipse cx="230" cy="310" rx="22" ry="50"/>
+      <path d="M285 260 Q340 220 360 180 Q370 150 350 140" stroke="#f5a623" stroke-width="14" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="login-box">
+    <div class="l-logo"><span class="mk">MONKEY</span>🐒<span class="mk">BOT</span></div>
+    <div class="l-sub">система сборки заказов · v2.0</div>
+
+    <!-- БД загрузка прямо на логине -->
+    <div class="l-bd-area" id="lBdArea"
+         ondragover="event.preventDefault();this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="lBdDrop(event)">
+      <input type="file" accept=".xlsx,.xls" id="lBdInput" onchange="lBdChosen(this)">
+      <span class="l-bd-label">📊 База данных (БД кофе.xlsx)</span>
+      <div class="l-bd-status" id="lBdStatus">Нажмите или перетащите файл БД кофе.xlsx</div>
+    </div>
+
+    <div class="l-field">
+      <label>Логин</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="off">
+    </div>
+    <div class="l-field">
+      <label>Пароль</label>
+      <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="l-err" id="loginErr"></div>
+    <button class="l-btn" id="loginBtn" onclick="doLogin()">ВОЙТИ</button>
+  </div>
+</div>
+
+<!-- ════ APP ════ -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="logo">🐒 <span class="mk">MONKEY</span>.BOT</div>
+    <div class="tab-row">
+      <button class="tb active" onclick="showTab('order',this)">Создать заказ</button>
+      <button class="tb" onclick="showTab('obsh',this)">Общая сборка</button>
+      <button class="tb" id="dbTabBtn" onclick="showTab('db',this)">База данных</button>
+    </div>
+    <div class="topbar-r">
+      <div class="db-pill" id="dbPill"><span class="db-dot"></span><span id="dbPillTxt">—</span></div>
+      <div class="user-chip" id="userChip">—</div>
+      <button class="logout-btn" onclick="doLogout()">Выйти</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ TAB: ORDER ══ -->
+    <div class="panel active" id="tab-order">
+
+      <!-- step-menu -->
+      <div id="step-menu" class="menu-wrap">
+        <div class="menu-title">🐒 ЧЕМ ЗАЙМЁМСЯ?</div>
+        <div class="menu-sub">Выберите действие</div>
+        <button class="menu-btn" onclick="goStep('platform')">
+          <span class="bi">📦</span><span class="bt">Создать заказ</span><span class="ba">›</span>
+        </button>
+        <button class="menu-btn admin-btn" id="menuGetDb" onclick="adminGetDb()">
+          <span class="bi">📊</span><span class="bt">Получить базу данных</span><span class="ba">›</span>
+        </button>
+        <button class="menu-btn admin-btn" id="menuUpdateDb" onclick="showTab('db',document.querySelectorAll('.tb')[2])">
+          <span class="bi">🔄</span><span class="bt">Обновить базу данных</span><span class="ba">›</span>
+        </button>
+      </div>
+
+      <!-- step-platform -->
+      <div id="step-platform" style="display:none">
+        <button class="back-btn" onclick="goStep('menu')">← Назад</button>
+        <div class="step-title">ВЫБОР ПЛОЩАДКИ</div>
+        <div class="step-sub">На какую платформу формируем поставку?</div>
+        <div class="plat-grid">
+          <button class="plat-btn p-ozon" onclick="selectPlat('ozon')">
+            <span class="pi">🔵</span><span class="pn">OZON</span><span class="ps">Коробами или паллетами</span>
+          </button>
+          <button class="plat-btn p-wb" onclick="selectPlat('wb')">
+            <span class="pi">🟣</span><span class="pn">WILDBERRIES</span><span class="ps">ШК + итоговый заказ</span>
+          </button>
+          <button class="plat-btn p-ym" onclick="selectPlat('ym')">
+            <span class="pi">🔴</span><span class="pn">Я.МАРКЕТ</span><span class="ps">Поставка с артикулами</span>
+          </button>
+          <button class="plat-btn p-sber" onclick="selectPlat('sber')">
+            <span class="pi">🟢</span><span class="pn">СБЕР</span><span class="ps">3-листовой Excel</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- step-ozon-type -->
+      <div id="step-ozon-type" style="display:none">
+        <button class="back-btn" onclick="goStep('platform')">← Назад</button>
+        <div class="step-title">ТИП ПОСТАВКИ OZON</div>
+        <div class="step-sub">Выберите формат отгрузки</div>
+        <div class="ozon-types">
+          <button class="plat-btn p-ozon" onclick="selectSubtype('OzonBox')">
+            <span class="pi">📦</span>
+            <div><div class="pn">ПОСТАВКА КОРОБАМИ</div><div class="ps">ШК_*.xlsx + Заказ_*_коробы.xlsx</div></div>
+          </button>
+          <button class="plat-btn p-ozon" onclick="selectSubtype('OzonPalette')">
+            <span class="pi">🗃️</span>
+            <div><div class="pn">ПОСТАВКА ПАЛЛЕТАМИ</div><div class="ps">palette_*.xlsx + Заказ_*_палеты.xlsx</div></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- step-upload -->
+      <div id="step-upload" style="display:none">
+        <button class="back-btn" id="uploadBackBtn" onclick="uploadBack()">← Назад</button>
+        <div class="step-title" id="uploadTitle">ЗАГРУЗКА ФАЙЛА</div>
+        <div class="step-sub" id="uploadSub">Прикрепите Excel-файл сборки заказа (формат 1С)</div>
+        <div class="dz" id="dropZone"
+             ondragover="dzOver(event,true)" ondragleave="dzOver(event,false)" ondrop="dzDrop(event)">
+          <input type="file" accept=".xlsx,.xls" id="fileInput" onchange="fileChosen(this)">
+          <span class="dz-icon">📂</span>
+          <div class="dz-title">ПЕРЕТАЩИТЕ ФАЙЛ</div>
+          <div class="dz-sub">или нажмите для выбора · .xlsx / .xls</div>
+          <div class="dz-chosen" id="dzChosen"></div>
+        </div>
+        <button class="proc-btn" id="procBtn" onclick="processOrder()">ОБРАБОТАТЬ →</button>
+      </div>
+
+      <!-- step-result -->
+      <div id="step-result" style="display:none">
+        <div class="result-card">
+          <span class="rc-icon">✅</span>
+          <div class="rc-title">ГОТОВО!</div>
+          <div class="rc-sub" id="rcSub">Файлы готовы к скачиванию</div>
+          <div id="dlBtns"></div>
+          <br>
+          <button class="new-btn" onclick="goStep('menu')">🏠 В главное меню</button>
+        </div>
+      </div>
+
+    </div><!-- /tab-order -->
+
+    <!-- ══ TAB: OBSH ══ -->
+    <div class="panel" id="tab-obsh">
+      <div style="max-width:560px">
+        <div class="step-title">ОБЩАЯ СБОРКА</div>
+        <div class="step-sub">Загрузите файлы для нескольких площадок. Имена должны содержать: <strong>Ozon</strong>, <strong>WildBerries</strong> (или <strong>WB</strong>), <strong>YM</strong>, <strong>SBER</strong>.</div>
+        <div class="multi-dz" id="multiDz"
+             ondragover="mdOver(event,true)" ondragleave="mdOver(event,false)" ondrop="mdDrop(event)">
+          <input type="file" accept=".xlsx,.xls" multiple id="multiInput" onchange="mdAdd(this.files)">
+          <span class="dz-icon" style="font-size:36px">📁</span>
+          <div class="dz-title" style="font-size:18px">ДОБАВИТЬ ФАЙЛЫ</div>
+          <div class="dz-sub">Несколько файлов · перетащите или нажмите</div>
+        </div>
+        <div class="files-list" id="filesList"></div>
+        <button class="proc-btn" id="obshBtn" onclick="processObsh()" style="max-width:560px">
+          ✅ СДЕЛАТЬ ОБЩУЮ СБОРКУ →
+        </button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: DB ══ -->
+    <div class="panel" id="tab-db">
+      <div class="db-section" id="dbSection"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Spinner -->
+<div class="spin-ov" id="spinner">
+  <div class="spin"></div>
+  <div class="spin-txt" id="spinTxt">Обработка…</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- SheetJS + JSZip -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+// ════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════
+var S = {
+  user: null,
+  isAdmin: false,
+  bdRows: null,       // Array of objects — загруженная БД
+  bdName: null,
+  platform: null,
+  orderFile: null,
+  orderFileName: '',
+  obshFiles: []       // [{name, data: ArrayBuffer}]
+};
+
+// Учётные данные (менять здесь)
+var USERS = {admin:{pass:'monkey2025',admin:true}, boris:{pass:'coffepod',admin:true}, demo:{pass:'1234',admin:false}};
+
+// ════════════════════════════════════════════
+//  БД — загрузка при логине
+// ════════════════════════════════════════════
+function lBdDrop(e){
+  e.preventDefault();
+  document.getElementById('lBdArea').classList.remove('dragover');
+  if(e.dataTransfer.files[0]) loadBd(e.dataTransfer.files[0]);
+}
+function lBdChosen(inp){ if(inp.files[0]) loadBd(inp.files[0]); }
+
+function loadBd(file){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var wb = XLSX.read(e.target.result, {type:'array'});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      S.bdRows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      S.bdName = file.name;
+      var st = document.getElementById('lBdStatus');
+      st.textContent = '✅ ' + file.name + ' · ' + S.bdRows.length + ' позиций';
+      st.className = 'l-bd-status loaded';
+    }catch(err){
+      toast('❌ Ошибка чтения БД: '+err.message,'err');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════
+function doLogin(){
+  var u = document.getElementById('loginUser').value.trim();
+  var p = document.getElementById('loginPass').value;
+  var err = document.getElementById('loginErr');
+  var acc = USERS[u];
+  if(!acc || acc.pass !== p){ err.textContent='Неверный логин или пароль'; return; }
+  if(!S.bdRows){ err.textContent='Сначала загрузите БД кофе.xlsx'; return; }
+  S.user = u; S.isAdmin = acc.admin;
+  sessionStorage.setItem('mb',JSON.stringify({u:u,a:acc.admin}));
+  err.textContent='';
+  showApp();
+}
+
+function doLogout(){
+  sessionStorage.removeItem('mb');
+  S.user=null; S.isAdmin=false;
+  document.getElementById('app').classList.remove('visible');
+  var ov=document.getElementById('loginOverlay');
+  ov.style.display='flex'; ov.classList.remove('hide');
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+}
+
+function showApp(){
+  document.getElementById('loginOverlay').classList.add('hide');
+  setTimeout(function(){
+    document.getElementById('loginOverlay').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('userChip').innerHTML=(S.isAdmin?'<span class="crown">👑</span> ':'')+S.user;
+    ['menuGetDb','menuUpdateDb'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el) el.style.display=S.isAdmin?'':'none';
+    });
+    updateDbPill();
+    renderDbSection();
+  },450);
+}
+
+// Session restore — без БД нельзя, нужна повторная загрузка
+(function(){
+  var s=sessionStorage.getItem('mb');
+  // We intentionally don't auto-restore without BD file present
+})();
+
+// ════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════
+function showTab(id,btn){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tb').forEach(function(b){b.classList.remove('active');});
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='db') renderDbSection();
+}
+
+// ════════════════════════════════════════════
+//  ORDER FLOW
+// ════════════════════════════════════════════
+function goStep(name){
+  ['menu','platform','ozon-type','upload','result'].forEach(function(s){
+    var el=document.getElementById('step-'+s);
+    if(el) el.style.display='none';
+  });
+  document.getElementById('step-'+name).style.display='';
+}
+
+function selectPlat(mp){
+  if(mp==='ozon'){goStep('ozon-type');return;}
+  S.platform={wb:'WildBerries',ym:'YM',sber:'SBER'}[mp];
+  prepUpload();
+}
+function selectSubtype(t){ S.platform=t; prepUpload(); }
+function uploadBack(){
+  S.orderFile=null; resetDz();
+  if(S.platform==='OzonBox'||S.platform==='OzonPalette') goStep('ozon-type');
+  else goStep('platform');
+}
+
+var PLAT_LABELS={
+  OzonBox:{title:'OZON — КОРОБАМИ',sub:'Загрузите файл сборки заказа (короба)'},
+  OzonPalette:{title:'OZON — ПАЛЛЕТАМИ',sub:'Загрузите файл сборки заказа (паллеты)'},
+  WildBerries:{title:'WILDBERRIES',sub:'Загрузите файл сборки заказа WildBerries'},
+  YM:{title:'ЯНДЕКС.МАРКЕТ',sub:'Загрузите файл сборки заказа Яндекс.Маркет'},
+  SBER:{title:'СБЕР',sub:'Загрузите файл сборки заказа Сбер'}
+};
+function prepUpload(){
+  var l=PLAT_LABELS[S.platform]||{};
+  document.getElementById('uploadTitle').textContent=l.title||'ЗАГРУЗКА';
+  document.getElementById('uploadSub').textContent=l.sub||'';
+  resetDz(); goStep('upload');
+}
+function resetDz(){
+  S.orderFile=null;
+  document.getElementById('dzChosen').style.display='none';
+  document.getElementById('procBtn').classList.remove('show');
+  document.getElementById('fileInput').value='';
+}
+
+function dzOver(e,on){e.preventDefault();document.getElementById('dropZone').classList.toggle('dragover',on);}
+function dzDrop(e){
+  e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');
+  if(e.dataTransfer.files[0]) setOrderFile(e.dataTransfer.files[0]);
+}
+function fileChosen(inp){if(inp.files[0])setOrderFile(inp.files[0]);}
+function setOrderFile(f){
+  S.orderFile=f; S.orderFileName=f.name.replace(/\.[^.]+$/,'').replace('Сборка_заказа_','');
+  var ch=document.getElementById('dzChosen');
+  ch.textContent='📎 '+f.name+' ('+(f.size/1024).toFixed(0)+' KB)';
+  ch.style.display='block';
+  document.getElementById('procBtn').classList.add('show');
+}
+
+async function processOrder(){
+  if(!S.orderFile){toast('Выберите файл','err');return;}
+  if(!S.bdRows){toast('БД не загружена','err');return;}
+  showSpinner('Обрабатываем '+S.platform+'…');
+  try{
+    var buf=await S.orderFile.arrayBuffer();
+    var result=runPipeline(S.platform,buf,S.bdRows);
+    renderResult(result,S.orderFileName);
+    goStep('result');
+    toast('✅ Обработка завершена!','ok');
+  }catch(e){
+    toast('❌ '+e.message,'err');
+    console.error(e);
+  }finally{hideSpinner();}
+}
+
+// ════════════════════════════════════════════
+//  BUSINESS LOGIC (port from business_logik.py)
+// ════════════════════════════════════════════
+
+/** Читает входной файл заказа.
+ *  Строка 0 = мусорные заголовки (pandas columns),
+ *  Строка 1 = реальные названия колонок,
+ *  Строки 2+ = данные.
+ *  sheet_to_json с header:1 даёт числовые ключи → берём строку [1] как заголовок.
+ */
+function parseOrderFile(buf){
+  var wb=XLSX.read(buf,{type:'array'});
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  // raw[0] = числовые индексы (строка 0 файла — мусорные заголовки от pandas/1C)
+  // raw[1] = реальные названия колонок
+  // raw[2+] = данные
+  if(raw.length<3) throw new Error('Файл пустой или неверного формата');
+  var headers=raw[1]; // реальная шапка
+  var rows=[];
+  for(var i=2;i<raw.length;i++){
+    var row={};
+    headers.forEach(function(h,j){ row[h]=raw[i][j]!==undefined?String(raw[i][j]):''; });
+    // фильтрация пустых Код 1С
+    if(row['Код 1С']&&row['Код 1С'].trim()!==''&&row['Код 1С']!=='nan') rows.push(row);
+  }
+  if(!rows.length) throw new Error('Нет данных после фильтрации (проверьте колонку «Код 1С»)');
+  return rows;
+}
+
+/** Левый JOIN по Код 1С */
+function mergeOnKod1c(orderRows, bdRows){
+  var bdMap={};
+  bdRows.forEach(function(r){ bdMap[String(r['Код 1С']||'').trim()]=r; });
+  var result=[];
+  orderRows.forEach(function(row){
+    var bd=bdMap[String(row['Код 1С']||'').trim()];
+    if(!bd){ console.warn('Нет в БД: '+row['Код 1С']); return; }
+    var merged=Object.assign({},row);
+    Object.keys(bd).forEach(function(k){
+      // суффикс _bd для дублирующихся ключей (аналог _y в pandas)
+      merged[k+'_bd']=bd[k];
+      if(!(k in row)) merged[k]=bd[k];
+    });
+    result.push(merged);
+  });
+  if(!result.length) throw new Error('Нет совпадений по «Код 1С» между файлом и БД. Проверьте базу.');
+  return result;
+}
+
+function toInt(v){ return parseInt(String(v).replace(',','.').trim())||0; }
+function toFloat(v){ return parseFloat(String(v).replace(',','.').trim())||0; }
+
+/* ── WB ── */
+function wb_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+
+  // Файл 1: Заказ (Баркод, Количество, Наименование)
+  var final1=merged.map(function(r){return{
+    'Баркод': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Количество': r['Итого кол-во']||'',
+    'Наименование': r['Короткое наименование_bd']||r['Короткое наименование']||''
+  };});
+
+  // Файл 2: ШК по коробам (каждый короб — отдельная строка)
+  var final2=[];
+  merged.forEach(function(r){
+    var numBoxes=toInt(r['Кол-во коробов']);
+    var boxItems=toFloat(r['Кратность короба_bd']||r['Кратность короба']);
+    for(var i=0;i<numBoxes;i++){
+      final2.push({
+        'ШК единицы товара': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+        'Кол-во товаров': Math.round(boxItems),
+        'ШК короба': '',
+        'Кол-во коробов': 1,
+        'Срок годности': '',
+        'Группа товаров': r['Группа товаров_bd']||r['Группа товаров']||'',
+        'Наименование': r['Короткое наименование_bd']||r['Короткое наименование']||''
+      });
+    }
+  });
+  return {type:'wb',files:[{name:'ШК',data:final2},{name:'Заказ',data:final1}]};
+}
+
+/* ── OZON КОРОБАМИ ── */
+function ozon_box_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+
+  // SK_FILE: артикул, имя, количество
+  var skFile=res.map(function(r){return{
+    'артикул': r['Код 1С'],
+    'имя (необязательно)': r['Короткое наименование']||'',
+    'количество': r['Итого кол-во']||''
+  };});
+
+  var final2=[];
+  merged.forEach(function(r){
+    var numBoxes=toInt(r['Кол-во коробов']);
+    var boxItems=toFloat(r['Кратность короба_bd']||r['Кратность короба']);
+    for(var i=0;i<numBoxes;i++){
+      final2.push({
+        'ШК товара': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+        'Артикул товара': r['Код 1С'],
+        'Кол-во товаров': boxItems,
+        'Зона размещения': '',
+        'Срок годности ДО в формате YYYY-MM-DD (не более 1 СГ на 1 SKU в 1 ГМ)': '',
+        'ШК ГМ': '',
+        'Тип ГМ (не обязательно)': '',
+        'Наименование': r['Короткое наименование_bd']||r['Короткое наименование']||''
+      });
+    }
+  });
+  return {type:'ozon_box',files:[{name:'ШК',data:final2},{name:'Заказ',data:skFile}]};
+}
+
+/* ── OZON ПАЛЛЕТАМИ ── */
+function ozon_palette_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+
+  var skFile=res.map(function(r){return{
+    'артикул': r['Код 1С'],
+    'имя (необязательно)': r['Короткое наименование']||'',
+    'количество': r['Итого кол-во']||''
+  };});
+
+  var shk=merged.map(function(r){return{
+    'ШК товара': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Артикул товара': r['Код 1С'],
+    'Кол-во товаров': r['Итого кол-во']||'',
+    'Зона размещения': '',
+    'Срок годности ДО в формате YYYY-MM-DD (не более 1 СГ на 1 SKU в 1 ГМ)': '',
+    'ШК ГМ': '',
+    'Тип ГМ (не обязательно)': '',
+    'Наименование': r['Короткое наименование_bd']||r['Короткое наименование']||''
+  };});
+  return {type:'ozon_palette',files:[{name:'palette',data:shk},{name:'Заказ',data:skFile}]};
+}
+
+/* ── YM ── */
+function ym_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+  var final=merged.map(function(r){return{
+    'Ваш SKU': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Название товара': r['Короткое наименование_bd']||r['Короткое наименование']||'',
+    'Штрихкоды': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Количество товаров в поставке': r['Итого кол-во']||'',
+    'Объявленная ценность одного товара, руб.': '',
+    'Сколько мест занимает один товар': '',
+    'Комментарий для склада': ''
+  };});
+  return {type:'ym',files:[{name:'Заказ',data:final}]};
+}
+
+/* ── SBER ── */
+function sber_sborka(orderBuf,bdRows){
+  var res=parseOrderFile(orderBuf);
+  var merged=mergeOnKod1c(res,bdRows);
+  var final=merged.map(function(r){return{
+    'Артикул товара продавца': r['Код 1С'],
+    'Наименование товара': r['Короткое наименование_bd']||r['Короткое наименование']||'',
+    'Штрихкод': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
+    'Необходимость маркировки': 'нет',
+    'План поставки (шт.)': r['Итого кол-во']||'',
+    'Максимальный план поставки (шт.)': 40,
+    'Бренд': r['Бренд_bd']||r['Бренд']||'',
+    'ТН ВЭД': '',
+    'Комментарии': '',
+    'Цена': 1
+  };});
+  return {type:'sber',files:[{name:'Заказ',data:final,multisheet:true}]};
+}
+
+/* ── DISPATCHER ── */
+function runPipeline(platform,orderBuf,bdRows){
+  switch(platform){
+    case 'WildBerries':  return wb_sborka(orderBuf,bdRows);
+    case 'OzonBox':      return ozon_box_sborka(orderBuf,bdRows);
+    case 'OzonPalette':  return ozon_palette_sborka(orderBuf,bdRows);
+    case 'YM':           return ym_sborka(orderBuf,bdRows);
+    case 'SBER':         return sber_sborka(orderBuf,bdRows);
+    default: throw new Error('Неизвестная площадка: '+platform);
+  }
+}
+
+// ════════════════════════════════════════════
+//  EXCEL WRITER
+// ════════════════════════════════════════════
+function rowsToWb(rows){
+  var ws=XLSX.utils.json_to_sheet(rows);
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Лист1');
+  return wb;
+}
+
+function sberToWb(rows){
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([]),'Инструкция');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),'Товары, доступные для поставки');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([]),'Недоступные для поставки товары');
+  return wb;
+}
+
+function wbToBlob(wb){
+  var buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+  return new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+
+function renderResult(result,baseName){
+  var btns=document.getElementById('dlBtns');
+  var sub=document.getElementById('rcSub');
+  btns.innerHTML='';
+
+  var PREFIX_MAP={
+    wb:       function(n){return n==='ШК'?'ШК_'+baseName+'.xlsx':'Заказ_'+baseName+'.xlsx';},
+    ozon_box: function(n){return n==='ШК'?'ШК_'+baseName+'.xlsx':'Заказ_'+baseName+'_коробы.xlsx';},
+    ozon_palette:function(n){return n==='palette'?'palette_'+baseName+'.xlsx':'Заказ_'+baseName+'_палеты.xlsx';},
+    ym:       function(n){return 'Заказ_'+baseName+'.xlsx';},
+    sber:     function(n){return 'Заказ_'+baseName+'.xlsx';}
+  };
+
+  if(result.files.length===1){
+    var f=result.files[0];
+    var fn=PREFIX_MAP[result.type](f.name);
+    var wb=f.multisheet?sberToWb(f.data):rowsToWb(f.data);
+    var url=URL.createObjectURL(wbToBlob(wb));
+    btns.innerHTML='<a class="dl-btn" href="'+url+'" download="'+fn+'">⬇ СКАЧАТЬ '+fn+'</a>';
+    sub.textContent='Файл «'+fn+'» готов';
+  } else {
+    // Несколько файлов → предлагаем скачать по одному + ZIP
+    var links='';
+    var zippedFiles=[];
+    result.files.forEach(function(f){
+      var fn=PREFIX_MAP[result.type](f.name);
+      var wb2=rowsToWb(f.data);
+      var blob2=wbToBlob(wb2);
+      var url2=URL.createObjectURL(blob2);
+      links+='<a class="dl-btn" href="'+url2+'" download="'+fn+'">⬇ '+fn+'</a> ';
+      zippedFiles.push({name:fn,wb:wb2});
+    });
+    // ZIP кнопка
+    var zipId='zipBtn_'+Date.now();
+    links+='<button class="dl-btn zip" id="'+zipId+'" onclick="downloadZip(this,\''+baseName+'\')">📦 ZIP все</button>';
+    // Сохраняем данные для zip
+    window['_zipData_'+zipId]=zippedFiles;
+    btns.innerHTML=links;
+    sub.textContent=result.files.length+' файла готовы к скачиванию';
+  }
+}
+
+function downloadZip(btn,baseName){
+  var zipId=btn.id;
+  var files=window['_zipData_'+zipId];
+  if(!files) return;
+  btn.textContent='⏳ Архивирую…'; btn.disabled=true;
+  var zip=new JSZip();
+  files.forEach(function(f){
+    var buf=XLSX.write(f.wb,{type:'array',bookType:'xlsx'});
+    zip.file(f.name,buf);
+  });
+  zip.generateAsync({type:'blob'}).then(function(content){
+    var url=URL.createObjectURL(content);
+    var a=document.createElement('a');
+    a.href=url; a.download=baseName+'_результат.zip';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    btn.textContent='📦 ZIP все'; btn.disabled=false;
+  });
+}
+
+// ════════════════════════════════════════════
+//  ОБЩАЯ СБОРКА
+// ════════════════════════════════════════════
+var MP_KW={Ozon:'badge-ozon',WildBerries:'badge-wb',WB:'badge-wb',YM:'badge-ym',SBER:'badge-sber',Sber:'badge-sber'};
+var BADGE_LBL={'badge-ozon':'OZON','badge-wb':'WB','badge-ym':'YM','badge-sber':'SBER'};
+function detectMp(name){ for(var k in MP_KW){ if(name.includes(k)) return MP_KW[k]; } return null; }
+
+function mdOver(e,on){e.preventDefault();document.getElementById('multiDz').classList.toggle('dragover',on);}
+function mdDrop(e){e.preventDefault();document.getElementById('multiDz').classList.remove('dragover');mdAddFiles(e.dataTransfer.files);}
+function mdAdd(files){mdAddFiles(files); document.getElementById('multiInput').value='';}
+
+function mdAddFiles(files){
+  Array.from(files).forEach(function(f){
+    if(!S.obshFiles.find(function(x){return x.name===f.name;})){
+      var reader=new FileReader();
+      reader.onload=function(e){ S.obshFiles.push({name:f.name,buf:e.target.result}); renderFilesList(); };
+      reader.readAsArrayBuffer(f);
+    }
+  });
+}
+function mdRemove(name){ S.obshFiles=S.obshFiles.filter(function(x){return x.name!==name;}); renderFilesList(); }
+
+function renderFilesList(){
+  var el=document.getElementById('filesList');
+  var btn=document.getElementById('obshBtn');
+  if(!S.obshFiles.length){el.innerHTML='';btn.classList.remove('show');return;}
+  btn.classList.add('show');
+  el.innerHTML=S.obshFiles.map(function(f){
+    var mp=detectMp(f.name);
+    var tag=mp?'<span class="fc-mp '+mp+'">'+BADGE_LBL[mp]+'</span>':'<span class="fc-mp badge-unk">⚠ ?</span>';
+    return '<div class="fc"><span class="fc-name">📎 '+f.name+'</span>'+tag
+      +'<button class="fc-rm" onclick="mdRemove(\''+f.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" >×</button></div>';
+  }).join('');
+}
+
+async function processObsh(){
+  if(!S.obshFiles.length){toast('Добавьте файлы','err');return;}
+  showSpinner('Делаем общую сборку…');
+  try{
+    var mpGroups={Ozon:[],WildBerries:[],YM:[],SBER:[]};
+    var mpKw={Ozon:['Ozon'],WildBerries:['WildBerries','WB'],YM:['YM'],SBER:['SBER','Sber']};
+    S.obshFiles.forEach(function(f){
+      for(var mp in mpKw){
+        if(mpKw[mp].some(function(k){return f.name.includes(k);})){
+          mpGroups[mp].push(f); return;
+        }
+      }
+    });
+
+    var zip=new JSZip();
+    var allRows=[];
+
+    for(var mp in mpGroups){
+      var grp=mpGroups[mp];
+      if(!grp.length) continue;
+      var combined=[];
+      grp.forEach(function(f){
+        var wb=XLSX.read(f.buf,{type:'array'});
+        var ws=wb.Sheets[wb.SheetNames[0]];
+        var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        if(raw.length<2) return;
+        var headers=raw[1] && raw[1].some(function(h){return h!=='';}) ? raw[1] : raw[0];
+        var startRow=headers===raw[1]?2:1;
+        for(var i=startRow;i<raw.length;i++){
+          var row={'Сборка':f.name,'Маркетплейс':mp};
+          headers.forEach(function(h,j){ if(h) row[h]=raw[i][j]; });
+          combined.push(row);
+        }
+      });
+      if(!combined.length) continue;
+      var wbOut=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wbOut,XLSX.utils.json_to_sheet(combined),'Лист1');
+      var buf=XLSX.write(wbOut,{type:'array',bookType:'xlsx'});
+      zip.file('Общая сборка '+mp+'.xlsx',buf);
+      allRows=allRows.concat(combined);
+    }
+
+    if(!allRows.length) throw new Error('Ни один файл не определён по площадке. Проверьте имена файлов.');
+
+    var fullWb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(fullWb,XLSX.utils.json_to_sheet(allRows),'Все площадки');
+    zip.file('full.xlsx',XLSX.write(fullWb,{type:'array',bookType:'xlsx'}));
+
+    var content=await zip.generateAsync({type:'blob'});
+    var url=URL.createObjectURL(content);
+    var a=document.createElement('a'); a.href=url; a.download='общая_сборка.zip';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    S.obshFiles=[]; renderFilesList();
+    toast('✅ Общая сборка готова! Скачивается архив.','ok');
+  }catch(e){
+    toast('❌ '+e.message,'err');
+    console.error(e);
+  }finally{hideSpinner();}
+}
+
+// ════════════════════════════════════════════
+//  БАЗА ДАННЫХ (в браузере — только скачать + обновить в памяти)
+// ════════════════════════════════════════════
+function updateDbPill(){
+  var pill=document.getElementById('dbPill');
+  var txt=document.getElementById('dbPillTxt');
+  if(S.bdRows){
+    pill.className='db-pill'; txt.textContent='БД: '+S.bdRows.length+' поз.';
+  }else{
+    pill.className='db-pill nobd'; txt.textContent='БД не загружена';
+  }
+}
+
+function renderDbSection(){
+  var el=document.getElementById('dbSection');
+  if(!S.isAdmin){
+    el.innerHTML='<div class="no-access"><div style="font-size:48px;margin-bottom:12px">🔒</div>'
+      +'<div style="font-family:var(--display);font-size:20px;letter-spacing:2px;color:var(--dim)">НЕТ ПРАВ</div>'
+      +'<div style="font-size:12px;color:var(--dim);margin-top:8px">Управление БД доступно только администраторам.</div></div>';
+    return;
+  }
+
+  var cols=(S.bdRows&&S.bdRows.length)?Object.keys(S.bdRows[0]):[];
+  var colTags=cols.map(function(c){return '<span class="col-tag">'+c+'</span>';}).join('');
+  var rows=S.bdRows?S.bdRows.length:0;
+
+  el.innerHTML=
+    '<div class="db-card">'
+    +'<div class="db-card-title">📊 БД КОФЕ.XLSX — ТЕКУЩЕЕ СОСТОЯНИЕ</div>'
+    +'<div class="db-row-item"><span class="db-k">Статус</span><span class="db-v" style="color:var('+(S.bdRows?'--ok':'--crit')+')">'+( S.bdRows?'✅ Загружена':'❌ Не загружена')+'</span></div>'
+    +'<div class="db-row-item"><span class="db-k">Строк</span><span class="db-v">'+rows+'</span></div>'
+    +'<div class="db-row-item" style="align-items:flex-start"><span class="db-k">Колонки</span><div class="col-tags">'+colTags+'</div></div>'
+    +'</div>'
+
+    +'<button class="db-action primary" onclick="adminGetDb()">⬇ СКАЧАТЬ БД КОФЕ.XLSX</button>'
+
+    +'<div class="db-card">'
+    +'<div class="db-card-title" style="margin-bottom:10px">🔄 ОБНОВИТЬ БД</div>'
+    +'<div class="step-sub" style="margin-bottom:14px">Загрузите Excel с новыми позициями. Дубли по «Код 1С» обновятся (keep=last). Изменения действуют в текущей сессии.</div>'
+    +'<div class="dz" style="padding:24px" id="dbDz"'
+    +' ondragover="event.preventDefault();this.classList.add(\'dragover\')" ondragleave="this.classList.remove(\'dragover\')" ondrop="dbFileDrop(event)">'
+    +'<input type="file" accept=".xlsx,.xls" id="dbFileInput" onchange="dbFileChosen(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">'
+    +'<span class="dz-icon" style="font-size:32px">📂</span>'
+    +'<div class="dz-sub">Перетащите или нажмите</div>'
+    +'<div class="dz-chosen" id="dbDzChosen" style="display:none"></div>'
+    +'</div>'
+    +'<button class="db-action" id="dbUpdateBtn" onclick="applyDbUpdate()" style="margin-top:12px;display:none">🔄 ПРИМЕНИТЬ ОБНОВЛЕНИЕ →</button>'
+    +'</div>';
+}
+
+var _dbUpdateBuf=null;
+function dbFileDrop(e){e.preventDefault();document.getElementById('dbDz').classList.remove('dragover');if(e.dataTransfer.files[0])setDbFile(e.dataTransfer.files[0]);}
+function dbFileChosen(inp){if(inp.files[0])setDbFile(inp.files[0]);}
+function setDbFile(f){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    _dbUpdateBuf=e.target.result;
+    var ch=document.getElementById('dbDzChosen');
+    if(ch){ch.textContent='📎 '+f.name;ch.style.display='block';}
+    var btn=document.getElementById('dbUpdateBtn');
+    if(btn) btn.style.display='';
+  };
+  reader.readAsArrayBuffer(f);
+}
+
+function applyDbUpdate(){
+  if(!_dbUpdateBuf){toast('Выберите файл','err');return;}
+  showSpinner('Обновляем базу данных…');
+  setTimeout(function(){
+    try{
+      var wb=XLSX.read(_dbUpdateBuf,{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var newRows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      // Объединяем: existing + new, dedup по Код 1С keep=last
+      var combined=(S.bdRows||[]).concat(newRows);
+      var seen={};
+      var deduped=[];
+      for(var i=combined.length-1;i>=0;i--){
+        var k=String(combined[i]['Код 1С']||'').trim();
+        if(k&&k!=='nan'&&!seen[k]){seen[k]=1;deduped.unshift(combined[i]);}
+      }
+      var before=S.bdRows?S.bdRows.length:0;
+      S.bdRows=deduped;
+      updateDbPill();
+      renderDbSection();
+      toast('✅ БД обновлена: '+deduped.length+' строк (было '+before+', добавлено '+newRows.length+')','ok');
+    }catch(e){
+      toast('❌ '+e.message,'err');
+    }finally{hideSpinner();}
+  },50);
+}
+
+function adminGetDb(){
+  if(!S.isAdmin){toast('Нет прав','err');return;}
+  if(!S.bdRows){toast('БД не загружена','err');return;}
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.bdRows),'БД');
+  var blob=wbToBlob(wb);
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download='БД кофе.xlsx';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ════════════════════════════════════════════
+//  UI HELPERS
+// ════════════════════════════════════════════
+function showSpinner(txt){ document.getElementById('spinTxt').textContent=txt||'Обработка…'; document.getElementById('spinner').classList.add('show'); }
+function hideSpinner(){ document.getElementById('spinner').classList.remove('show'); }
+
+var _toastTimer;
+function toast(msg,type){
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast show '+(type||'inf');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(function(){el.classList.remove('show');},4000);
+}
+</script>
+</body>
+</html>
