@@ -182,7 +182,7 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
       <div class="fld"><label>Период по</label><input type="date" id="dateTo"   value="2025-11-30"></div>
     </div>
   </div>
-  <!-- Google Apps Script URL -->
+  <!-- Apps Script URL -->
   <div class="proxy-row">
     <span class="proxy-dot" id="proxyDot"></span>
     <label>Apps Script URL</label>
@@ -191,9 +191,8 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
            oninput="saveAndCheck()">
   </div>
   <div class="btn-row">
-    <button class="btn btn-p" id="loadBtn2" onclick="loadData()" style="flex:1">Загрузить из 1С</button>
-    <button class="btn btn-g" onclick="loadLast()" title="Последние данные из таблицы">📋 Из таблицы</button>
-    <button class="btn btn-g" onclick="debugScript()" title="Диагностика">🔍 Debug</button>
+    <button class="btn btn-p" id="loadBtn2" onclick="loadData()" style="flex:1">Обновить из 1С → Таблица</button>
+    <button class="btn btn-g" onclick="loadFromSheet()" title="Показать последние данные из таблицы">📋 Из таблицы</button>
   </div>
 </div>
 
@@ -238,6 +237,9 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
 </div>
 
 <script>
+const SHEET_ID = '1FUZWAMSEXWcdMn0lU2wc3VXYAHgr5Epf4fLfM2iEPnw';
+const SHEET_NAME = 'PL';
+
 /* ── VIEW ── */
 function setView(v){
   const b=document.getElementById('bodyEl');
@@ -275,8 +277,7 @@ async function checkProxy(){
   dot.className='proxy-dot';
   try{
     const r=await fetch(url+'?action=health',{signal:AbortSignal.timeout(6000)});
-    const j=await r.json();
-    dot.className=(r.ok&&j.status==='ok')?'proxy-dot ok':'proxy-dot err';
+    dot.className=r.ok?'proxy-dot ok':'proxy-dot err';
   }catch{dot.className='proxy-dot err';}
 }
 
@@ -300,226 +301,141 @@ function setSt(type,msg,detail){
   if(detail){d.style.display='block';d.textContent=detail}else d.style.display='none';
 }
 
-/* ── DEBUG ── */
-async function debugScript(){
-  const wb=scriptBase();
-  const base=document.getElementById('baseUrl').value.trim();
-  const login=document.getElementById('login').value.trim();
-  const pw=document.getElementById('password').value.trim();
-  const creds=btoa(login+':'+pw);
-
-  setSt('loading','Диагностика соединения...');
-  const results=[];
-
-  // 1. Health
-  try{
-    const r=await fetch(wb+'?action=health',{signal:AbortSignal.timeout(8000)});
-    const j=await r.json();
-    results.push('✓ Apps Script доступен: '+JSON.stringify(j));
-  }catch(e){
-    results.push('✗ Apps Script недоступен: '+e.message);
-    results.push('  → Проверьте URL и что скрипт опубликован как веб-приложение');
-    setSt('error','Apps Script недоступен',e.message);
-    alert(results.join('\n'));
-    return;
-  }
-
-  // 2. Тест запроса к 1С через Apps Script
-  results.push('');
-  results.push('── Тест запроса к 1С ──');
-  try{
-    const path='ChartOfAccounts_Хозрасчетный?$top=1&$select=Code&$format=json';
-    const url=wb+'?action=proxy'
-      +'&baseUrl='+encodeURIComponent(base)
-      +'&auth='+encodeURIComponent(creds)
-      +'&path='+encodeURIComponent(path);
-    const r=await fetch(url,{signal:AbortSignal.timeout(15000)});
-    const j=await r.json();
-    results.push('  HTTP статус: '+r.status);
-    if(j.ok&&j.value){
-      results.push('  ✓ 1С отвечает! Данные получены ('+j.value.length+' записей)');
-    } else if(j.error){
-      results.push('  ✗ Ошибка: '+j.error);
-      if(j.hint)        results.push('  Подсказка: '+j.hint);
-      if(j.upstream_body) results.push('  Ответ 1С: '+j.upstream_body.slice(0,300));
-    }
-  }catch(e){
-    results.push('  ✗ Fetch error: '+e.message);
-    if(e.name==='TimeoutError') results.push('  → Таймаут — Apps Script или 1С не ответили за 15 сек');
-  }
-
-  // 3. Параметры
-  results.push('');
-  results.push('── Параметры ──');
-  results.push('  Apps Script: '+(wb||'НЕ ЗАПОЛНЕН'));
-  results.push('  Base URL:    '+(base||'НЕ ЗАПОЛНЕН'));
-  results.push('  Login:       '+(login||'НЕ ЗАПОЛНЕН'));
-  results.push('  Password:    '+(pw?'заполнен ('+pw.length+' симв.)':'НЕ ЗАПОЛНЕН'));
-
-  const hasErr=results.some(r=>r.includes('✗'));
-  setSt(hasErr?'error':'success',hasErr?'Диагностика выявила проблемы':'Всё работает');
-  alert(results.join('\n'));
-}
-
-/* ── API ── */
-function scriptBase(){
-  return(document.getElementById('proxyUrl').value||'').trim().replace(/\/$/,'');
-}
-// обратная совместимость
-function workerBase(){ return scriptBase(); }
-
-async function apiFetch(path){
-  const sb=scriptBase();
-  if(!sb) throw new Error('Не указан Apps Script URL');
-  const login=document.getElementById('login').value.trim();
-  const pw=document.getElementById('password').value.trim();
-  if(!login||!pw) throw new Error('Не заполнен логин или пароль');
-  const creds=btoa(login+':'+pw);
-  const base=document.getElementById('baseUrl').value.trim();
-  if(!base) throw new Error('Не заполнен URL базы 1С');
-
-  const url=sb+'?action=proxy'
-    +'&baseUrl='+encodeURIComponent(base)
-    +'&auth='+encodeURIComponent(creds)
-    +'&path='+encodeURIComponent(path);
-
-  const resp=await fetch(url);
-  if(!resp.ok){
-    const t=await resp.text().catch(()=>'');
-    throw new Error(`HTTP ${resp.status}\n${t.slice(0,400)}`);
-  }
-  const j=await resp.json();
-  if(j.error) throw new Error(j.error+(j.hint?'\n'+j.hint:'')+(j.upstream_body?'\n'+j.upstream_body.slice(0,300):''));
-  return j;
-}
-
-/* ── СОХРАНИТЬ В ТАБЛИЦУ ── */
-async function saveToSheet(data){
-  const sb=scriptBase();
-  if(!sb) return;
-  try{
-    await fetch(sb,{
-      method:'POST',
-      body:JSON.stringify(data),
-      headers:{'Content-Type':'application/json'},
-    });
-  }catch(e){console.warn('Не удалось сохранить в таблицу:',e.message);}
-}
-
-/* ── ЗАГРУЗИТЬ ПОСЛЕДНИЕ ИЗ ТАБЛИЦЫ ── */
-async function loadLast(){
-  const sb=scriptBase();
-  if(!sb){setSt('error','Не указан Apps Script URL');return;}
+/* ── ЗАГРУЗИТЬ ИЗ ТАБЛИЦЫ (Google Sheets API, без CORS) ── */
+async function loadFromSheet(){
   setSt('loading','Загрузка из таблицы...');
   try{
-    const r=await fetch(sb+'?action=getLast');
-    const j=await r.json();
-    if(j.empty){setSt('error','В таблице нет сохранённых данных');return;}
-    render(j);
-    document.getElementById('lastUpd').textContent=`Из таблицы: ${j.updatedAt} · ${j.from} — ${j.to}`;
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+    const resp=await fetch(url);
+    const text=await resp.text();
+    // Google возвращает /*O_o*/ google.visualization.Query.setResponse({...});
+    const json=JSON.parse(text.replace(/^.*?(\{)/,'$1').replace(/\);?\s*$/,''));
+    const rows=json.table.rows;
+    if(!rows||rows.length===0){setSt('error','В таблице нет данных. Сначала нажмите «Обновить из 1С»');return;}
+    // Парсим key-value пары
+    const data={};
+    rows.forEach(r=>{
+      const key=r.c[0]&&r.c[0].v;
+      const val=r.c[1]&&r.c[1].v;
+      if(key) data[key]=val;
+    });
+    if(!data.revNet){setSt('error','Данные в таблице повреждены или пусты');return;}
+    render(data);
+    document.getElementById('lastUpd').textContent=`Из таблицы: ${new Date(data.updated).toLocaleString('ru-RU')} · ${data.from} — ${data.to}`;
     setSt('success','Данные загружены из таблицы');
-  }catch(e){setSt('error','Ошибка загрузки из таблицы',e.message);}
-}
-async function getKey(code){
-  const d=await apiFetch(`ChartOfAccounts_Хозрасчетный?$filter=Code eq '${code}'&$select=Ref_Key,Code&$format=json`);
-  if(!d.value?.[0]) throw new Error(`Счёт ${code} не найден`);
-  return d.value[0].Ref_Key;
-}
-async function getKeySafe(code){try{return await getKey(code);}catch{return null;}}
-function buildQ(key,from,to,dr,cr){
-  return`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${key}''')?$select=${dr},${cr}&$format=json`;
-}
-async function probeFields(from,to){
-  let fk=null;
-  for(const c of ['90.01.1','90.01','90.02.1','90.02']){fk=await getKeySafe(c);if(fk)break;}
-  if(!fk) throw new Error('Не удалось получить ключ счёта для probe');
-  const bq=`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${fk}''')`;
-  for(const [dr,cr] of [['СуммаTurnoverDr','СуммаTurnoverCr'],['СуммаОборотДт','СуммаОборотКт'],['AmountTurnoverDr','AmountTurnoverCr']]){
-    try{await apiFetch(`${bq}?$top=1&$select=${dr},${cr}&$format=json`);return{dr,cr};}
-    catch(e){console.warn('Probe miss:',dr,e.message.slice(0,80));}
+  }catch(e){
+    setSt('error','Ошибка загрузки из таблицы',e.message);
   }
-  return null;
 }
 
-/* ── DIAG ── */
-async function findDeprAccounts(from,to,dr,cr){
-  const res=[];
-  for(const code of ['02','02.01','02.02','02.03','05','20','20.01','25','26','44','44.01','44.02']){
-    try{
-      const key=await getKeySafe(code);
-      if(!key){res.push({code,status:'не найден'});continue;}
-      const data=await apiFetch(buildQ(key,from,to,dr,cr));
-      const S=(rows,f)=>rows.reduce((a,r)=>a+(r[f]||0),0);
-      const da=S(data.value,dr),ca=S(data.value,cr);
-      if(da>0||ca>0)res.push({code,dr:Math.round(da),cr:Math.round(ca),status:'✓ есть обороты'});
-      else res.push({code,dr:0,cr:0,status:'нет оборотов'});
-    }catch(e){res.push({code,status:'ошибка: '+e.message.slice(0,50)});}
-  }
-  return res;
-}
-async function diagDepr(){
-  const from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
-  setSt('loading','Диагностика...');
-  try{
-    const probe=await probeFields(from,to);
-    if(!probe) throw new Error('Не удалось определить поля');
-    const res=await findDeprAccounts(from,to,probe.dr,probe.cr);
-    const has=res.filter(r=>r.status.startsWith('✓'));
-    setSt('success',has.length?'Найдено: '+has.map(r=>r.code).join(', '):'Оборотов не найдено');
-    console.table(res);
-    alert('Диагностика амортизации:\n\n'+res.map(r=>`${r.code.padEnd(8)} ${r.status}${r.dr!==undefined?' | Дт:'+r.dr.toLocaleString('ru-RU')+' Кт:'+r.cr.toLocaleString('ru-RU'):''}`).join('\n'));
-  }catch(e){setSt('error','Ошибка',e.message);}
-}
-
-/* ── LOAD ── */
+/* ── ОБНОВИТЬ ИЗ 1С → ТАБЛИЦА (через Apps Script + JSONP trick) ── */
 async function loadData(){
-  const from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
+  const scriptUrl=(document.getElementById('proxyUrl').value||'').trim().replace(/\/$/,'');
+  if(!scriptUrl){setSt('error','Не указан Apps Script URL');return;}
+  const login=document.getElementById('login').value.trim();
+  const pw=document.getElementById('password').value.trim();
+  const base=document.getElementById('baseUrl').value.trim();
+  const from=document.getElementById('dateFrom').value;
+  const to=document.getElementById('dateTo').value;
+  if(!login||!pw){setSt('error','Не заполнен логин или пароль');return;}
+  if(!base){setSt('error','Не заполнен URL базы 1С');return;}
+
   ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=true);
   document.getElementById('placeholder').style.display='none';
-  document.getElementById('content').style.display='none';
+  setSt('loading','Запрос к 1С через Apps Script...<br><small>Это может занять 30–60 секунд</small>');
+
+  const auth=btoa(login+':'+pw);
+  const syncUrl=scriptUrl+'?action=sync'
+    +'&baseUrl='+encodeURIComponent(base)
+    +'&auth='+encodeURIComponent(auth)
+    +'&from='+encodeURIComponent(from)
+    +'&to='+encodeURIComponent(to);
+
   try{
-    setSt('loading','Получение плана счетов...');
-    const [k9001,k9001_1,k9001_2,k9002_1,k9002_2,k9003,k9007_1,k9007_2,k9008_1,k9008_2,k02_01,k02_03]=await Promise.all([
-      getKeySafe('90.01'),getKeySafe('90.01.1'),getKeySafe('90.01.2'),
-      getKeySafe('90.02.1'),getKeySafe('90.02.2'),getKeySafe('90.03'),
-      getKeySafe('90.07.1'),getKeySafe('90.07.2'),getKeySafe('90.08.1'),getKeySafe('90.08.2'),
-      getKeySafe('02.01'),getKeySafe('02.03'),
-    ]);
-    setSt('loading','Определение структуры регистра...');
-    const probe=await probeFields(from,to);
-    if(!probe) throw new Error('Не удалось определить поля регистра');
-    const{dr,cr}=probe;
-    const fQ=key=>key?apiFetch(buildQ(key,from,to,dr,cr)):Promise.resolve({value:[]});
-    setSt('loading','Загрузка оборотов...');
-    const [r9001,r9001_1,r9001_2,r9002_1,r9002_2,r9003,r9007_1,r9007_2,r9008_1,r9008_2,r02_01,r02_03]=await Promise.all([
-      fQ(k9001),fQ(k9001_1),fQ(k9001_2),fQ(k9002_1),fQ(k9002_2),fQ(k9003),
-      fQ(k9007_1),fQ(k9007_2),fQ(k9008_1),fQ(k9008_2),fQ(k02_01),fQ(k02_03),
-    ]);
-    const S=(rows,f)=>rows.reduce((a,r)=>a+(r[f]||0),0);
-    const revSub=S(r9001_1.value,cr)+S(r9001_2.value,cr);
-    const revGross=revSub>0?revSub:S(r9001.value,cr);
-    const nds=S(r9003.value,dr),revNet=revGross-nds;
-    const cost=S(r9002_1.value,dr)+S(r9002_2.value,dr);
-    const comm=S(r9007_1.value,dr)+S(r9007_2.value,dr);
-    const mgmt=S(r9008_1.value,dr)+S(r9008_2.value,dr);
-    const depr=S(r02_01.value,cr)+S(r02_03.value,cr);
-    const totalExp=cost+comm+mgmt,opProfit=revNet-totalExp;
-    const ndsRate=revGross?nds/revGross*100:0;
-    render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to});
-    await saveToSheet({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to});
-    document.getElementById('lastUpd').textContent=`Обновлено: ${new Date().toLocaleString('ru-RU')} · ${from} — ${to}`;
-    setSt('success',`Готово · ${new Date().toLocaleTimeString('ru-RU')}`);
+    // Используем no-cors + потом читаем из таблицы
+    // Сначала пробуем обычный fetch
+    let data=null;
+    try{
+      const resp=await fetch(syncUrl,{signal:AbortSignal.timeout(120000)});
+      const text=await resp.text();
+      // Apps Script может вернуть HTML при редиректе — проверяем
+      if(text.trim().startsWith('{')){
+        data=JSON.parse(text);
+      }
+    }catch(fetchErr){
+      console.warn('Direct fetch failed:',fetchErr.message);
+    }
+
+    if(data&&data.ok){
+      // Данные вернулись напрямую — рендерим
+      render(data);
+      document.getElementById('lastUpd').textContent=`Обновлено: ${new Date().toLocaleString('ru-RU')} · ${from} — ${to}`;
+      setSt('success',`Готово · данные записаны в таблицу`);
+    } else {
+      // Прямой fetch заблокирован CORS — запускаем через img/script trick
+      // и ждём пока данные появятся в таблице
+      setSt('loading','Синхронизация запущена, ждём запись в таблицу...');
+      await triggerViaImg(syncUrl);
+      // Даём Apps Script 45 секунд на выполнение
+      await waitAndLoad(45);
+    }
   }catch(e){
-    setSt('error','Ошибка загрузки данных',e.message);
+    setSt('error','Ошибка',e.message);
     document.getElementById('placeholder').style.display='block';
   }finally{
     ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=false);
   }
 }
 
+// Запускаем Apps Script через <img> тег (обходим CORS, fire-and-forget)
+function triggerViaImg(url){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=img.onerror=()=>resolve();
+    img.src=url;
+    setTimeout(resolve,3000); // максимум 3 сек ждём ответа img
+  });
+}
+
+// Опрашиваем таблицу каждые 5 секунд пока не появятся свежие данные
+async function waitAndLoad(maxSeconds){
+  const now=Date.now();
+  let attempts=0;
+  while((Date.now()-now)<maxSeconds*1000){
+    attempts++;
+    setSt('loading',`Ожидание данных в таблице... (${Math.round((Date.now()-now)/1000)}с)`);
+    await new Promise(r=>setTimeout(r,5000));
+    try{
+      const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&_=${Date.now()}`;
+      const resp=await fetch(url);
+      const text=await resp.text();
+      const json=JSON.parse(text.replace(/^.*?(\{)/,'$1').replace(/\);?\s*$/,''));
+      const rows=json.table.rows;
+      if(!rows||rows.length===0) continue;
+      const data={};
+      rows.forEach(r=>{const k=r.c[0]&&r.c[0].v,v=r.c[1]&&r.c[1].v;if(k)data[k]=v;});
+      if(!data.updated) continue;
+      // Проверяем что данные свежие (не старше 3 минут)
+      const updatedMs=new Date(data.updated).getTime();
+      if(Date.now()-updatedMs<180000){
+        render(data);
+        document.getElementById('lastUpd').textContent=`Обновлено: ${new Date(data.updated).toLocaleString('ru-RU')} · ${data.from} — ${data.to}`;
+        setSt('success','Готово · данные записаны в таблицу');
+        return;
+      }
+    }catch(e){console.warn('Poll error:',e.message);}
+  }
+  setSt('error','Таймаут. Попробуйте нажать «📋 Из таблицы» через минуту — данные могут ещё записываться');
+}
+
 /* ── RENDER ── */
 let barCI=null;
-function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to}){
+function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to,margin}){
+  // Приводим к числам (из таблицы могут прийти строки)
+  revGross=+revGross||0;nds=+nds||0;ndsRate=+ndsRate||0;revNet=+revNet||0;
+  cost=+cost||0;comm=+comm||0;mgmt=+mgmt||0;depr=+depr||0;
+  totalExp=+totalExp||0;opProfit=+opProfit||0;
+
   document.getElementById('kRevNet').textContent=FMT(revNet);
   document.getElementById('kTotalExp').textContent=FMT(totalExp);
   document.getElementById('kOpProfit').textContent=FMT(opProfit);
@@ -528,7 +444,7 @@ function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProf
   document.getElementById('kTotalExpS').textContent=PCT(totalExp,revNet)+' от выручки';
   document.getElementById('kOpProfitS').textContent=opProfit>=0?'прибыль':'убыток';
   const fmt2=s=>{const[y,m]=s.split('-');return new Date(+y,+m-1).toLocaleString('ru-RU',{month:'long',year:'numeric'})};
-  document.getElementById('plPeriod').textContent=from.slice(0,7)===to.slice(0,7)?fmt2(from):from+' — '+to;
+  document.getElementById('plPeriod').textContent=from&&to?(from.slice(0,7)===to.slice(0,7)?fmt2(from):from+' — '+to):'';
   const rows=[
     ['section','','Доходы'],
     ['row','90.01','Выручка с НДС',revGross,revGross,'#4f8ef7',''],
@@ -537,11 +453,11 @@ function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProf
     ['rowhl','','Выручка без НДС',revNet,revGross],
     ['section','','Расходы'],
     ['row','90.02','Себестоимость',cost,revNet,'#f7604f',''],
-    ['sub','','Доля в выручке',cost/revNet*100],
+    ['sub','','Доля в выручке',revNet?cost/revNet*100:0],
     ['row','90.07','Коммерческие расходы',comm,revNet,'#f7b84f',''],
-    ['sub','','Доля в выручке',comm/revNet*100],
+    ['sub','','Доля в выручке',revNet?comm/revNet*100:0],
     ['row','90.08','АУП расходы',mgmt,revNet,'#a78bfa',''],
-    ['sub','','Доля в выручке',mgmt/revNet*100],
+    ['sub','','Доля в выручке',revNet?mgmt/revNet*100:0],
     ['total','','Итого расходы',totalExp,revNet],
     ['result','','Операционная прибыль',opProfit,revNet],
     ['section','','Справочно'],
@@ -576,6 +492,9 @@ function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProf
   document.getElementById('content').style.display='block';
   document.getElementById('footer').style.display='block';
 }
+
+// Автозагрузка из таблицы при открытии страницы
+window.addEventListener('load',()=>{ setTimeout(loadFromSheet, 500); });
 </script>
 </body>
 </html>
