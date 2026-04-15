@@ -193,6 +193,7 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
   </div>
   <div class="btn-row">
     <button class="btn btn-p" id="loadBtn2" onclick="loadData()" style="flex:1">Загрузить из 1С</button>
+    <button class="btn btn-g" onclick="debugWorker()" title="Диагностика соединения">🔍 Debug</button>
   </div>
 </div>
 
@@ -311,29 +312,75 @@ async function debugWorker(){
 
   // 1. Проверяем health
   try{
-    const r=await fetch(wb+'/health');
+    const r=await fetch(wb+'/health',{signal:AbortSignal.timeout(5000)});
     const j=await r.json();
-    results.push('✓ Worker: '+JSON.stringify(j));
-  }catch(e){results.push('✗ Worker недоступен: '+e.message);}
+    results.push('✓ Worker доступен: '+JSON.stringify(j));
+  }catch(e){
+    results.push('✗ Worker недоступен: '+e.message);
+    results.push('  → Проверьте Worker URL и что скрипт задеплоен в Cloudflare');
+    setSt('error','Worker недоступен',e.message);
+    alert(results.join('\n'));
+    return;
+  }
 
-  // 2. Проверяем что Worker получает наши параметры
+  // 2. Проверяем /debug — видит ли воркер наши заголовки
   try{
-    const r=await fetch(wb+'/api/test_debug?$format=json&_auth='+encodeURIComponent('Basic '+creds)+'&_base='+encodeURIComponent(base),{
-      headers:{'X-1C-Auth':'Basic '+creds,'X-1C-BaseUrl':base}
+    const r=await fetch(wb+'/debug',{
+      headers:{'X-1C-Auth':'Basic '+creds,'X-1C-BaseUrl':base},
+      signal:AbortSignal.timeout(5000)
     });
     const j=await r.json();
-    results.push('Worker ответил ('+r.status+'): '+JSON.stringify(j).slice(0,200));
-  }catch(e){results.push('✗ Ошибка запроса: '+e.message);}
+    results.push('');
+    results.push('── Заголовки на воркере ──');
+    results.push('  X-1C-Auth получен:    '+(j.got_auth?'✓ ДА':'✗ НЕТ'));
+    results.push('  X-1C-BaseUrl получен: '+(j.got_base?'✓ ДА':'✗ НЕТ'));
+    if(j.auth_prefix) results.push('  Auth prefix: '+j.auth_prefix);
+    if(j.base_url)    results.push('  Base URL: '+j.base_url);
+    if(!j.got_auth||!j.got_base){
+      results.push('  → Заголовки не доходят! Возможно CORS preflight срезает их.');
+    }
+  }catch(e){results.push('✗ /debug ошибка: '+e.message);}
 
-  // 3. Показываем параметры
+  // 3. Пробуем реальный запрос к 1С через воркер (план счетов)
   results.push('');
-  results.push('Параметры:');
-  results.push('  Worker: '+(wb||'НЕ ЗАПОЛНЕН'));
-  results.push('  Base:   '+(base||'НЕ ЗАПОЛНЕН'));
-  results.push('  Login:  '+(login||'НЕ ЗАПОЛНЕН'));
-  results.push('  Pass:   '+(pw?'заполнен ('+pw.length+' симв.)':'НЕ ЗАПОЛНЕН'));
+  results.push('── Тест запроса к 1С ──');
+  try{
+    const r=await fetch(wb+'/api/ChartOfAccounts_Хозрасчетный?$top=1&$select=Code&$format=json',{
+      headers:{'X-1C-Auth':'Basic '+creds,'X-1C-BaseUrl':base,'Accept':'application/json'},
+      signal:AbortSignal.timeout(10000)
+    });
+    const text=await r.text();
+    let parsed=null;
+    try{parsed=JSON.parse(text);}catch{}
+    results.push('  HTTP статус: '+r.status);
+    if(r.ok && parsed?.value){
+      results.push('  ✓ 1С отвечает! Данные получены.');
+    } else if(parsed?.error){
+      results.push('  ✗ Ошибка: '+JSON.stringify(parsed.error).slice(0,200));
+      if(parsed.hint) results.push('  Подсказка: '+parsed.hint);
+      if(parsed.upstream_body) results.push('  Ответ 1С: '+parsed.upstream_body.slice(0,300));
+      if(r.status===401) results.push('  → Неверный логин или пароль');
+      if(r.status===403) results.push('  → Нет прав доступа в 1С');
+      if(r.status===404) results.push('  → Неверный URL базы 1С');
+      if(r.status===502) results.push('  → Cloudflare не достучался до 1С (блокировка IP?)');
+    } else {
+      results.push('  Ответ: '+text.slice(0,300));
+    }
+  }catch(e){
+    results.push('  ✗ Fetch error: '+e.message);
+    if(e.name==='TimeoutError') results.push('  → Таймаут — сервер 1С не отвечает за 10 сек');
+  }
 
-  setSt(results.some(r=>r.startsWith('✗'))?'error':'success', results[0]);
+  // 4. Итоговые параметры
+  results.push('');
+  results.push('── Параметры ──');
+  results.push('  Worker:  '+(wb||'НЕ ЗАПОЛНЕН'));
+  results.push('  Base URL:'+(base||'НЕ ЗАПОЛНЕН'));
+  results.push('  Login:   '+(login||'НЕ ЗАПОЛНЕН'));
+  results.push('  Password:'+(pw?'заполнен ('+pw.length+' симв.)':'НЕ ЗАПОЛНЕН'));
+
+  const hasErr=results.some(r=>r.includes('✗'));
+  setSt(hasErr?'error':'success', hasErr?'Диагностика выявила проблемы':'Всё работает');
   alert(results.join('\n'));
 }
 
