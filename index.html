@@ -182,18 +182,18 @@ body.desk .cfg{padding:18px 20px;margin-bottom:20px}
       <div class="fld"><label>Период по</label><input type="date" id="dateTo"   value="2025-11-30"></div>
     </div>
   </div>
-  <!-- Cloudflare Worker URL -->
+  <!-- Google Apps Script URL -->
   <div class="proxy-row">
     <span class="proxy-dot" id="proxyDot"></span>
-    <label>Worker URL</label>
+    <label>Apps Script URL</label>
     <input type="text" id="proxyUrl"
-           placeholder="https://pl-proxy.YOUR.workers.dev"
-           value="https://1odata.singlecupclaude.workers.dev"
+           placeholder="https://script.google.com/macros/s/XXXX/exec"
            oninput="saveAndCheck()">
   </div>
   <div class="btn-row">
     <button class="btn btn-p" id="loadBtn2" onclick="loadData()" style="flex:1">Загрузить из 1С</button>
-    <button class="btn btn-g" onclick="debugWorker()" title="Диагностика соединения">🔍 Debug</button>
+    <button class="btn btn-g" onclick="loadLast()" title="Последние данные из таблицы">📋 Из таблицы</button>
+    <button class="btn btn-g" onclick="debugScript()" title="Диагностика">🔍 Debug</button>
   </div>
 </div>
 
@@ -274,8 +274,9 @@ async function checkProxy(){
   if(!url){dot.className='proxy-dot';return;}
   dot.className='proxy-dot';
   try{
-    const r=await fetch(url+'/health',{signal:AbortSignal.timeout(4000)});
-    dot.className=r.ok?'proxy-dot ok':'proxy-dot err';
+    const r=await fetch(url+'?action=health',{signal:AbortSignal.timeout(6000)});
+    const j=await r.json();
+    dot.className=(r.ok&&j.status==='ok')?'proxy-dot ok':'proxy-dot err';
   }catch{dot.className='proxy-dot err';}
 }
 
@@ -300,8 +301,8 @@ function setSt(type,msg,detail){
 }
 
 /* ── DEBUG ── */
-async function debugWorker(){
-  const wb=workerBase();
+async function debugScript(){
+  const wb=scriptBase();
   const base=document.getElementById('baseUrl').value.trim();
   const login=document.getElementById('login').value.trim();
   const pw=document.getElementById('password').value.trim();
@@ -310,114 +311,123 @@ async function debugWorker(){
   setSt('loading','Диагностика соединения...');
   const results=[];
 
-  // 1. Проверяем health
+  // 1. Health
   try{
-    const r=await fetch(wb+'/health',{signal:AbortSignal.timeout(5000)});
+    const r=await fetch(wb+'?action=health',{signal:AbortSignal.timeout(8000)});
     const j=await r.json();
-    results.push('✓ Worker доступен: '+JSON.stringify(j));
+    results.push('✓ Apps Script доступен: '+JSON.stringify(j));
   }catch(e){
-    results.push('✗ Worker недоступен: '+e.message);
-    results.push('  → Проверьте Worker URL и что скрипт задеплоен в Cloudflare');
-    setSt('error','Worker недоступен',e.message);
+    results.push('✗ Apps Script недоступен: '+e.message);
+    results.push('  → Проверьте URL и что скрипт опубликован как веб-приложение');
+    setSt('error','Apps Script недоступен',e.message);
     alert(results.join('\n'));
     return;
   }
 
-  // 2. Проверяем /debug — видит ли воркер наши заголовки
-  try{
-    const r=await fetch(wb+'/debug',{
-      headers:{'X-1C-Auth':'Basic '+creds,'X-1C-BaseUrl':base},
-      signal:AbortSignal.timeout(5000)
-    });
-    const j=await r.json();
-    results.push('');
-    results.push('── Заголовки на воркере ──');
-    results.push('  X-1C-Auth получен:    '+(j.got_auth?'✓ ДА':'✗ НЕТ'));
-    results.push('  X-1C-BaseUrl получен: '+(j.got_base?'✓ ДА':'✗ НЕТ'));
-    if(j.auth_prefix) results.push('  Auth prefix: '+j.auth_prefix);
-    if(j.base_url)    results.push('  Base URL: '+j.base_url);
-    if(!j.got_auth||!j.got_base){
-      results.push('  → Заголовки не доходят! Возможно CORS preflight срезает их.');
-    }
-  }catch(e){results.push('✗ /debug ошибка: '+e.message);}
-
-  // 3. Пробуем реальный запрос к 1С через воркер (план счетов)
+  // 2. Тест запроса к 1С через Apps Script
   results.push('');
   results.push('── Тест запроса к 1С ──');
   try{
-    const r=await fetch(wb+'/api/ChartOfAccounts_Хозрасчетный?$top=1&$select=Code&$format=json',{
-      headers:{'X-1C-Auth':'Basic '+creds,'X-1C-BaseUrl':base,'Accept':'application/json'},
-      signal:AbortSignal.timeout(10000)
-    });
-    const text=await r.text();
-    let parsed=null;
-    try{parsed=JSON.parse(text);}catch{}
+    const path='ChartOfAccounts_Хозрасчетный?$top=1&$select=Code&$format=json';
+    const url=wb+'?action=proxy'
+      +'&baseUrl='+encodeURIComponent(base)
+      +'&auth='+encodeURIComponent(creds)
+      +'&path='+encodeURIComponent(path);
+    const r=await fetch(url,{signal:AbortSignal.timeout(15000)});
+    const j=await r.json();
     results.push('  HTTP статус: '+r.status);
-    if(r.ok && parsed?.value){
-      results.push('  ✓ 1С отвечает! Данные получены.');
-    } else if(parsed?.error){
-      results.push('  ✗ Ошибка: '+JSON.stringify(parsed.error).slice(0,200));
-      if(parsed.hint) results.push('  Подсказка: '+parsed.hint);
-      if(parsed.upstream_body) results.push('  Ответ 1С: '+parsed.upstream_body.slice(0,300));
-      if(r.status===401) results.push('  → Неверный логин или пароль');
-      if(r.status===403) results.push('  → Нет прав доступа в 1С');
-      if(r.status===404) results.push('  → Неверный URL базы 1С');
-      if(r.status===502) results.push('  → Cloudflare не достучался до 1С (блокировка IP?)');
-    } else {
-      results.push('  Ответ: '+text.slice(0,300));
+    if(j.ok&&j.value){
+      results.push('  ✓ 1С отвечает! Данные получены ('+j.value.length+' записей)');
+    } else if(j.error){
+      results.push('  ✗ Ошибка: '+j.error);
+      if(j.hint)        results.push('  Подсказка: '+j.hint);
+      if(j.upstream_body) results.push('  Ответ 1С: '+j.upstream_body.slice(0,300));
     }
   }catch(e){
     results.push('  ✗ Fetch error: '+e.message);
-    if(e.name==='TimeoutError') results.push('  → Таймаут — сервер 1С не отвечает за 10 сек');
+    if(e.name==='TimeoutError') results.push('  → Таймаут — Apps Script или 1С не ответили за 15 сек');
   }
 
-  // 4. Итоговые параметры
+  // 3. Параметры
   results.push('');
   results.push('── Параметры ──');
-  results.push('  Worker:  '+(wb||'НЕ ЗАПОЛНЕН'));
-  results.push('  Base URL:'+(base||'НЕ ЗАПОЛНЕН'));
-  results.push('  Login:   '+(login||'НЕ ЗАПОЛНЕН'));
-  results.push('  Password:'+(pw?'заполнен ('+pw.length+' симв.)':'НЕ ЗАПОЛНЕН'));
+  results.push('  Apps Script: '+(wb||'НЕ ЗАПОЛНЕН'));
+  results.push('  Base URL:    '+(base||'НЕ ЗАПОЛНЕН'));
+  results.push('  Login:       '+(login||'НЕ ЗАПОЛНЕН'));
+  results.push('  Password:    '+(pw?'заполнен ('+pw.length+' симв.)':'НЕ ЗАПОЛНЕН'));
 
   const hasErr=results.some(r=>r.includes('✗'));
-  setSt(hasErr?'error':'success', hasErr?'Диагностика выявила проблемы':'Всё работает');
+  setSt(hasErr?'error':'success',hasErr?'Диагностика выявила проблемы':'Всё работает');
   alert(results.join('\n'));
 }
 
 /* ── API ── */
-function workerBase(){
+function scriptBase(){
   return(document.getElementById('proxyUrl').value||'').trim().replace(/\/$/,'');
 }
+// обратная совместимость
+function workerBase(){ return scriptBase(); }
+
 async function apiFetch(path){
-  const wb=workerBase();
-  if(!wb) throw new Error('Не указан Cloudflare Worker URL');
+  const sb=scriptBase();
+  if(!sb) throw new Error('Не указан Apps Script URL');
   const login=document.getElementById('login').value.trim();
   const pw=document.getElementById('password').value.trim();
   if(!login||!pw) throw new Error('Не заполнен логин или пароль');
   const creds=btoa(unescape(encodeURIComponent(login+':'+pw)));
   const base=document.getElementById('baseUrl').value.trim();
   if(!base) throw new Error('Не заполнен URL базы 1С');
-  const enc=path.replace(/[а-яёА-ЯЁ]+/g,w=>encodeURIComponent(w));
-  const sep=enc.includes('?')?'&':'?';
-  const url=wb+'/api/'+enc+sep+'$format=json';
-  const resp=await fetch(url,{
-    headers:{
-      'X-1C-Auth':'Basic '+creds,
-      'X-1C-BaseUrl':base,
-      'Accept':'application/json'
-    }
-  });
-  if(!resp.ok){const t=await resp.text().catch(()=>'');throw new Error(`HTTP ${resp.status}\n${t.slice(0,400)}`)}
-  return resp.json();
+
+  const url=sb+'?action=proxy'
+    +'&baseUrl='+encodeURIComponent(base)
+    +'&auth='+encodeURIComponent(creds)
+    +'&path='+encodeURIComponent(path);
+
+  const resp=await fetch(url);
+  if(!resp.ok){
+    const t=await resp.text().catch(()=>'');
+    throw new Error(`HTTP ${resp.status}\n${t.slice(0,400)}`);
+  }
+  const j=await resp.json();
+  if(j.error) throw new Error(j.error+(j.hint?'\n'+j.hint:'')+(j.upstream_body?'\n'+j.upstream_body.slice(0,300):''));
+  return j;
+}
+
+/* ── СОХРАНИТЬ В ТАБЛИЦУ ── */
+async function saveToSheet(data){
+  const sb=scriptBase();
+  if(!sb) return;
+  try{
+    await fetch(sb,{
+      method:'POST',
+      body:JSON.stringify(data),
+      headers:{'Content-Type':'application/json'},
+    });
+  }catch(e){console.warn('Не удалось сохранить в таблицу:',e.message);}
+}
+
+/* ── ЗАГРУЗИТЬ ПОСЛЕДНИЕ ИЗ ТАБЛИЦЫ ── */
+async function loadLast(){
+  const sb=scriptBase();
+  if(!sb){setSt('error','Не указан Apps Script URL');return;}
+  setSt('loading','Загрузка из таблицы...');
+  try{
+    const r=await fetch(sb+'?action=getLast');
+    const j=await r.json();
+    if(j.empty){setSt('error','В таблице нет сохранённых данных');return;}
+    render(j);
+    document.getElementById('lastUpd').textContent=`Из таблицы: ${j.updatedAt} · ${j.from} — ${j.to}`;
+    setSt('success','Данные загружены из таблицы');
+  }catch(e){setSt('error','Ошибка загрузки из таблицы',e.message);}
 }
 async function getKey(code){
-  const d=await apiFetch(`ChartOfAccounts_Хозрасчетный?$filter=Code eq '${code}'&$select=Ref_Key,Code`);
+  const d=await apiFetch(`ChartOfAccounts_Хозрасчетный?$filter=Code eq '${code}'&$select=Ref_Key,Code&$format=json`);
   if(!d.value?.[0]) throw new Error(`Счёт ${code} не найден`);
   return d.value[0].Ref_Key;
 }
 async function getKeySafe(code){try{return await getKey(code);}catch{return null;}}
 function buildQ(key,from,to,dr,cr){
-  return`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${key}''')?$select=${dr},${cr}`;
+  return`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${key}''')?$select=${dr},${cr}&$format=json`;
 }
 async function probeFields(from,to){
   let fk=null;
@@ -425,7 +435,7 @@ async function probeFields(from,to){
   if(!fk) throw new Error('Не удалось получить ключ счёта для probe');
   const bq=`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${fk}''')`;
   for(const [dr,cr] of [['СуммаTurnoverDr','СуммаTurnoverCr'],['СуммаОборотДт','СуммаОборотКт'],['AmountTurnoverDr','AmountTurnoverCr']]){
-    try{await apiFetch(`${bq}?$top=1&$select=${dr},${cr}`);return{dr,cr};}
+    try{await apiFetch(`${bq}?$top=1&$select=${dr},${cr}&$format=json`);return{dr,cr};}
     catch(e){console.warn('Probe miss:',dr,e.message.slice(0,80));}
   }
   return null;
@@ -496,6 +506,7 @@ async function loadData(){
     const totalExp=cost+comm+mgmt,opProfit=revNet-totalExp;
     const ndsRate=revGross?nds/revGross*100:0;
     render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to});
+    await saveToSheet({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to});
     document.getElementById('lastUpd').textContent=`Обновлено: ${new Date().toLocaleString('ru-RU')} · ${from} — ${to}`;
     setSt('success',`Готово · ${new Date().toLocaleTimeString('ru-RU')}`);
   }catch(e){
