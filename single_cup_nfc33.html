@@ -9,6 +9,8 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root { color-scheme: only light; }
+  html { color-scheme: light; }
+  html, body { background-color: #fff !important; color: #111 !important; }
 
   body {
     background: #fff;
@@ -157,6 +159,18 @@
     letter-spacing: 0.03em; animation: fadeIn 0.5s 0.55s ease both;
   }
   .footer-link { color: #CC0000; text-decoration: none; font-weight: 500; }
+
+  /* Samsung Internet dark mode fix */
+  @media (prefers-color-scheme: dark) {
+    html, body { background-color: #fff !important; color: #111 !important; }
+    .page { background: #fff; }
+    .store-link { background: #fff !important; border-color: #CC0000 !important; }
+    .store-name { color: #111 !important; }
+    .store-sub  { color: #999 !important; }
+    .tagline    { color: #999 !important; }
+    .footer-text{ color: #bbb !important; }
+    .divider::before, .divider::after { background: #E5E5E5 !important; }
+  }
 
   @keyframes fadeDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
   @keyframes fadeUp   { from { opacity:0; transform:translateY(8px); }  to { opacity:1; transform:translateY(0); } }
