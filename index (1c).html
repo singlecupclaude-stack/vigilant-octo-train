@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P&L · 1С</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--bg2:#161922;--bg3:#1d2130;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);
+  --text:#e8eaf0;--text2:#8b90a0;--text3:#555a6a;
+  --blue:#4f8ef7;--blue-dim:rgba(79,142,247,.15);
+  --green:#34c98a;--green-dim:rgba(52,201,138,.12);
+  --red:#f7604f;--red-dim:rgba(247,96,79,.12);
+  --amber:#f7b84f;--amber-dim:rgba(247,184,79,.12);
+  --r:10px;--rl:14px;
+}
+body{font-family:'Golos Text',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:14px;font-size:14px;line-height:1.5}
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.hdr h1{font-size:16px;font-weight:600;letter-spacing:-.3px}
+.hdr p{font-size:11px;color:var(--text2);margin-top:2px}
+.hdr-r{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.vtg{display:flex;background:var(--bg3);border-radius:8px;padding:3px;gap:2px}
+.vb{padding:5px 10px;border-radius:6px;border:none;cursor:pointer;font-family:'Golos Text',sans-serif;font-size:11px;font-weight:500;color:var(--text3);background:transparent;transition:all .15s;line-height:1}
+.vb.on{background:var(--bg2);color:var(--text);border:.5px solid var(--border2)}
+.cfg{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rl);padding:14px;margin-bottom:14px}
+.cfg-grid{display:grid;grid-template-columns:1fr;gap:10px}
+.cfg-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld label{display:block;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.fld input{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:8px 11px;color:var(--text);font-family:'Golos Text',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
+.fld input:focus{border-color:var(--blue)}
+.fld input::placeholder{color:var(--text3)}
+.pw{position:relative}.pw input{padding-right:36px}
+.eye{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px}
+.proxy-row{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:.5px solid var(--border)}
+.proxy-row label{font-size:10px;color:var(--text3);white-space:nowrap;text-transform:uppercase;letter-spacing:.7px}
+.proxy-row input{flex:1;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 10px;color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;transition:border-color .15s}
+.proxy-row input:focus{border-color:var(--blue);color:var(--text)}
+.proxy-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:background .3s}
+.proxy-dot.ok{background:var(--green)}
+.proxy-dot.err{background:var(--red)}
+.btn{padding:9px 16px;border-radius:var(--r);font-family:'Golos Text',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .15s;white-space:nowrap}
+.btn-p{background:var(--blue);color:#fff;border-color:var(--blue)}.btn-p:hover{background:#3d7de8}.btn-p:disabled{opacity:.45;cursor:not-allowed}
+.btn-g{background:transparent;color:var(--text2);border-color:var(--border2)}.btn-g:hover{border-color:var(--blue);color:var(--blue)}
+.btn-row{display:flex;gap:8px;margin-top:12px}
+.btn-row .btn-p{flex:1}
+.sb{display:flex;align-items:flex-start;gap:8px;font-size:12px;padding:10px 14px;border-radius:var(--r);margin-bottom:14px;border:1px solid transparent}
+.sb.idle{display:none}
+.sb.loading{background:var(--blue-dim);border-color:rgba(79,142,247,.3);color:var(--blue)}
+.sb.success{background:var(--green-dim);border-color:rgba(52,201,138,.3);color:var(--green)}
+.sb.error{background:var(--red-dim);border-color:rgba(247,96,79,.3);color:var(--red)}
+.spin{width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;margin-top:1px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ed{font-family:'JetBrains Mono',monospace;font-size:11px;margin-top:6px;opacity:.8;word-break:break-all;white-space:pre-wrap;max-height:100px;overflow:auto}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.mc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:12px 13px;position:relative;overflow:hidden}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--rl) var(--rl) 0 0}
+.mc.blue::before{background:var(--blue)}.mc.green::before{background:var(--green)}
+.mc.amber::before{background:var(--amber)}.mc.red::before{background:var(--red)}
+.mc .ml{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.mc .mv{font-size:17px;font-weight:600;color:var(--text);letter-spacing:-.4px;line-height:1.2}
+.mc .ms{font-size:11px;color:var(--text2);margin-top:3px}
+.pl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:14px}
+.pl-head{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px}
+.pl-title{font-size:13px;font-weight:500;color:var(--text2)}
+.pl-period{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+.pl-table{width:100%;border-collapse:collapse}
+.pl-table td{padding:9px 14px;font-size:13px;border-bottom:.5px solid var(--border)}
+.pl-table tr:last-child td{border-bottom:none}
+.pl-table tr:hover td{background:rgba(255,255,255,.02)}
+.pl-table .lbl{color:var(--text2)}
+.pl-table .acc{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);width:44px}
+.pl-table .val{text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;white-space:nowrap}
+.pl-table .pct{text-align:right;font-size:11px;color:var(--text3);width:46px}
+.pl-table .bar-cell{display:none}
+.row-section td{background:var(--bg3);padding:5px 14px}
+.row-section .lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text3)}
+.row-total td{background:rgba(255,255,255,.04);padding:10px 14px}
+.row-total .lbl{font-size:13px;font-weight:600;color:var(--text)}
+.row-total .val{font-size:14px;font-weight:600}
+.row-result td{background:rgba(52,201,138,.08);padding:12px 14px;border-bottom:none}
+.row-result .lbl{font-size:14px;font-weight:600;color:var(--green)}
+.row-result .val{font-size:15px;font-weight:600;color:var(--green)}
+.row-result.loss td{background:rgba(247,96,79,.08)}
+.row-result.loss .lbl,.row-result.loss .val{color:var(--red)}
+.tag{display:inline-block;font-size:9px;font-weight:600;padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:middle}
+.tag-nds{background:rgba(79,142,247,.15);color:var(--blue)}
+.mini-bar{display:flex;align-items:center;gap:5px}
+.mini-bar-bg{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.mini-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:14px;margin-bottom:14px}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px}
+.pt{font-size:13px;font-weight:500;color:var(--text2)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--text2)}
+.legend span{display:flex;align-items:center;gap:4px}
+.ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.ph2{text-align:center;padding:48px 16px;color:var(--text3)}
+.ph2 p{font-size:13px;line-height:1.9}
+.ph2 code{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--bg2);padding:2px 7px;border-radius:5px;color:var(--text2)}
+.footer{font-size:11px;color:var(--text3);text-align:center;padding:8px 0 14px}
+
+/* ── DESKTOP ── */
+body.desk{padding:24px}
+body.desk .hdr h1{font-size:20px}
+body.desk .cfg-grid{grid-template-columns:2fr 1fr 1fr}
+body.desk .cfg-row2{display:contents}
+body.desk .btn-row{margin-top:0;align-items:flex-end}
+body.desk .metrics{grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+body.desk .mc .mv{font-size:20px}.body.desk .mc .ml{font-size:11px}
+body.desk .mc{padding:14px 16px}
+body.desk .pl-table td{padding:10px 20px;font-size:13px}
+body.desk .pl-table .acc{font-size:11px;width:60px}
+body.desk .pl-table .val{font-size:13px}
+body.desk .pl-table .pct{width:55px}
+body.desk .pl-table .bar-cell{display:table-cell;width:130px;padding-right:20px}
+body.desk .pl-head{padding:16px 20px 14px}
+body.desk .pl-wrap,.body.desk .panel{margin-bottom:24px}
+body.desk .row-section td{padding:6px 20px}
+body.desk .row-total td{padding:12px 20px}
+body.desk .row-result td{padding:14px 20px}
+body.desk .panel{padding:18px 20px;margin-bottom:24px}
+body.desk .cfg{padding:18px 20px;margin-bottom:20px}
+
+/* ── AUTO ── */
+@media(min-width:860px){
+  body:not(.mob):not(.desk){padding:24px}
+  body:not(.mob):not(.desk) .hdr h1{font-size:20px}
+  body:not(.mob):not(.desk) .cfg-grid{grid-template-columns:2fr 1fr 1fr}
+  body:not(.mob):not(.desk) .cfg-row2{display:contents}
+  body:not(.mob):not(.desk) .btn-row{margin-top:0;align-items:flex-end}
+  body:not(.mob):not(.desk) .metrics{grid-template-columns:repeat(4,1fr);gap:12px}
+  body:not(.mob):not(.desk) .mc .mv{font-size:20px}
+  body:not(.mob):not(.desk) .pl-table .bar-cell{display:table-cell;width:130px;padding-right:20px}
+  body:not(.mob):not(.desk) .pl-table td{padding:10px 20px}
+  body:not(.mob):not(.desk) .pl-head{padding:16px 20px 14px}
+  body:not(.mob):not(.desk) .row-section td{padding:6px 20px}
+  body:not(.mob):not(.desk) .row-total td{padding:12px 20px}
+  body:not(.mob):not(.desk) .row-result td{padding:14px 20px}
+  body:not(.mob):not(.desk) .panel{padding:18px 20px}
+  body:not(.mob):not(.desk) .cfg{padding:18px 20px}
+}
+</style>
+</head>
+<body id="bodyEl">
+
+<div class="hdr">
+  <div><h1>Отчёт о прибылях и убытках</h1><p id="lastUpd">Данные не загружены</p></div>
+  <div class="hdr-r">
+    <div class="vtg">
+      <button class="vb" id="vbMob"  onclick="setView('mob')"  title="Мобильный">📱</button>
+      <button class="vb on" id="vbAuto" onclick="setView('auto')" title="Авто">Auto</button>
+      <button class="vb" id="vbDesk" onclick="setView('desk')" title="Десктоп">🖥</button>
+    </div>
+    <button class="btn btn-p" id="loadBtn" onclick="loadData()">Загрузить из 1С</button>
+  </div>
+</div>
+
+<div class="cfg">
+  <div class="cfg-grid">
+    <div class="fld" style="grid-column:1/-1">
+      <label>URL базы 1С (OData)</label>
+      <input type="url" id="baseUrl"
+             value="https://terminal.scloud.ru/01/kbytqrf_base01/odata/standard.odata"
+             placeholder="https://terminal.scloud.ru/01/base/odata/standard.odata">
+    </div>
+    <div class="fld">
+      <label>Логин</label>
+      <input type="text" id="login" placeholder="Пользователь">
+    </div>
+    <div class="fld">
+      <label>Пароль</label>
+      <div class="pw">
+        <input type="password" id="password" placeholder="••••••••">
+        <button class="eye" onclick="togglePwd()">👁</button>
+      </div>
+    </div>
+    <div class="cfg-row2">
+      <div class="fld"><label>Период с</label><input type="date" id="dateFrom" value="2025-11-01"></div>
+      <div class="fld"><label>Период по</label><input type="date" id="dateTo"   value="2025-11-30"></div>
+    </div>
+  </div>
+  <!-- Cloudflare Worker URL -->
+  <div class="proxy-row">
+    <span class="proxy-dot" id="proxyDot"></span>
+    <label>Worker URL</label>
+    <input type="text" id="proxyUrl"
+           placeholder="https://1odata.singlecupclaude.workers.dev"
+           value="https://script.google.com/macros/s/AKfycby6DDVsdsP-GCgjzmvcmM4UeZj3xo9naVEF9phSsXha-0AbULs3PqC7h1CPqXSjS7iY/exec"
+           oninput="saveAndCheck()">
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-p" id="loadBtn2" onclick="loadData()" style="flex:1">Загрузить из 1С</button>
+  </div>
+</div>
+
+<div class="sb idle" id="sb">
+  <div class="spin" id="spin" style="display:none"></div>
+  <div><div id="sbText"></div><div class="ed" id="sbDetail" style="display:none"></div></div>
+</div>
+
+<div id="content" style="display:none">
+  <div class="metrics">
+    <div class="mc blue"><div class="ml">Выручка без НДС</div><div class="mv" id="kRevNet">—</div><div class="ms" id="kRevNetS"></div></div>
+    <div class="mc red"><div class="ml">Все расходы</div><div class="mv" id="kTotalExp">—</div><div class="ms" id="kTotalExpS"></div></div>
+    <div class="mc green"><div class="ml">Операц. прибыль</div><div class="mv" id="kOpProfit">—</div><div class="ms" id="kOpProfitS"></div></div>
+    <div class="mc amber"><div class="ml">Рентабельность</div><div class="mv" id="kMargin">—</div><div class="ms">по выручке без НДС</div></div>
+  </div>
+  <div class="pl-wrap">
+    <div class="pl-head">
+      <span class="pl-title">Доходы и расходы</span>
+      <span class="pl-period" id="plPeriod"></span>
+    </div>
+    <table class="pl-table" id="plTable"></table>
+  </div>
+  <div class="panel">
+    <div class="ph">
+      <span class="pt">Структура расходов</span>
+      <div class="legend" id="chartLegend"></div>
+    </div>
+    <div style="position:relative;height:220px">
+      <canvas id="barChart" role="img" aria-label="Структура расходов"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="ph2" id="placeholder">
+  <p>
+    Введите <strong style="color:var(--text2)">Worker URL</strong> (прокси),<br>
+    параметры подключения к 1С и нажмите «Загрузить из 1С»
+  </p>
+</div>
+<div class="footer" id="footer" style="display:none">
+  1С OData · 90.01 / 90.02 / 90.03 / 90.07 / 90.08 / 02 · via Cloudflare Worker
+</div>
+
+<script>
+/* ── VIEW ── */
+function setView(v){
+  const b=document.getElementById('bodyEl');
+  b.classList.remove('mob','desk');
+  if(v!=='auto') b.classList.add(v);
+  ['vbMob','vbAuto','vbDesk'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  document.getElementById(v==='mob'?'vbMob':v==='desk'?'vbDesk':'vbAuto').classList.add('on');
+  localStorage.setItem('plView',v);
+}
+(()=>{const s=localStorage.getItem('plView');if(s)setView(s);})();
+
+/* ── PERSIST SETTINGS ── */
+function saveAndCheck(){
+  const v=document.getElementById('proxyUrl').value.trim();
+  if(v) localStorage.setItem('plProxy',v);
+  checkProxy();
+}
+(()=>{
+  let p=localStorage.getItem('plProxy');
+  // Миграция: старые сохранённые *.workers.dev URL заменяем на новый дефолт (Apps Script)
+  if(p && /workers\.dev/.test(p)){
+    p = document.getElementById('proxyUrl').value; // текущий дефолт из HTML
+    localStorage.setItem('plProxy', p);
+  }
+  if(p) document.getElementById('proxyUrl').value=p;
+  const u=localStorage.getItem('plBaseUrl');
+  if(u) document.getElementById('baseUrl').value=u;
+  const l=localStorage.getItem('plLogin');
+  if(l) document.getElementById('login').value=l;
+  checkProxy();
+})();
+document.getElementById('baseUrl').addEventListener('input',e=>localStorage.setItem('plBaseUrl',e.target.value));
+document.getElementById('login').addEventListener('input',e=>localStorage.setItem('plLogin',e.target.value));
+
+/* ── PROXY CHECK ── */
+function isAppsScript(url){ return /script\.google\.com\/macros\//.test(url||''); }
+async function checkProxy(){
+  const url=(document.getElementById('proxyUrl').value||'').trim();
+  const dot=document.getElementById('proxyDot');
+  if(!url){dot.className='proxy-dot';return;}
+  dot.className='proxy-dot';
+  try{
+    const healthUrl = isAppsScript(url) ? url+'?_target=health' : url+'/health';
+    const r=await fetch(healthUrl,{signal:AbortSignal.timeout(8000)});
+    dot.className=r.ok?'proxy-dot ok':'proxy-dot err';
+  }catch{dot.className='proxy-dot err';}
+}
+
+/* ── UTILS ── */
+const R  =(n)=>n===null||isNaN(n)?'—':Math.round(n).toLocaleString('ru-RU')+' ₽';
+const PCT=(a,b)=>b?(a/b*100).toFixed(1)+'%':'—';
+const FMT=n=>{
+  if(n===null||isNaN(n))return'—';
+  const a=Math.abs(n),s=n<0?'-':'';
+  if(a>=1e6)return s+(a/1e6).toFixed(2)+' М₽';
+  if(a>=1e3)return s+(a/1e3).toFixed(1)+' К₽';
+  return s+Math.round(a).toLocaleString('ru-RU')+' ₽';
+};
+function togglePwd(){const i=document.getElementById('password');i.type=i.type==='password'?'text':'password'}
+function setSt(type,msg,detail){
+  const b=document.getElementById('sb');
+  b.className='sb '+type;
+  document.getElementById('sbText').textContent=msg;
+  document.getElementById('spin').style.display=type==='loading'?'block':'none';
+  const d=document.getElementById('sbDetail');
+  if(detail){d.style.display='block';d.textContent=detail}else d.style.display='none';
+}
+
+/* ── DEBUG ── */
+async function debugWorker(){
+  const wb=workerBase();
+  const base=document.getElementById('baseUrl').value.trim();
+  const login=document.getElementById('login').value.trim();
+  const pw=document.getElementById('password').value.trim();
+  const creds=btoa(unescape(encodeURIComponent(login+':'+pw)));
+
+  setSt('loading','Диагностика соединения...');
+  const results=[];
+  const mode = isAppsScript(wb) ? 'Apps Script' : 'Direct Worker';
+  results.push('Режим: '+mode);
+
+  // 1. Проверяем health
+  try{
+    const healthUrl = isAppsScript(wb) ? wb+'?_target=health' : wb+'/health';
+    const r=await fetch(healthUrl);
+    const j=await r.json();
+    results.push('✓ Прокси: '+JSON.stringify(j).slice(0,200));
+  }catch(e){results.push('✗ Прокси недоступен: '+e.message);}
+
+  // 2. Проверяем, что прокси получает наши параметры
+  try{
+    let testUrl;
+    if(isAppsScript(wb)){
+      const p = new URLSearchParams();
+      p.set('_target','api'); p.set('_path','test_debug');
+      p.set('$format','json');
+      p.set('_auth','Basic '+creds); p.set('_base',base);
+      testUrl = wb+'?'+p.toString();
+      var r = await fetch(testUrl);
+    } else {
+      testUrl = wb+'/api/test_debug?$format=json&_auth='+encodeURIComponent('Basic '+creds)+'&_base='+encodeURIComponent(base);
+      var r = await fetch(testUrl, { headers:{'X-1C-Auth':'Basic '+creds,'X-1C-BaseUrl':base} });
+    }
+    const j=await r.json();
+    results.push('Прокси ответил ('+r.status+'): '+JSON.stringify(j).slice(0,200));
+  }catch(e){results.push('✗ Ошибка запроса: '+e.message);}
+
+  // 3. Показываем параметры
+  results.push('');
+  results.push('Параметры:');
+  results.push('  Прокси: '+(wb||'НЕ ЗАПОЛНЕН'));
+  results.push('  Base:   '+(base||'НЕ ЗАПОЛНЕН'));
+  results.push('  Login:  '+(login||'НЕ ЗАПОЛНЕН'));
+  results.push('  Pass:   '+(pw?'заполнен ('+pw.length+' симв.)':'НЕ ЗАПОЛНЕН'));
+
+  setSt(results.some(r=>r.startsWith('✗'))?'error':'success', results[0]);
+  alert(results.join('\n'));
+}
+
+/* ── API ── */
+function workerBase(){
+  return(document.getElementById('proxyUrl').value||'').trim().replace(/\/$/,'');
+}
+async function apiFetch(path){
+  const wb=workerBase();
+  if(!wb) throw new Error('Не указан Worker URL');
+  const login=document.getElementById('login').value.trim();
+  const pw=document.getElementById('password').value.trim();
+  if(!login||!pw) throw new Error('Не заполнен логин или пароль');
+  const creds=btoa(unescape(encodeURIComponent(login+':'+pw)));
+  const base=document.getElementById('baseUrl').value.trim();
+  if(!base) throw new Error('Не заполнен URL базы 1С');
+  const enc=path.replace(/[а-яёА-ЯЁ]+/g,w=>encodeURIComponent(w));
+
+  let url, opts;
+  if(isAppsScript(wb)){
+    // ── Apps Script прокси: всё в query, кастомные заголовки не пробрасываются
+    // Разделяем путь и query-часть, если есть
+    const qIdx = enc.indexOf('?');
+    const pathPart = qIdx >= 0 ? enc.slice(0, qIdx) : enc;
+    const existingQs = qIdx >= 0 ? enc.slice(qIdx+1) : '';
+    const params = new URLSearchParams(existingQs);
+    params.set('$format', 'json');
+    params.set('_target', 'api');
+    params.set('_path', pathPart);
+    params.set('_auth', 'Basic '+creds);
+    params.set('_base', base);
+    url = wb + '?' + params.toString();
+    opts = { headers: { 'Accept': 'application/json' } };
+  } else {
+    // ── Прямой воркер Cloudflare: как раньше, через кастомные заголовки
+    const sep=enc.includes('?')?'&':'?';
+    url = wb+'/api/'+enc+sep+'$format=json';
+    opts = {
+      headers:{
+        'X-1C-Auth':'Basic '+creds,
+        'X-1C-BaseUrl':base,
+        'Accept':'application/json'
+      }
+    };
+  }
+  const resp=await fetch(url, opts);
+  if(!resp.ok){const t=await resp.text().catch(()=>'');throw new Error(`HTTP ${resp.status}\n${t.slice(0,400)}`)}
+  return resp.json();
+}
+async function getKey(code){
+  const d=await apiFetch(`ChartOfAccounts_Хозрасчетный?$filter=Code eq '${code}'&$select=Ref_Key,Code`);
+  if(!d.value?.[0]) throw new Error(`Счёт ${code} не найден`);
+  return d.value[0].Ref_Key;
+}
+async function getKeySafe(code){try{return await getKey(code);}catch{return null;}}
+function buildQ(key,from,to,dr,cr){
+  return`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${key}''')?$select=${dr},${cr}`;
+}
+async function probeFields(from,to){
+  let fk=null;
+  for(const c of ['90.01.1','90.01','90.02.1','90.02']){fk=await getKeySafe(c);if(fk)break;}
+  if(!fk) throw new Error('Не удалось получить ключ счёта для probe');
+  const bq=`AccountingRegister_Хозрасчетный/Turnovers(StartPeriod=datetime'${from}T00:00:00',EndPeriod=datetime'${to}T23:59:59',AccountCondition='Account_Key eq guid''${fk}''')`;
+  for(const [dr,cr] of [['СуммаTurnoverDr','СуммаTurnoverCr'],['СуммаОборотДт','СуммаОборотКт'],['AmountTurnoverDr','AmountTurnoverCr']]){
+    try{await apiFetch(`${bq}?$top=1&$select=${dr},${cr}`);return{dr,cr};}
+    catch(e){console.warn('Probe miss:',dr,e.message.slice(0,80));}
+  }
+  return null;
+}
+
+/* ── DIAG ── */
+async function findDeprAccounts(from,to,dr,cr){
+  const res=[];
+  for(const code of ['02','02.01','02.02','02.03','05','20','20.01','25','26','44','44.01','44.02']){
+    try{
+      const key=await getKeySafe(code);
+      if(!key){res.push({code,status:'не найден'});continue;}
+      const data=await apiFetch(buildQ(key,from,to,dr,cr));
+      const S=(rows,f)=>rows.reduce((a,r)=>a+(r[f]||0),0);
+      const da=S(data.value,dr),ca=S(data.value,cr);
+      if(da>0||ca>0)res.push({code,dr:Math.round(da),cr:Math.round(ca),status:'✓ есть обороты'});
+      else res.push({code,dr:0,cr:0,status:'нет оборотов'});
+    }catch(e){res.push({code,status:'ошибка: '+e.message.slice(0,50)});}
+  }
+  return res;
+}
+async function diagDepr(){
+  const from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
+  setSt('loading','Диагностика...');
+  try{
+    const probe=await probeFields(from,to);
+    if(!probe) throw new Error('Не удалось определить поля');
+    const res=await findDeprAccounts(from,to,probe.dr,probe.cr);
+    const has=res.filter(r=>r.status.startsWith('✓'));
+    setSt('success',has.length?'Найдено: '+has.map(r=>r.code).join(', '):'Оборотов не найдено');
+    console.table(res);
+    alert('Диагностика амортизации:\n\n'+res.map(r=>`${r.code.padEnd(8)} ${r.status}${r.dr!==undefined?' | Дт:'+r.dr.toLocaleString('ru-RU')+' Кт:'+r.cr.toLocaleString('ru-RU'):''}`).join('\n'));
+  }catch(e){setSt('error','Ошибка',e.message);}
+}
+
+/* ── LOAD ── */
+async function loadData(){
+  const from=document.getElementById('dateFrom').value,to=document.getElementById('dateTo').value;
+  ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=true);
+  document.getElementById('placeholder').style.display='none';
+  document.getElementById('content').style.display='none';
+  try{
+    setSt('loading','Получение плана счетов...');
+    const [k9001,k9001_1,k9001_2,k9002_1,k9002_2,k9003,k9007_1,k9007_2,k9008_1,k9008_2,k02_01,k02_03]=await Promise.all([
+      getKeySafe('90.01'),getKeySafe('90.01.1'),getKeySafe('90.01.2'),
+      getKeySafe('90.02.1'),getKeySafe('90.02.2'),getKeySafe('90.03'),
+      getKeySafe('90.07.1'),getKeySafe('90.07.2'),getKeySafe('90.08.1'),getKeySafe('90.08.2'),
+      getKeySafe('02.01'),getKeySafe('02.03'),
+    ]);
+    setSt('loading','Определение структуры регистра...');
+    const probe=await probeFields(from,to);
+    if(!probe) throw new Error('Не удалось определить поля регистра');
+    const{dr,cr}=probe;
+    const fQ=key=>key?apiFetch(buildQ(key,from,to,dr,cr)):Promise.resolve({value:[]});
+    setSt('loading','Загрузка оборотов...');
+    const [r9001,r9001_1,r9001_2,r9002_1,r9002_2,r9003,r9007_1,r9007_2,r9008_1,r9008_2,r02_01,r02_03]=await Promise.all([
+      fQ(k9001),fQ(k9001_1),fQ(k9001_2),fQ(k9002_1),fQ(k9002_2),fQ(k9003),
+      fQ(k9007_1),fQ(k9007_2),fQ(k9008_1),fQ(k9008_2),fQ(k02_01),fQ(k02_03),
+    ]);
+    const S=(rows,f)=>rows.reduce((a,r)=>a+(r[f]||0),0);
+    const revSub=S(r9001_1.value,cr)+S(r9001_2.value,cr);
+    const revGross=revSub>0?revSub:S(r9001.value,cr);
+    const nds=S(r9003.value,dr),revNet=revGross-nds;
+    const cost=S(r9002_1.value,dr)+S(r9002_2.value,dr);
+    const comm=S(r9007_1.value,dr)+S(r9007_2.value,dr);
+    const mgmt=S(r9008_1.value,dr)+S(r9008_2.value,dr);
+    const depr=S(r02_01.value,cr)+S(r02_03.value,cr);
+    const totalExp=cost+comm+mgmt,opProfit=revNet-totalExp;
+    const ndsRate=revGross?nds/revGross*100:0;
+    render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to});
+    document.getElementById('lastUpd').textContent=`Обновлено: ${new Date().toLocaleString('ru-RU')} · ${from} — ${to}`;
+    setSt('success',`Готово · ${new Date().toLocaleTimeString('ru-RU')}`);
+  }catch(e){
+    setSt('error','Ошибка загрузки данных',e.message);
+    document.getElementById('placeholder').style.display='block';
+  }finally{
+    ['loadBtn','loadBtn2'].forEach(id=>document.getElementById(id).disabled=false);
+  }
+}
+
+/* ── RENDER ── */
+let barCI=null;
+function render({revGross,nds,ndsRate,revNet,cost,comm,mgmt,depr,totalExp,opProfit,from,to}){
+  document.getElementById('kRevNet').textContent=FMT(revNet);
+  document.getElementById('kTotalExp').textContent=FMT(totalExp);
+  document.getElementById('kOpProfit').textContent=FMT(opProfit);
+  document.getElementById('kMargin').textContent=PCT(opProfit,revNet);
+  document.getElementById('kRevNetS').textContent='без НДС';
+  document.getElementById('kTotalExpS').textContent=PCT(totalExp,revNet)+' от выручки';
+  document.getElementById('kOpProfitS').textContent=opProfit>=0?'прибыль':'убыток';
+  const fmt2=s=>{const[y,m]=s.split('-');return new Date(+y,+m-1).toLocaleString('ru-RU',{month:'long',year:'numeric'})};
+  document.getElementById('plPeriod').textContent=from.slice(0,7)===to.slice(0,7)?fmt2(from):from+' — '+to;
+  const rows=[
+    ['section','','Доходы'],
+    ['row','90.01','Выручка с НДС',revGross,revGross,'#4f8ef7',''],
+    ['row','90.03','НДС',-nds,revGross,'#8b90a0','nds'],
+    ['sub','','Ставка НДС',ndsRate],
+    ['rowhl','','Выручка без НДС',revNet,revGross],
+    ['section','','Расходы'],
+    ['row','90.02','Себестоимость',cost,revNet,'#f7604f',''],
+    ['sub','','Доля в выручке',cost/revNet*100],
+    ['row','90.07','Коммерческие расходы',comm,revNet,'#f7b84f',''],
+    ['sub','','Доля в выручке',comm/revNet*100],
+    ['row','90.08','АУП расходы',mgmt,revNet,'#a78bfa',''],
+    ['sub','','Доля в выручке',mgmt/revNet*100],
+    ['total','','Итого расходы',totalExp,revNet],
+    ['result','','Операционная прибыль',opProfit,revNet],
+    ['section','','Справочно'],
+    ['row','02','Амортизация',depr,revNet,'#64748b',''],
+    ['sub','','Доля в выручке',depr&&revNet?depr/revNet*100:0],
+    ['rowhl','','EBITDA',opProfit+depr,revNet],
+  ];
+  document.getElementById('plTable').innerHTML=rows.map(r=>{
+    const[type,acc,lbl,val,base,color,tag='']=r;
+    if(type==='section')return`<tr class="row-section"><td class="acc"></td><td class="lbl">${lbl}</td><td></td><td></td><td class="bar-cell"></td></tr>`;
+    if(type==='sub')return`<tr><td class="acc"></td><td class="lbl" style="color:var(--text3);font-size:11px;padding-top:2px;padding-bottom:5px">${lbl}</td><td class="val" style="font-size:11px;color:var(--text3)">${typeof val==='number'?val.toFixed(1)+'%':'—'}</td><td></td><td class="bar-cell"></td></tr>`;
+    if(type==='rowhl')return`<tr style="background:rgba(52,201,138,.06)"><td class="acc"></td><td class="lbl" style="font-weight:600;color:var(--green)">${lbl}</td><td class="val" style="color:var(--green)">${R(val)}</td><td class="pct">${base?PCT(Math.abs(val),base):''}</td><td class="bar-cell"><div class="mini-bar"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:100%;background:var(--green)"></div></div></div></td></tr>`;
+    if(type==='total')return`<tr class="row-total"><td class="acc"></td><td class="lbl">${lbl}</td><td class="val">${R(val)}</td><td class="pct">${base?PCT(val,base):''}</td><td class="bar-cell"></td></tr>`;
+    if(type==='result'){const cls=val<0?'row-result loss':'row-result';return`<tr class="${cls}"><td class="acc"></td><td class="lbl">${lbl}</td><td class="val">${R(val)}</td><td class="pct">${base?PCT(val,base):''}</td><td class="bar-cell"></td></tr>`;}
+    const bw=base>0?Math.round(Math.abs(val)/base*100):0;
+    const tg=tag==='nds'?'<span class="tag tag-nds">НДС</span>':'';
+    return`<tr><td class="acc">${acc}</td><td class="lbl">${lbl}${tg}</td><td class="val">${R(val)}</td><td class="pct">${base?PCT(Math.abs(val),base):''}</td><td class="bar-cell"><div class="mini-bar"><div class="mini-bar-bg"><div class="mini-bar-fill" style="width:${bw}%;background:${color}"></div></div></div></td></tr>`;
+  }).join('');
+  const labels=['Себестоимость','Коммерческие','АУП'];
+  const vals=[Math.round(cost),Math.round(comm),Math.round(mgmt)];
+  const colors=['rgba(247,96,79,.8)','rgba(247,184,79,.8)','rgba(167,139,250,.8)'];
+  document.getElementById('chartLegend').innerHTML=labels.map((l,i)=>`<span><span class="ld" style="background:${colors[i]}"></span>${l}</span>`).join('');
+  if(barCI)barCI.destroy();
+  barCI=new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{labels,datasets:[{data:vals,backgroundColor:colors,borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+R(c.parsed.y)}}},
+      scales:{x:{ticks:{color:'#555a6a',font:{size:12}},grid:{display:false}},
+              y:{ticks:{color:'#555a6a',font:{size:11},callback:v=>FMT(v)},grid:{color:'rgba(255,255,255,.06)'}}}}
+  });
+  document.getElementById('content').style.display='block';
+  document.getElementById('footer').style.display='block';
+}
+</script>
+</body>
+</html>
