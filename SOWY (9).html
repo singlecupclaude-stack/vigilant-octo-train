@@ -347,6 +347,144 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); min-
   font-family: var(--mono);
   font-size: 13px;
 }
+
+/* ── РАБОЧИЕ РЕСУРСЫ (второй блок на странице Проекты) ── */
+.proj-section { display: flex; flex-direction: column; gap: 14px; }
+.res-add-btn {
+  background: #06b6d4;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  transition: all 0.2s;
+}
+.res-add-btn:hover { background: #0891b2; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(6,182,212,0.3); }
+.res-form { background: var(--s1); border: 1px solid #06b6d4; border-radius: 12px; padding: 18px 20px; }
+.res-btn-primary { background: #06b6d4 !important; }
+.res-btn-primary:hover { background: #0891b2 !important; }
+
+.res-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  width: fit-content;
+}
+.res-tab {
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all 0.15s;
+}
+.res-tab:hover { color: var(--text); }
+.res-tab.active { background: #06b6d4; color: white; }
+
+.res-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+.res-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: all 0.2s;
+}
+.res-card:hover { border-color: #06b6d4; transform: translateY(-1px); }
+.res-card-head { display: flex; align-items: center; gap: 8px; }
+.res-card-cat {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+.res-card-cat.cat-table { background: rgba(6,182,212,0.15); color: #06b6d4; }
+.res-card-cat.cat-service { background: rgba(251,146,60,0.15); color: #fb923c; }
+.res-card-cat.cat-contact { background: rgba(34,197,94,0.15); color: #22c55e; }
+.res-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.res-card-field { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 1.4; }
+.res-card-field-label {
+  color: var(--dim);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  width: 55px;
+  flex-shrink: 0;
+}
+.res-card-field-value {
+  color: var(--text);
+  word-break: break-all;
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.res-card-field-value a { color: #06b6d4; text-decoration: none; }
+.res-card-field-value a:hover { text-decoration: underline; }
+.res-card-pass {
+  font-family: var(--mono);
+  letter-spacing: 2px;
+  user-select: all;
+}
+.res-card-copybtn {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--dim);
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.res-card-copybtn:hover { color: #06b6d4; border-color: #06b6d4; }
+.res-card-note {
+  font-size: 11px;
+  color: var(--dim);
+  font-style: italic;
+  padding: 6px 0 2px;
+  border-top: 1px dashed var(--border);
+  margin-top: 4px;
+}
+.res-card-actions { display: flex; gap: 6px; margin-top: 6px; }
+.res-card-actions .proj-card-iconbtn { width: 26px; height: 26px; font-size: 12px; }
 .alerts-bar { border-bottom: 1px solid rgba(224,82,82,0.2); padding: 8px 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: rgba(224,82,82,0.06); }
 .alerts-bar.hidden { display: none !important; margin: 0 !important; padding: 0 !important; }
 .alert-label { font-size: 11px; color: var(--crit); white-space: nowrap; font-weight: 600; }
@@ -2431,48 +2569,149 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); min-
     </div>
 
     <!-- ══ ПРОЕКТЫ ══ -->
-    <div id="pageProjects" style="display:none;flex-direction:column;gap:20px;padding:20px 24px">
-      <div class="proj-header">
-        <div>
-          <div class="section-title" style="font-size:18px;color:#8b5cf6">🗂 Проекты</div>
-          <div style="font-size:12px;color:var(--dim);margin-top:4px">
-            Список дашбордов и ссылок. Хранится в браузере (localStorage).
+    <div id="pageProjects" style="display:none;flex-direction:column;gap:24px;padding:20px 24px">
+
+      <!-- ── Блок 1: Проекты ── -->
+      <div class="proj-section">
+        <div class="proj-header">
+          <div>
+            <div class="section-title" style="font-size:18px;color:#8b5cf6">🗂 Проекты</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:4px">
+              Список дашбордов и ссылок. Синхронизируется через Google Sheets.
+            </div>
+          </div>
+          <button class="proj-add-btn" onclick="projOpenAddForm()">
+            <span style="font-size:14px">+</span> Добавить проект
+          </button>
+        </div>
+
+        <!-- Форма добавления/редактирования -->
+        <div id="projForm" class="proj-form" style="display:none">
+          <div class="proj-form-title" id="projFormTitle">Новый проект</div>
+          <div class="proj-form-grid">
+            <div class="proj-field">
+              <label class="proj-label">Иконка (эмодзи)</label>
+              <input type="text" class="proj-input" id="projFormIcon" maxlength="4" placeholder="📊" style="width:70px;text-align:center;font-size:16px">
+            </div>
+            <div class="proj-field" style="flex:1">
+              <label class="proj-label">Название *</label>
+              <input type="text" class="proj-input" id="projFormTitleInput" placeholder="Например: Дашборд 1С">
+            </div>
+          </div>
+          <div class="proj-field" style="margin-top:10px">
+            <label class="proj-label">Ссылка (URL) *</label>
+            <input type="url" class="proj-input" id="projFormUrl" placeholder="https://...">
+          </div>
+          <div class="proj-field" style="margin-top:10px">
+            <label class="proj-label">Описание</label>
+            <input type="text" class="proj-input" id="projFormDesc" placeholder="Необязательно — короткое описание">
+          </div>
+          <div class="proj-form-actions">
+            <button class="proj-btn-primary" onclick="projSave()">💾 Сохранить</button>
+            <button class="proj-btn-secondary" onclick="projCancelForm()">Отмена</button>
           </div>
         </div>
-        <button class="proj-add-btn" onclick="projOpenAddForm()">
-          <span style="font-size:14px">+</span> Добавить проект
-        </button>
+
+        <!-- Список проектов -->
+        <div id="projList" class="proj-list"></div>
       </div>
 
-      <!-- Форма добавления/редактирования -->
-      <div id="projForm" class="proj-form" style="display:none">
-        <div class="proj-form-title" id="projFormTitle">Новый проект</div>
-        <div class="proj-form-grid">
-          <div class="proj-field">
-            <label class="proj-label">Иконка (эмодзи)</label>
-            <input type="text" class="proj-input" id="projFormIcon" maxlength="4" placeholder="📊" style="width:70px;text-align:center;font-size:16px">
+      <!-- ── Блок 2: Рабочие ресурсы ── -->
+      <div class="proj-section">
+        <div class="proj-header">
+          <div>
+            <div class="section-title" style="font-size:18px;color:#06b6d4">📁 Рабочие ресурсы</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:4px">
+              Таблицы, сервисы маркетплейсов, контакты менеджеров. Синхронизируется через Google Sheets.
+            </div>
           </div>
-          <div class="proj-field" style="flex:1">
-            <label class="proj-label">Название *</label>
-            <input type="text" class="proj-input" id="projFormTitleInput" placeholder="Например: Дашборд 1С">
+          <button class="res-add-btn" onclick="resOpenAddForm()">
+            <span style="font-size:14px">+</span> Добавить запись
+          </button>
+        </div>
+
+        <!-- Форма добавления/редактирования -->
+        <div id="resForm" class="res-form" style="display:none">
+          <div class="proj-form-title" id="resFormTitle" style="color:#06b6d4">Новая запись</div>
+
+          <div class="proj-form-grid">
+            <div class="proj-field">
+              <label class="proj-label">Категория *</label>
+              <select class="proj-input" id="resFormCategory" onchange="resToggleFields()" style="width:160px">
+                <option value="table">📋 Таблица</option>
+                <option value="service">🔑 Сервис</option>
+                <option value="contact">👤 Контакт</option>
+              </select>
+            </div>
+            <div class="proj-field" style="flex:1">
+              <label class="proj-label">Название *</label>
+              <input type="text" class="proj-input" id="resFormTitle2" placeholder="Например: Учёт заказов">
+            </div>
+          </div>
+
+          <!-- Поля для table / service -->
+          <div id="resFieldsLink" style="margin-top:10px">
+            <div class="proj-field">
+              <label class="proj-label">Ссылка (URL)</label>
+              <input type="url" class="proj-input" id="resFormUrl" placeholder="https://...">
+            </div>
+          </div>
+
+          <!-- Поля для service -->
+          <div id="resFieldsService" style="margin-top:10px;display:none">
+            <div class="proj-form-grid">
+              <div class="proj-field" style="flex:1">
+                <label class="proj-label">Логин</label>
+                <input type="text" class="proj-input" id="resFormLogin" placeholder="email@example.com">
+              </div>
+              <div class="proj-field" style="flex:1">
+                <label class="proj-label">Пароль</label>
+                <input type="password" class="proj-input" id="resFormPassword" placeholder="••••••••">
+              </div>
+            </div>
+          </div>
+
+          <!-- Поля для contact -->
+          <div id="resFieldsContact" style="margin-top:10px;display:none">
+            <div class="proj-form-grid">
+              <div class="proj-field" style="flex:1">
+                <label class="proj-label">Email</label>
+                <input type="email" class="proj-input" id="resFormEmail" placeholder="name@company.com">
+              </div>
+              <div class="proj-field" style="flex:1">
+                <label class="proj-label">Телефон</label>
+                <input type="text" class="proj-input" id="resFormPhone" placeholder="+7 ...">
+              </div>
+            </div>
+            <div class="proj-field" style="margin-top:10px">
+              <label class="proj-label">Компания / роль</label>
+              <input type="text" class="proj-input" id="resFormCompany" placeholder="ВБ / менеджер">
+            </div>
+          </div>
+
+          <div class="proj-field" style="margin-top:10px">
+            <label class="proj-label">Комментарий</label>
+            <input type="text" class="proj-input" id="resFormNote" placeholder="Необязательно">
+          </div>
+
+          <div class="proj-form-actions">
+            <button class="proj-btn-primary res-btn-primary" onclick="resSave()">💾 Сохранить</button>
+            <button class="proj-btn-secondary" onclick="resCancelForm()">Отмена</button>
           </div>
         </div>
-        <div class="proj-field" style="margin-top:10px">
-          <label class="proj-label">Ссылка (URL) *</label>
-          <input type="url" class="proj-input" id="projFormUrl" placeholder="https://...">
+
+        <!-- Табы категорий -->
+        <div class="res-tabs">
+          <button class="res-tab active" data-cat="all" onclick="resFilter('all')">Все</button>
+          <button class="res-tab" data-cat="table" onclick="resFilter('table')">📋 Таблицы</button>
+          <button class="res-tab" data-cat="service" onclick="resFilter('service')">🔑 Сервисы</button>
+          <button class="res-tab" data-cat="contact" onclick="resFilter('contact')">👤 Контакты</button>
         </div>
-        <div class="proj-field" style="margin-top:10px">
-          <label class="proj-label">Описание</label>
-          <input type="text" class="proj-input" id="projFormDesc" placeholder="Необязательно — короткое описание">
-        </div>
-        <div class="proj-form-actions">
-          <button class="proj-btn-primary" onclick="projSave()">💾 Сохранить</button>
-          <button class="proj-btn-secondary" onclick="projCancelForm()">Отмена</button>
-        </div>
+
+        <!-- Список записей -->
+        <div id="resList" class="res-list"></div>
       </div>
 
-      <!-- Список проектов -->
-      <div id="projList" class="proj-list"></div>
     </div>
 
   </div>
@@ -2926,6 +3165,8 @@ function switchMarket(market) {
   } else if (market === 'projects') {
     projRender();
     projCancelForm();
+    resRender();
+    resCancelForm();
   }
 }
 
@@ -6957,6 +7198,7 @@ const SBER_WAREHOUSES = [
   { name: 'МСК Белая Дача',    token: '2607B624-9F07-473F-A786-776E69E2F190' },
   { name: 'МСК Тёплый Стан',   token: '5362A5FB-0961-43E5-B0EB-B51F6B65BD21' },
   { name: 'МСК Химки',         token: 'DAE337C3-0312-4A3B-9B8E-72148314689C' },
+  { name: 'Красноярск',        token: '8F3A282E-9976-414B-B1FB-AEE3EF7E2CE1' },
 ];
 
 async function sberPost(path, body, token) {
@@ -7111,10 +7353,13 @@ async function loadSberApi() {
     if (sberBannerTxt) sberBannerTxt.textContent = '⏳ ЗАГРУЖАЕМ СБЕР · ' + warehouses.length + ' СКЛАДОВ...';
 
     // FBO stock API — запрашиваем остатки по каждому складу (у каждого свой токен)
-    let fboStockMap = {};    // { code1c -> { available, name } } — суммарно
-    let fboWhStockMap = {};  // { whName -> Set(code1c) } — есть ли товар на складе
+    let fboStockMap = {};    // { code1c -> { available, name } } — суммарно по всем складам
+    let fboWhStockMap = {};  // { whName -> { code1c -> qty, barcode -> qty } } — остатки по каждому складу
     console.log('[Sber FBO] запрашиваем остатки по', warehouses.length, 'складам...');
     await Promise.all(warehouses.map(async (wh) => {
+      // Склад сразу кладём в карту — даже если ответ пустой или qty=0,
+      // чтобы в разбивке по складам появлялись нули (например МСК Тёплый Стан, СПБ Парнас)
+      fboWhStockMap[wh.name] = fboWhStockMap[wh.name] || {};
       try {
         const r = await corsPost(
           'https://api.megamarket.tech/api/merchantIntegration/fbo/v1/stock/list',
@@ -7126,15 +7371,13 @@ async function loadSberApi() {
         if (items.length > 0 && !Object.keys(fboStockMap).length) {
           console.log('[Sber FBO] item[0]:', JSON.stringify(items[0]));
         }
-        // Склад есть в карте — инициализируем набор товаров
-        fboWhStockMap[wh.name] = fboWhStockMap[wh.name] || new Set();
         items.forEach(s => {
           const generalFact = (s.fact || []).find(f => f.quality === 'GENERAL');
           const qty = generalFact?.quantity ?? s.stockAverage ?? 0;
           const stockQty = Number(qty) || 0;
           const name = s.itemName || s.name || '';
           const code1c = s.itemId ? String(s.itemId) : null;
-          // Суммарная карта
+          // Суммарная карта (оставляем без изменений — используется в матчинге)
           const addEntry = (key) => {
             if (!key) return;
             const k = String(key);
@@ -7145,10 +7388,16 @@ async function loadSberApi() {
           addEntry(s.offerId);
           addEntry(s.goodsId);
           if (s.barcodes) s.barcodes.forEach(b => addEntry(b));
-          // Карта по складам — товар есть на складе если qty > 0
-          if (code1c && stockQty > 0) fboWhStockMap[wh.name].add(code1c);
-          // Также добавляем barcode-ключи
-          if (stockQty > 0 && s.barcodes) s.barcodes.forEach(b => fboWhStockMap[wh.name].add(String(b)));
+          // Карта ПО СКЛАДАМ — теперь хранит реальные количества, а не Set
+          // Пишем даже stockQty === 0, чтобы склад точно присутствовал в разбивке
+          const whBucket = fboWhStockMap[wh.name];
+          if (code1c) {
+            whBucket[code1c] = (whBucket[code1c] || 0) + stockQty;
+          }
+          if (s.barcodes) s.barcodes.forEach(b => {
+            const k = String(b);
+            whBucket[k] = (whBucket[k] || 0) + stockQty;
+          });
         });
       } catch(e) {
         console.log('[Sber FBO]', wh.name, 'ошибка:', e.message);
@@ -7333,41 +7582,54 @@ async function loadSberApi() {
 
     const whMap = {};
     const fboStock = window._sberFboStockMap || {};
+    const fboWhStock = window._sberFboWhStockMap || {};
     const hasFboStock = Object.keys(fboStock).length > 0;
-    const metrics = Object.entries(globalSku).map(([code1c, g]) => {
-      const totalSold  = Object.values(g.whData).reduce((s, w) => s + w.sold,  0);
-      let   totalStock = Object.values(g.whData).reduce((s, w) => s + w.stock, 0);
-      // Если есть реальные остатки из FBO API — используем их
-      // itemId в FBO API = code1c продавца (формат 00-XXXXXXX)
-      const fboKey  = String(g.ean || g.barcode || code1c);
-      const fboEntry = hasFboStock && (
-        fboStock[code1c] ||         // code1c = itemId из FBO API
-        fboStock[fboKey] ||         // ean/barcode
-        fboStock[g.ean] ||
-        fboStock[g.barcode]
-      );
-      if (fboEntry) {
-        totalStock = fboEntry.available ?? fboEntry.total ?? totalStock;
+    // Полный список складов (для которых была попытка FBO-запроса) — даже если сток = 0
+    const allWhNames = Object.keys(fboWhStock);
+
+    // Хелпер: взять сток по складу для SKU, пробуя разные идентификаторы
+    const getWhStock = (whName, code1c, g) => {
+      const bucket = fboWhStock[whName];
+      if (!bucket) return 0;
+      const keys = [code1c, g.ean, g.barcode].filter(Boolean);
+      for (const k of keys) {
+        const v = bucket[String(k)];
+        if (v !== undefined) return v;
       }
-      const vel  = totalSold  > 0 ? +(totalSold  / DAYS).toFixed(2) : 0;
-      const days = vel > 0 && totalStock > 0 ? Math.round(totalStock / vel) : null;
-      const eanKey   = String(g.ean || g.barcode || code1c);
-      const unitCost = (typeof WB_BARCODE_COST !== 'undefined' && WB_BARCODE_COST[eanKey]) || 0;
+      return 0;
+    };
+
+    const metrics = Object.entries(globalSku).map(([code1c, g]) => {
+      const totalSold = Object.values(g.whData).reduce((s, w) => s + w.sold, 0);
+      const eanKey    = String(g.ean || g.barcode || code1c);
+      const unitCost  = (typeof WB_BARCODE_COST !== 'undefined' && WB_BARCODE_COST[eanKey]) || 0;
       const totalRevenue = Object.values(g.whData).reduce((s, w) => s + (w.revenue || 0), 0);
-      const warehouses = Object.entries(g.whData).map(([n, w]) => {
-        const wVel  = w.sold > 0 ? +(w.sold / DAYS).toFixed(2) : 0;
-        const wDays = wVel > 0 && w.stock > 0 ? Math.round(w.stock / wVel) : null;
+
+      // Собираем warehouses[]: ВСЕ склады из FBO (чтобы появились и нули), плюс склады где были продажи
+      const whNamesSet = new Set([...allWhNames, ...Object.keys(g.whData)]);
+      const warehouses = [...whNamesSet].map(n => {
+        const sold     = g.whData[n]?.sold    || 0;
+        const revenue  = g.whData[n]?.revenue || 0;
+        const wStock   = getWhStock(n, code1c, g);   // реальный сток из FBO
+        const wVel     = sold > 0 ? +(sold / DAYS).toFixed(2) : 0;
+        const wDays    = wVel > 0 && wStock > 0 ? Math.round(wStock / wVel) : null;
         whMap[n] = (whMap[n] || 0) + wVel;
-        return { name: n, sold: w.sold, stock: w.stock, vel: wVel, days: wDays,
-                 revenue: w.revenue || 0, cost: Math.round(unitCost * w.sold) };  // себест. проданных
+        return { name: n, sold, stock: wStock, vel: wVel, days: wDays,
+                 revenue, cost: Math.round(unitCost * sold) };
       });
-      const totalCost = Math.round(unitCost * totalSold);  // себест. проданных
+
+      // Суммарный сток = сумма реальных стоков по складам из FBO
+      const totalStock = warehouses.reduce((s, w) => s + w.stock, 0);
+      const vel  = totalSold > 0 ? +(totalSold / DAYS).toFixed(2) : 0;
+      const days = vel > 0 && totalStock > 0 ? Math.round(totalStock / vel) : null;
+      const totalCost = Math.round(unitCost * totalSold);
       return { name: g.name, sku: code1c, barcode: g.ean || g.barcode, ean: g.ean || g.barcode,
                stock: totalStock, vel, sold: totalSold, revenue: totalRevenue, cost: totalCost, days,
-               wh: warehouses[0]?.name || '—', warehouses };
+               wh: (warehouses.find(w => w.stock > 0 || w.sold > 0) || warehouses[0])?.name || '—',
+               warehouses };
     }).filter(m => m.sold > 0 || m.stock > 0);
 
-    // Добавляем товары из FBO которых нет в заказах
+    // Добавляем товары из FBO которых нет в заказах (есть только сток, продаж нет)
     if (hasFboStock) {
       const existingCodes = new Set(metrics.map(m => m.sku));
       Object.entries(fboStock).forEach(([key, entry]) => {
@@ -7375,12 +7637,18 @@ async function loadSberApi() {
         if (existingCodes.has(key)) return;
         if (!entry.available || entry.available <= 0) return;
         const bInfo = (typeof WB_BARCODE_MAP !== 'undefined' && WB_BARCODE_MAP[key]) || {};
-        const unitCost = (typeof WB_BARCODE_COST !== 'undefined' && WB_BARCODE_COST[key]) || 0;
+        // Для таких SKU тоже раскладываем по всем 16 складам (из FBO)
+        const fauxG = { ean: '', barcode: '', whData: {} };
+        const whs = allWhNames.map(n => {
+          const wStock = getWhStock(n, key, fauxG);
+          return { name: n, sold: 0, stock: wStock, vel: 0, days: null, revenue: 0, cost: 0 };
+        });
         metrics.push({
           name: bInfo.shortName || entry.name || key,
           sku: key, barcode: '', ean: '',
-          stock: entry.available, vel: 0, sold: 0, revenue: 0, cost: 0, days: null,
-          wh: '—', warehouses: []
+          stock: whs.reduce((s, w) => s + w.stock, 0),
+          vel: 0, sold: 0, revenue: 0, cost: 0, days: null,
+          wh: '—', warehouses: whs
         });
       });
     }
@@ -8281,6 +8549,14 @@ function gsheetsUpdateUI(connected) {
     if (label) label.textContent = 'Sheets';
     if (saveBtn) saveBtn.style.display = 'none';
   }
+
+  // Сброс in-memory кэша проектов/ресурсов при смене состояния подключения
+  try { projData = null; resData = null; } catch(e){}
+  // Если сейчас открыта вкладка Проекты — перерендерим
+  if (typeof currentMarket !== 'undefined' && currentMarket === 'projects') {
+    if (typeof projRender === 'function') projRender();
+    if (typeof resRender  === 'function') resRender();
+  }
 }
 
 async function sheetsRequest(method, path, body) {
@@ -8311,6 +8587,8 @@ const GSHEETS_SHEETS = {
   warehouses:       { title: 'warehouses',       headers: ['дата','маркетплейс','кластер','склад','код_1с','штрихкод','короткое_имя','категория','остаток_шт','уходимость_день','дней_остатка','статус','себест_остатка'] },
   critical:         { title: 'critical',         headers: ['дата','маркетплейс','штрихкод','код_1с','короткое_имя','остаток_шт','продажи_день','дней_остатка','статус'] },
   clusters_history: { title: 'clusters_history', headers: ['дата','время','маркетплейс','кластер','дней_запаса','уходимость','остаток_шт','выручка','себест','маржа'] },
+  projects:         { title: 'projects',         headers: ['id','icon','title','url','desc','updated_at'] },
+  resources:        { title: 'resources',        headers: ['id','cat','title','url','login','password','email','phone','company','note','updated_at'] },
 };
 
 async function gsheetsEnsureSheets() {
@@ -9970,12 +10248,15 @@ function toggleTheme() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// ПРОЕКТЫ — CRUD в localStorage
+// ПРОЕКТЫ — хранение в Google Sheets (лист "projects")
 // ══════════════════════════════════════════════════════════════
-var PROJ_LS_KEY = 'sowy_projects_v1';
-var projEditingId = null;  // id редактируемого проекта, либо null при добавлении
+var PROJ_LS_KEY = 'sowy_projects_v1';   // только офлайн-кэш для первого рендера
+var projEditingId = null;
+var projData = null;        // in-memory: массив объектов или null если не загружено
+var projLoading = false;
+var projDirty = false;      // идёт сохранение в Sheets
 
-// Дефолтный набор, если пусто
+// Дефолтный набор на первый запуск (если лист пустой)
 var PROJ_DEFAULT = [
   { id: 'p1', icon: '📗', title: 'Дашборд 1С — Google Sheets', desc: 'Таблица 1С в Google Sheets',
     url: 'https://docs.google.com/spreadsheets/d/1FUZWAMSEXWcdMn0lU2wc3VXYAHgr5Epf4fLfM2iEPnw/edit?gid=2145401384#gid=2145401384' },
@@ -9989,44 +10270,121 @@ var PROJ_DEFAULT = [
     url: 'https://singlecupclaude-stack.github.io/vigilant-octo-train/monkey_bot_dashboard.html' }
 ];
 
-function projLoad() {
+function projEscape(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function projGenId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// Локальный кэш (для моментального рендера до загрузки с Sheets)
+function projCacheGet() {
   try {
     var raw = localStorage.getItem(PROJ_LS_KEY);
-    if (!raw) {
-      // первый запуск — сохраняем дефолтный список
-      localStorage.setItem(PROJ_LS_KEY, JSON.stringify(PROJ_DEFAULT));
-      return PROJ_DEFAULT.slice();
-    }
+    if (!raw) return null;
     var arr = JSON.parse(raw);
-    return Array.isArray(arr) ? arr : PROJ_DEFAULT.slice();
-  } catch (e) {
-    console.warn('projLoad error', e);
-    return PROJ_DEFAULT.slice();
+    return Array.isArray(arr) ? arr : null;
+  } catch(e){ return null; }
+}
+function projCacheSet(list) {
+  try { localStorage.setItem(PROJ_LS_KEY, JSON.stringify(list)); } catch(e){}
+}
+
+// Чтение из Sheets
+async function projLoadFromSheets() {
+  if (!gsheetsToken) throw new Error('Не подключено Google Sheets');
+  await gsheetsEnsureSheets();
+  var data = await sheetsRequest('GET', '/values/projects!A2:F');
+  var rows = data.values || [];
+  var list = [];
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0] && !r[2]) continue;          // пустая строка
+    list.push({
+      id:    r[0] || projGenId(),
+      icon:  r[1] || '',
+      title: r[2] || '',
+      url:   r[3] || '',
+      desc:  r[4] || ''
+    });
+  }
+  return list;
+}
+
+// Запись в Sheets: полная перезапись листа (проще всего, записей мало)
+async function projSaveToSheets(list) {
+  if (!gsheetsToken) throw new Error('Не подключено Google Sheets');
+  await gsheetsEnsureSheets();
+
+  // 1) Очистить всё ниже шапки
+  await sheetsRequest('POST', '/values/projects!A2:F:clear', {});
+
+  // 2) Записать свежие данные
+  if (list && list.length) {
+    var now = new Date().toISOString();
+    var rows = list.map(function(p){
+      return [p.id || '', p.icon || '', p.title || '', p.url || '', p.desc || '', now];
+    });
+    await sheetsRequest('PUT', '/values/projects!A2?valueInputOption=RAW', { values: rows });
   }
 }
 
-function projSaveAll(list) {
-  try { localStorage.setItem(PROJ_LS_KEY, JSON.stringify(list)); }
-  catch (e) { console.warn('projSaveAll error', e); }
+// Первичная инициализация — если лист только что создан и пуст, заливаем дефолт
+async function projInitIfEmpty() {
+  var list = await projLoadFromSheets();
+  if (!list.length) {
+    await projSaveToSheets(PROJ_DEFAULT);
+    return PROJ_DEFAULT.slice();
+  }
+  return list;
 }
 
-function projGenId() {
-  return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+// Главная функция загрузки — всегда возвращает список (дефолт/кэш, если нет подключения)
+async function projEnsureLoaded(force) {
+  if (projData && !force) return projData;
+  if (projLoading) {
+    var tries = 0;
+    while (projLoading && tries++ < 50) await new Promise(function(r){ setTimeout(r, 100); });
+    if (projData) return projData;
+  }
+
+  // 1) Если не подключены — берём кэш, иначе дефолт. Пишем дефолт в кэш, чтобы не пересоздавать каждый раз.
+  if (!gsheetsToken) {
+    var cached = projCacheGet();
+    if (cached && cached.length) {
+      projData = cached;
+    } else {
+      projData = PROJ_DEFAULT.slice();
+      projCacheSet(projData);
+    }
+    return projData;
+  }
+
+  // 2) Подключены — грузим из Sheets
+  projLoading = true;
+  try {
+    projData = await projInitIfEmpty();
+    projCacheSet(projData);
+  } catch(e) {
+    console.warn('projEnsureLoaded', e);
+    projData = projCacheGet() || PROJ_DEFAULT.slice();
+  } finally {
+    projLoading = false;
+  }
+  return projData;
 }
 
-function projEscape(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function projRender() {
-  var list = projLoad();
+// Render — всегда показываем карточки (из кэша/дефолтов, если нет подключения)
+async function projRender() {
   var container = document.getElementById('projList');
   if (!container) return;
 
+  if (!projData) {
+    container.innerHTML = '<div class="proj-empty">⏳ Загружаем проекты...</div>';
+    await projEnsureLoaded();
+  }
+
+  var list = projData || [];
   if (!list.length) {
     container.innerHTML = '<div class="proj-empty">Пока нет проектов. Нажмите <b>«+ Добавить проект»</b>, чтобы создать первый.</div>';
     return;
@@ -10041,8 +10399,7 @@ function projRender() {
     var url  = projEscape(p.url || '#');
     var id   = projEscape(p.id);
 
-    html +=
-      '<div class="proj-card">'
+    html += '<div class="proj-card">'
       + '<div class="proj-card-head">'
       +   '<div class="proj-card-icon">' + icon + '</div>'
       +   '<div class="proj-card-title" title="' + title + '">' + title + '</div>'
@@ -10071,7 +10428,7 @@ function projOpenAddForm() {
 }
 
 function projEdit(id) {
-  var list = projLoad();
+  var list = projData || [];
   var item = null;
   for (var i = 0; i < list.length; i++) { if (list[i].id === id) { item = list[i]; break; } }
   if (!item) return;
@@ -10091,7 +10448,7 @@ function projCancelForm() {
   if (f) f.style.display = 'none';
 }
 
-function projSave() {
+async function projSave() {
   var icon  = (document.getElementById('projFormIcon').value  || '🔗').trim();
   var title = (document.getElementById('projFormTitleInput').value || '').trim();
   var url   = (document.getElementById('projFormUrl').value   || '').trim();
@@ -10099,32 +10456,461 @@ function projSave() {
 
   if (!title) { alert('Укажите название проекта'); return; }
   if (!url)   { alert('Укажите ссылку (URL)'); return; }
-  // Приведение URL к виду со схемой
-  if (!/^https?:\/\//i.test(url)) {
-    url = 'https://' + url;
-  }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
 
-  var list = projLoad();
+  var list = (projData || []).slice();
   if (projEditingId) {
     for (var i = 0; i < list.length; i++) {
       if (list[i].id === projEditingId) {
-        list[i].icon = icon; list[i].title = title; list[i].url = url; list[i].desc = desc;
+        list[i] = { id: projEditingId, icon: icon, title: title, url: url, desc: desc };
         break;
       }
     }
   } else {
     list.push({ id: projGenId(), icon: icon, title: title, url: url, desc: desc });
   }
-  projSaveAll(list);
+
+  // 1) локальный апдейт (всегда)
+  projData = list;
+  projCacheSet(list);
   projCancelForm();
   projRender();
+
+  // 2) синхронизация с Sheets — только если подключены
+  if (gsheetsToken) {
+    try {
+      await projSaveToSheets(list);
+      if (typeof showToast === 'function') showToast('✅ Сохранено в Google Sheets');
+    } catch(e) {
+      console.warn('projSaveToSheets', e);
+      if (typeof showToast === 'function') showToast('⚠ Сохранено локально, синхронизация не удалась');
+    }
+  } else {
+    if (typeof showToast === 'function') showToast('💾 Сохранено локально (без синхронизации)');
+  }
 }
 
-function projDelete(id) {
+async function projDelete(id) {
   if (!confirm('Удалить этот проект?')) return;
-  var list = projLoad().filter(function(p){ return p.id !== id; });
-  projSaveAll(list);
+  var list = (projData || []).filter(function(p){ return p.id !== id; });
+  projData = list;
+  projCacheSet(list);
   projRender();
+  if (gsheetsToken) {
+    try {
+      await projSaveToSheets(list);
+      if (typeof showToast === 'function') showToast('🗑 Удалено');
+    } catch(e) {
+      console.warn('projSaveToSheets', e);
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// РАБОЧИЕ РЕСУРСЫ — хранение в Google Sheets (лист "resources")
+// ══════════════════════════════════════════════════════════════
+var RES_LS_KEY = 'sowy_resources_v1';
+var resEditingId = null;
+var resCurrentFilter = 'all';
+var resData = null;
+var resLoading = false;
+
+// Предзаполненный список на первый запуск
+var RES_DEFAULT = [
+  // === Таблицы ===
+  { id: 'r_t1', cat: 'table', title: 'Учёт заказов',          url: 'https://docs.google.com/spreadsheets/d/1oMzCgHrCIXCN06HlRv1K5g-qZEtuSnVyai5CAX83uyA/edit?gid=693766379#gid=693766379', note: '' },
+  { id: 'r_t2', cat: 'table', title: 'База данных АТ',        url: 'https://docs.google.com/spreadsheets/d/1VvamkmYbH9RaD9ioPBwF8bMMTDPONjCXOAPqY0emtDs/edit?pli=1&gid=1796844474#gid=1796844474', note: '' },
+  { id: 'r_t3', cat: 'table', title: 'Учёт заказов ФАСОВКА',  url: 'https://docs.google.com/spreadsheets/d/1-1pRv1SPHrNUD_h5EcY7VQjogpR4-7o_LNG-MVEQM5Q/edit?gid=107320296#gid=107320296', note: '' },
+  { id: 'r_t4', cat: 'table', title: 'Учёт заказов СБОРКА',   url: 'https://docs.google.com/spreadsheets/d/1DnugqRHo2Jd6_RMaMPckTHYhcKyjMTg6IR50XlnMl5w/edit?gid=1422184176#gid=1422184176', note: '' },
+  { id: 'r_t5', cat: 'table', title: 'Вывозы возвраты с МП',  url: 'https://docs.google.com/spreadsheets/d/1TW7YfaDQC1oe_GmiZdG1COJPr3bwELPC5leYNF5umqQ/edit?gid=0#gid=0', note: '' },
+  { id: 'r_t6', cat: 'table', title: 'Резерв ГП на МП',       url: 'https://docs.google.com/spreadsheets/d/174hjvc0MLlfNBJCKAN2Epbc7aC1hPGmHJADgo0svIKQ/edit?gid=63021913#gid=63021913', note: '' },
+  { id: 'r_t7', cat: 'table', title: 'Заказы фиксация ОМ',    url: 'https://docs.google.com/spreadsheets/d/1PV-NylhJxoTt_tQT1IwL7nhn9DIL9zIcPJ_ezg1elbw/edit#gid=1724852709', note: '' },
+
+  // === Сервисы ===
+  { id: 'r_s1', cat: 'service', title: 'Яндекс Маркет (ЯМ) — партнёрский кабинет', url: 'https://partner.market.yandex.ru/', login: '', password: '', note: '' },
+  { id: 'r_s2', cat: 'service', title: 'Сбер Мегамаркет — партнёр',                url: 'https://partner.megamarket.ru/',     login: '', password: '', note: '' },
+  { id: 'r_s3', cat: 'service', title: 'Wildberries — seller',                    url: 'https://seller.wildberries.ru/',     login: '', password: '', note: '' },
+  { id: 'r_s4', cat: 'service', title: 'Ozon — seller',                           url: 'https://seller.ozon.ru/app/dashboard/main', login: '', password: '', note: '' },
+  { id: 'r_s5', cat: 'service', title: 'Seller24',                                url: 'https://app.seller24.ru/',           login: 'k_komarova@singlecup.ru', password: 'Good4Day', note: '' },
+  { id: 'r_s6', cat: 'service', title: 'Sellmonitor',                             url: 'https://sellmonitor.com/',           login: '+7 961 269 1523',            password: '', note: 'Пароль через код у Лады' },
+  { id: 'r_s7', cat: 'service', title: 'Pi-Data',                                 url: 'https://app.pi-data.ru/login',       login: 'kseninkof@gmail.com',        password: '5HUNGgxoan87', note: '' },
+  { id: 'r_s8', cat: 'service', title: '1С через браузер',                        url: 'https://terminal.scloud.ru/01/kbytqrf_base01/ru/', login: '', password: '', note: '' },
+
+  // === Контакты ===
+  { id: 'r_c1', cat: 'contact', title: 'Беклемешева Оксана Васильевна', company: 'Самокат / Мегамаркет', email: 'obeklemesheva@samokat.ru', phone: '', note: '' },
+  { id: 'r_c2', cat: 'contact', title: 'Мамыкина Яна Анатольевна',       company: 'Самокат / Мегамаркет', email: 'ymamykina@samokat.ru',   phone: '', note: '' },
+  { id: 'r_c3', cat: 'contact', title: 'Вячеслав Мелехов',               company: 'Wildberries',          email: 'melehov.v5@rwb.ru',      phone: '', note: '' },
+  { id: 'r_c4', cat: 'contact', title: 'Виктория Верохина',              company: 'Ozon',                 email: 'verokhina@ozon.ru',      phone: '', note: '' },
+  { id: 'r_c5', cat: 'contact', title: 'Елена Зуйкова',                  company: 'Яндекс Маркет',        email: 'yelenaaa@yandex-team.ru', phone: '', note: '' },
+  { id: 'r_c6', cat: 'contact', title: 'Хасен Шогенов',                  company: 'Seller24',             email: 'h.shogenov@seller24.ru', phone: '', note: '' },
+  { id: 'r_c7', cat: 'contact', title: 'Давид Аликадзе',                 company: 'Sellmonitor',          email: 'davidalikadze@gmail.com', phone: '+7 908 515 6408', note: '' }
+];
+
+function resGenId() { return 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+function resEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function resCatLabel(cat) {
+  if (cat === 'table')   return { label: 'Таблица', cls: 'cat-table' };
+  if (cat === 'service') return { label: 'Сервис',  cls: 'cat-service' };
+  if (cat === 'contact') return { label: 'Контакт', cls: 'cat-contact' };
+  return { label: cat, cls: '' };
+}
+
+function resCacheGet() {
+  try {
+    var raw = localStorage.getItem(RES_LS_KEY);
+    if (!raw) return null;
+    var arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr : null;
+  } catch(e){ return null; }
+}
+function resCacheSet(list) {
+  try { localStorage.setItem(RES_LS_KEY, JSON.stringify(list)); } catch(e){}
+}
+
+async function resLoadFromSheets() {
+  if (!gsheetsToken) throw new Error('Не подключено Google Sheets');
+  await gsheetsEnsureSheets();
+  var data = await sheetsRequest('GET', '/values/resources!A2:K');
+  var rows = data.values || [];
+  var list = [];
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (!r[0] && !r[2]) continue;
+    list.push({
+      id:       r[0] || resGenId(),
+      cat:      r[1] || 'table',
+      title:    r[2] || '',
+      url:      r[3] || '',
+      login:    r[4] || '',
+      password: r[5] || '',
+      email:    r[6] || '',
+      phone:    r[7] || '',
+      company:  r[8] || '',
+      note:     r[9] || ''
+    });
+  }
+  return list;
+}
+
+async function resSaveToSheets(list) {
+  if (!gsheetsToken) throw new Error('Не подключено Google Sheets');
+  await gsheetsEnsureSheets();
+
+  await sheetsRequest('POST', '/values/resources!A2:K:clear', {});
+
+  if (list && list.length) {
+    var now = new Date().toISOString();
+    var rows = list.map(function(r){
+      return [
+        r.id || '', r.cat || '', r.title || '', r.url || '',
+        r.login || '', r.password || '',
+        r.email || '', r.phone || '', r.company || '',
+        r.note || '', now
+      ];
+    });
+    await sheetsRequest('PUT', '/values/resources!A2?valueInputOption=RAW', { values: rows });
+  }
+}
+
+async function resInitIfEmpty() {
+  var list = await resLoadFromSheets();
+  if (!list.length) {
+    await resSaveToSheets(RES_DEFAULT);
+    return RES_DEFAULT.slice();
+  }
+  return list;
+}
+
+async function resEnsureLoaded(force) {
+  if (resData && !force) return resData;
+  if (resLoading) {
+    var tries = 0;
+    while (resLoading && tries++ < 50) await new Promise(function(r){ setTimeout(r, 100); });
+    if (resData) return resData;
+  }
+  if (!gsheetsToken) {
+    var cached = resCacheGet();
+    if (cached && cached.length) {
+      resData = cached;
+    } else {
+      resData = RES_DEFAULT.slice();
+      resCacheSet(resData);
+    }
+    return resData;
+  }
+  resLoading = true;
+  try {
+    resData = await resInitIfEmpty();
+    resCacheSet(resData);
+  } catch(e) {
+    console.warn('resEnsureLoaded', e);
+    resData = resCacheGet() || RES_DEFAULT.slice();
+  } finally {
+    resLoading = false;
+  }
+  return resData;
+}
+
+function resToggleFields() {
+  var cat = document.getElementById('resFormCategory').value;
+  document.getElementById('resFieldsLink').style.display    = (cat === 'table' || cat === 'service') ? '' : 'none';
+  document.getElementById('resFieldsService').style.display = cat === 'service' ? '' : 'none';
+  document.getElementById('resFieldsContact').style.display = cat === 'contact' ? '' : 'none';
+}
+
+function resFilter(cat) {
+  resCurrentFilter = cat;
+  var tabs = document.querySelectorAll('.res-tab');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].classList.toggle('active', tabs[i].getAttribute('data-cat') === cat);
+  }
+  resRender();
+}
+
+async function resRender() {
+  var container = document.getElementById('resList');
+  if (!container) return;
+
+  if (!resData) {
+    container.innerHTML = '<div class="proj-empty">⏳ Загружаем ресурсы...</div>';
+    await resEnsureLoaded();
+  }
+
+  var list = (resData || []).slice();
+  if (resCurrentFilter !== 'all') {
+    list = list.filter(function(r){ return r.cat === resCurrentFilter; });
+  }
+
+  if (!list.length) {
+    container.innerHTML = '<div class="proj-empty">Нет записей в этой категории.</div>';
+    return;
+  }
+
+  var order = { table: 1, service: 2, contact: 3 };
+  list.sort(function(a, b){
+    var oa = order[a.cat] || 9, ob = order[b.cat] || 9;
+    if (oa !== ob) return oa - ob;
+    return (a.title || '').localeCompare(b.title || '', 'ru');
+  });
+
+  var html = '';
+  for (var i = 0; i < list.length; i++) {
+    var r = list[i];
+    var id = resEsc(r.id);
+    var catInfo = resCatLabel(r.cat);
+
+    html += '<div class="res-card">';
+    html +=   '<div class="res-card-head">';
+    html +=     '<span class="res-card-cat ' + catInfo.cls + '">' + catInfo.label + '</span>';
+    html +=     '<div class="res-card-name" title="' + resEsc(r.title) + '">' + resEsc(r.title) + '</div>';
+    html +=   '</div>';
+
+    if (r.url) {
+      html += '<div class="res-card-field">';
+      html +=   '<span class="res-card-field-label">URL</span>';
+      html +=   '<span class="res-card-field-value"><a href="' + resEsc(r.url) + '" target="_blank" rel="noopener">' + resEsc(r.url) + '</a></span>';
+      html += '</div>';
+    }
+
+    if (r.cat === 'service') {
+      if (r.login) {
+        html += '<div class="res-card-field">';
+        html +=   '<span class="res-card-field-label">Логин</span>';
+        html +=   '<span class="res-card-field-value">' + resEsc(r.login) + '</span>';
+        html +=   '<button class="res-card-copybtn" title="Скопировать" onclick="resCopy(' + JSON.stringify(r.login).replace(/"/g,'&quot;') + ')">📋</button>';
+        html += '</div>';
+      }
+      if (r.password) {
+        html += '<div class="res-card-field">';
+        html +=   '<span class="res-card-field-label">Пароль</span>';
+        html +=   '<span class="res-card-field-value res-card-pass" data-real="' + resEsc(r.password) + '" data-shown="0">' + '•'.repeat(Math.max(8, Math.min(16, r.password.length))) + '</span>';
+        html +=   '<button class="res-card-copybtn" title="Показать/скрыть" onclick="resTogglePass(this)">👁</button>';
+        html +=   '<button class="res-card-copybtn" title="Скопировать" onclick="resCopy(' + JSON.stringify(r.password).replace(/"/g,'&quot;') + ')">📋</button>';
+        html += '</div>';
+      }
+    }
+
+    if (r.cat === 'contact') {
+      if (r.company) {
+        html += '<div class="res-card-field">';
+        html +=   '<span class="res-card-field-label">Откуда</span>';
+        html +=   '<span class="res-card-field-value" style="font-family:var(--sans);font-size:12px">' + resEsc(r.company) + '</span>';
+        html += '</div>';
+      }
+      if (r.email) {
+        html += '<div class="res-card-field">';
+        html +=   '<span class="res-card-field-label">Email</span>';
+        html +=   '<span class="res-card-field-value"><a href="mailto:' + resEsc(r.email) + '">' + resEsc(r.email) + '</a></span>';
+        html +=   '<button class="res-card-copybtn" title="Скопировать" onclick="resCopy(' + JSON.stringify(r.email).replace(/"/g,'&quot;') + ')">📋</button>';
+        html += '</div>';
+      }
+      if (r.phone) {
+        html += '<div class="res-card-field">';
+        html +=   '<span class="res-card-field-label">Телефон</span>';
+        html +=   '<span class="res-card-field-value"><a href="tel:' + resEsc(r.phone.replace(/\s/g,'')) + '">' + resEsc(r.phone) + '</a></span>';
+        html +=   '<button class="res-card-copybtn" title="Скопировать" onclick="resCopy(' + JSON.stringify(r.phone).replace(/"/g,'&quot;') + ')">📋</button>';
+        html += '</div>';
+      }
+    }
+
+    if (r.note) {
+      html += '<div class="res-card-note">💬 ' + resEsc(r.note) + '</div>';
+    }
+
+    html += '<div class="res-card-actions">';
+    html +=   '<button class="proj-card-iconbtn" title="Редактировать" onclick="resEdit(\'' + id + '\')">✏️</button>';
+    html +=   '<button class="proj-card-iconbtn danger" title="Удалить" onclick="resDelete(\'' + id + '\')">🗑</button>';
+    html += '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function resTogglePass(btn) {
+  var field = btn.previousElementSibling;
+  if (!field) return;
+  var shown = field.getAttribute('data-shown') === '1';
+  if (shown) {
+    var realLen = (field.getAttribute('data-real') || '').length;
+    field.textContent = '•'.repeat(Math.max(8, Math.min(16, realLen)));
+    field.setAttribute('data-shown', '0');
+  } else {
+    field.textContent = field.getAttribute('data-real') || '';
+    field.setAttribute('data-shown', '1');
+  }
+}
+
+function resCopy(text) {
+  if (!text) return;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){
+        if (typeof showToast === 'function') showToast('✅ Скопировано');
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      if (typeof showToast === 'function') showToast('✅ Скопировано');
+    }
+  } catch (e) { console.warn('copy failed', e); }
+}
+
+function resOpenAddForm() {
+  resEditingId = null;
+  document.getElementById('resFormTitle').textContent = 'Новая запись';
+  document.getElementById('resFormCategory').value = 'table';
+  document.getElementById('resFormTitle2').value = '';
+  document.getElementById('resFormUrl').value = '';
+  document.getElementById('resFormLogin').value = '';
+  document.getElementById('resFormPassword').value = '';
+  document.getElementById('resFormEmail').value = '';
+  document.getElementById('resFormPhone').value = '';
+  document.getElementById('resFormCompany').value = '';
+  document.getElementById('resFormNote').value = '';
+  resToggleFields();
+  document.getElementById('resForm').style.display = 'block';
+  setTimeout(function(){ document.getElementById('resFormTitle2').focus(); }, 50);
+}
+
+function resEdit(id) {
+  var list = resData || [];
+  var item = null;
+  for (var i = 0; i < list.length; i++) { if (list[i].id === id) { item = list[i]; break; } }
+  if (!item) return;
+  resEditingId = id;
+  document.getElementById('resFormTitle').textContent = 'Редактировать запись';
+  document.getElementById('resFormCategory').value = item.cat || 'table';
+  document.getElementById('resFormTitle2').value = item.title || '';
+  document.getElementById('resFormUrl').value = item.url || '';
+  document.getElementById('resFormLogin').value = item.login || '';
+  document.getElementById('resFormPassword').value = item.password || '';
+  document.getElementById('resFormEmail').value = item.email || '';
+  document.getElementById('resFormPhone').value = item.phone || '';
+  document.getElementById('resFormCompany').value = item.company || '';
+  document.getElementById('resFormNote').value = item.note || '';
+  resToggleFields();
+  document.getElementById('resForm').style.display = 'block';
+  document.getElementById('resForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function resCancelForm() {
+  resEditingId = null;
+  var f = document.getElementById('resForm');
+  if (f) f.style.display = 'none';
+}
+
+async function resSave() {
+  var cat   = document.getElementById('resFormCategory').value;
+  var title = (document.getElementById('resFormTitle2').value || '').trim();
+  if (!title) { alert('Укажите название записи'); return; }
+
+  var rec = { cat: cat, title: title };
+  rec.note = (document.getElementById('resFormNote').value || '').trim();
+
+  if (cat === 'table' || cat === 'service') {
+    var url = (document.getElementById('resFormUrl').value || '').trim();
+    if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+    rec.url = url;
+  }
+  if (cat === 'service') {
+    rec.login = (document.getElementById('resFormLogin').value || '').trim();
+    rec.password = document.getElementById('resFormPassword').value || '';
+  }
+  if (cat === 'contact') {
+    rec.email   = (document.getElementById('resFormEmail').value   || '').trim();
+    rec.phone   = (document.getElementById('resFormPhone').value   || '').trim();
+    rec.company = (document.getElementById('resFormCompany').value || '').trim();
+  }
+
+  var list = (resData || []).slice();
+  if (resEditingId) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === resEditingId) { rec.id = resEditingId; list[i] = rec; break; }
+    }
+  } else {
+    rec.id = resGenId();
+    list.push(rec);
+  }
+
+  resData = list;
+  resCacheSet(list);
+  resCancelForm();
+  resRender();
+
+  if (gsheetsToken) {
+    try {
+      await resSaveToSheets(list);
+      if (typeof showToast === 'function') showToast('✅ Сохранено в Google Sheets');
+    } catch(e) {
+      console.warn('resSaveToSheets', e);
+      if (typeof showToast === 'function') showToast('⚠ Сохранено локально, синхронизация не удалась');
+    }
+  } else {
+    if (typeof showToast === 'function') showToast('💾 Сохранено локально (без синхронизации)');
+  }
+}
+
+async function resDelete(id) {
+  if (!confirm('Удалить эту запись?')) return;
+  var list = (resData || []).filter(function(r){ return r.id !== id; });
+  resData = list;
+  resCacheSet(list);
+  resRender();
+  if (gsheetsToken) {
+    try {
+      await resSaveToSheets(list);
+      if (typeof showToast === 'function') showToast('🗑 Удалено');
+    } catch(e) {
+      console.warn('resSaveToSheets', e);
+    }
+  }
 }
 
 
