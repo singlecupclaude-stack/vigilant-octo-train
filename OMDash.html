@@ -602,6 +602,7 @@ body::before {
 .supply-products-table {
   margin: 8px 14px 14px;
   font-size: 13px;
+  overflow-x: auto;
 }
 /* Базовая раскладка — переопределяется .ozon / .wb модификаторами */
 .supply-products-head,
@@ -610,16 +611,65 @@ body::before {
   gap: 14px;
   align-items: center;
 }
-/* Ozon: SKU (140) / offer_id (140) / наименование (растягивается) / кол-во (90) */
+/* Единый формат SKU: код 1С / ШК / тип / короткое имя / данные МП */
 .supply-products-table.ozon .supply-products-head,
 .supply-products-table.ozon .supply-products-row {
-  grid-template-columns: 140px 150px minmax(0, 1fr) 90px;
+  grid-template-columns: 108px 128px 116px 92px minmax(150px, 0.72fr) 110px;
 }
-/* WB: артикул (растягивается) / nmID-баркод (160) / план (80) / принято (90) */
 .supply-products-table.wb .supply-products-head,
 .supply-products-table.wb .supply-products-row {
-  grid-template-columns: minmax(0, 1fr) 170px 90px 100px;
+  grid-template-columns: 108px 128px 116px 92px minmax(150px, 0.72fr) 104px 104px;
 }
+.supply-summary-strip {
+  margin: 0 14px 12px;
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.supply-summary-chip {
+  background: rgba(143, 163, 131, 0.06);
+  border: 1px solid rgba(143, 163, 131, 0.18);
+  border-radius: 4px;
+  padding: 10px 14px;
+  min-width: 150px;
+}
+.supply-summary-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.supply-summary-value {
+  font-size: 18px;
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.supply-summary-value span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.sku-type {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 74px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-family: var(--font-sans, inherit);
+  font-size: 10px;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: nowrap;
+}
+.sku-type-nes { color: var(--text-primary); background: rgba(212,197,160,0.13); border: 1px solid rgba(212,197,160,0.24); }
+.sku-type-dg { color: var(--accent-copper-bright); background: rgba(199,144,93,0.13); border: 1px solid rgba(199,144,93,0.28); }
+.sku-type-empty { color: var(--text-soft); background: rgba(138,142,131,0.08); border: 1px solid rgba(138,142,131,0.14); }
 /* Старая разметка для обратной совместимости (если class модификатор не выставлен) */
 .supply-products-table:not(.ozon):not(.wb) .supply-products-head,
 .supply-products-table:not(.ozon):not(.wb) .supply-products-row {
@@ -658,21 +708,29 @@ body::before {
 .supply-products-row .name {
   font-size: 13px;
   color: var(--text-body);
-  line-height: 1.4;
-  word-break: break-word;
+  line-height: 1.35;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+.supply-products-head .qty-head {
+  text-align: center !important;
 }
 .supply-products-row .qty {
-  text-align: right;
-  font-size: 14px;
-  font-weight: 500;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
+  justify-self: center;
+  min-width: 44px;
 }
 .supply-products-row .qty-accepted {
-  text-align: right;
-  font-size: 14px;
-  font-weight: 500;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  justify-self: center;
+  min-width: 44px;
 }
 .supply-products-row .qty-accepted.ok { color: #8FA383; }
 .supply-products-row .qty-accepted.partial { color: var(--text-muted); }
@@ -3524,6 +3582,86 @@ async function sendOrderToTelegram(order) {
   }
 }
 
+
+// ─── SKU справочник из SOWY: код 1С / ШК / тип / короткое имя ──────────────
+// Используется только для обогащения состава поставок OM. Источник — тот же
+// справочник, что в SOWY: встроенная карта + свежий кэш localStorage, если
+// в SOWY справочник обновляли через XLSX.
+let WB_BARCODE_MAP = {"4602009425653": {"code1c": "00-00000227", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Amaretto", "capsLot": 10, "category": "Nespresso"}, "4602009432569": {"code1c": "00-00000256", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Яблочный штрудель", "capsLot": 10, "category": "Nespresso"}, "4602009461477": {"code1c": "КП-00000433", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Яблоко корица", "capsLot": 10, "category": "Nespresso"}, "4602009406935": {"code1c": "00-00000110", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Balanced", "capsLot": 10, "category": "Nespresso"}, "4602009967429": {"code1c": "00-00002389", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Шварцвальдский торт", "capsLot": 10, "category": "Nespresso"}, "4602009406966": {"code1c": "00-00000111", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Caramel", "capsLot": 10, "category": "Nespresso"}, "4603781299593": {"code1c": "00-00003063", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Caramel\"", "capsLot": 30, "category": "Nespresso"}, "4603781299623": {"code1c": "00-00003066", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Caramel, Vanilla, Chocolate\"", "capsLot": 30, "category": "Nespresso"}, "4602009967467": {"code1c": "00-00002390", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Кардамон", "capsLot": 10, "category": "Nespresso"}, "4602009461484": {"code1c": "КП-00000431", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Вишня с коньяком", "capsLot": 10, "category": "Nespresso"}, "4602009406980": {"code1c": "00-00000112", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Chocolate", "capsLot": 10, "category": "Nespresso"}, "4602009461316": {"code1c": "КП-00000189", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Кокос", "capsLot": 10, "category": "Nespresso"}, "4602009425615": {"code1c": "00-00000173", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Корица", "capsLot": 10, "category": "Nespresso"}, "4602009406959": {"code1c": "00-00000113", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Декаф", "capsLot": 10, "category": "Nespresso"}, "4603781299777": {"code1c": "00-00003484", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Декаф Caramel", "capsLot": 10, "category": "Nespresso"}, "4603781299791": {"code1c": "00-00003485", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Декаф Irish cream", "capsLot": 10, "category": "Nespresso"}, "4602009406928": {"code1c": "00-00000114", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Delicate", "capsLot": 10, "category": "Nespresso"}, "4603781299647": {"code1c": "00-00003068", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Delicate, Balance, Espresso 7\"", "capsLot": 30, "category": "Nespresso"}, "4602009952142": {"code1c": "00-00000868", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Espresso 5", "capsLot": 10, "category": "Nespresso"}, "4602009425646": {"code1c": "00-00000206", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Espresso 7", "capsLot": 10, "category": "Nespresso"}, "4602009456404": {"code1c": "КП-00000219", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Extra Srtong", "capsLot": 10, "category": "Nespresso"}, "4603781299562": {"code1c": "00-00003060", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Extra Strong\"", "capsLot": 30, "category": "Nespresso"}, "4603781299616": {"code1c": "00-00003065", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Extra Strong, Intense, Ristretto\"", "capsLot": 30, "category": "Nespresso"}, "4602009461460": {"code1c": "КП-00000432", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Фундук", "capsLot": 10, "category": "Nespresso"}, "4602009967436": {"code1c": "00-00002386", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Мёд", "capsLot": 10, "category": "Nespresso"}, "4602009423932": {"code1c": "КП-00000143", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Горячий шоколад", "capsLot": 10, "category": "Nespresso"}, "4602009406904": {"code1c": "00-00000115", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Intense", "capsLot": 10, "category": "Nespresso"}, "4602009425608": {"code1c": "00-00000172", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Irish Cream", "capsLot": 10, "category": "Nespresso"}, "4603781299579": {"code1c": "00-00003061", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Irish Cream\"", "capsLot": 30, "category": "Nespresso"}, "4603781299630": {"code1c": "00-00003067", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Irish Cream, Миндаль, Кокос\"", "capsLot": 30, "category": "Nespresso"}, "4602009967443": {"code1c": "00-00002387", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Лимон", "capsLot": 10, "category": "Nespresso"}, "4602009406942": {"code1c": "00-00000116", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Mild", "capsLot": 10, "category": "Nespresso"}, "4602009425639": {"code1c": "00-00000202", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Миндаль", "capsLot": 10, "category": "Nespresso"}, "4603781299609": {"code1c": "00-00003064", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Миндаль\"", "capsLot": 30, "category": "Nespresso"}, "4602009423291": {"code1c": "00-00000245", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Ассорти", "capsLot": 10, "category": "Nespresso"}, "4602009461309": {"code1c": "КП-00000190", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Сицилийский апельсин", "capsLot": 10, "category": "Nespresso"}, "4603781299555": {"code1c": "00-00002873", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Ristretto", "capsLot": 10, "category": "Nespresso"}, "4602009425622": {"code1c": "00-00000228", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Strawberry cream", "capsLot": 10, "category": "Nespresso"}, "4602009406911": {"code1c": "00-00000117", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Strong", "capsLot": 10, "category": "Nespresso"}, "4602009967450": {"code1c": "00-00002388", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Тутти-Фрутти", "capsLot": 10, "category": "Nespresso"}, "4602009425677": {"code1c": "00-00000170", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Uganda", "capsLot": 10, "category": "Nespresso"}, "4602009406973": {"code1c": "00-00000118", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Vanilla", "capsLot": 10, "category": "Nespresso"}, "4603781299586": {"code1c": "00-00003062", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Vanilla\"", "capsLot": 30, "category": "Nespresso"}, "4602009461385": {"code1c": "КП-00000088", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Карамель CJ", "capsLot": 10, "category": "Nespresso"}, "4603781299869": {"code1c": "00-00003508", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Набор Карамель CJ 2 упак.", "capsLot": 20, "category": "Nespresso"}, "4602009461354": {"code1c": "КП-00000087", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Шоколад CJ", "capsLot": 10, "category": "Nespresso"}, "4603781299883": {"code1c": "00-00003509", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Набор Шоколад CJ 2 упак.", "capsLot": 20, "category": "Nespresso"}, "4602009461361": {"code1c": "КП-00000091", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Корица CJ", "capsLot": 10, "category": "Nespresso"}, "4602009461347": {"code1c": "00-00000261", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Classic темная обжарка CJ", "capsLot": 10, "category": "Nespresso"}, "4602009461415": {"code1c": "КП-00000086", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Espresso italiano CJ", "capsLot": 10, "category": "Nespresso"}, "4602009461330": {"code1c": "КП-00000092", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Irish Cream CJ", "capsLot": 10, "category": "Nespresso"}, "4603781299852": {"code1c": "00-00003511", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Набор Irish Cream CJ 2 упак.", "capsLot": 20, "category": "Nespresso"}, "4602009461439": {"code1c": "00-00000262", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Classic светлая обжарка CJ", "capsLot": 10, "category": "Nespresso"}, "4602009461408": {"code1c": "КП-00000090", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Миндаль CJ", "capsLot": 10, "category": "Nespresso"}, "4603781299890": {"code1c": "00-00003512", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Набор Миндаль CJ 2 упак.", "capsLot": 20, "category": "Nespresso"}, "4602009461378": {"code1c": "КП-00000093", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Ассорти CJ", "capsLot": 10, "category": "Nespresso"}, "4602009461392": {"code1c": "00-00000263", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Клубника со сливками CJ", "capsLot": 10, "category": "Nespresso"}, "4602009461323": {"code1c": "КП-00000220", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Strong CJ", "capsLot": 10, "category": "Nespresso"}, "4602009461422": {"code1c": "КП-00000089", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Французская ваниль CJ", "capsLot": 10, "category": "Nespresso"}, "4603781299876": {"code1c": "00-00003513", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Набор Французская ваниль CJ 2 упак.", "capsLot": 20, "category": "Nespresso"}, "4603781299913": {"code1c": "00-00003577", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Набор CJ \"Aroma\" 10 упак.", "capsLot": 100, "category": "Nespresso"}, "4603781299920": {"code1c": "00-00003578", "group": "Кофе в капсулах", "brand": "Coffee Joy", "shortName": "Набор CJ \"Classic\" 10 упак.", "capsLot": 100, "category": "Nespresso"}, "4602009967498": {"code1c": "00-00002674", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "AROMA HB 60", "capsLot": 60, "category": "Nespresso"}, "4603781299807": {"code1c": "00-00003483", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "CHOCO & NUTS HB (60)", "capsLot": 60, "category": "Nespresso"}, "4602009967474": {"code1c": "00-00002673", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "ITALIANO HB 60", "capsLot": 60, "category": "Nespresso"}, "4602009967481": {"code1c": "00-00002675", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "SCANDINAVIA HB 60", "capsLot": 60, "category": "Nespresso"}, "4602009952869": {"code1c": "00-00002098", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый Decaf без кофеина 250 г", "capsLot": 250, "category": ""}, "4602009967221": {"code1c": "00-00002033", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый Decaf без кофеина 500 г", "capsLot": 500, "category": ""}, "4603781299814": {"code1c": "00-00003558", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano SCC DG 16", "capsLot": 16, "category": "Dolce Gusto"}, "4603781299821": {"code1c": "00-00003559", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano Strong SCC DG 16", "capsLot": 16, "category": "Dolce Gusto"}, "4603781299845": {"code1c": "00-00003560", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cappuccino SCC DG 16", "capsLot": 16, "category": "Dolce Gusto"}, "4603781299838": {"code1c": "00-00003561", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Latte macchiato SCC DG 16", "capsLot": 16, "category": "Dolce Gusto"}, "4603809726100": {"code1c": "00-00004341", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Aroma Coffee Single Cup 50 капсул", "capsLot": 50, "category": "Nespresso"}, "4603809726094": {"code1c": "00-00004342", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Classic Coffee Single Cup по 50 капсул", "capsLot": 50, "category": "Nespresso"}, "4603809726001": {"code1c": "00-00003751", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Вишня с коньяком, апельсин, клубника со сливками\"", "capsLot": 30, "category": "Nespresso"}, "4603781299999": {"code1c": "00-00003750", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Decaf\"", "capsLot": 30, "category": "Nespresso"}, "4603781299784": {"code1c": "00-00000193", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Декаф Vanilla", "capsLot": 10, "category": "Nespresso"}, "4603781299937": {"code1c": "00-00003611", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "Набор AMERICANO HB DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4603781299944": {"code1c": "00-00003612", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "Набор CAPPUCCINO HB DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4603781299951": {"code1c": "00-00003613", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "Набор LATTE MACCHIATO HB DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4603809726070": {"code1c": "00-00004243", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "Hot chocolate HB DG 48 капсул МОЛОКО", "capsLot": 48, "category": "Dolce Gusto"}, "4603809726018": {"code1c": "00-00003870", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano Decaf SCC DG 16", "capsLot": 16, "category": "Dolce Gusto"}, "4603809726032": {"code1c": "00-00003871", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Hot Chocolate SCC DG 16", "capsLot": 16, "category": "Dolce Gusto"}, "4603809726087": {"code1c": "00-00004250", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cioccolato SCC DG 16", "capsLot": 16, "category": "Dolce Gusto"}, "4603781299968": {"code1c": "00-00003614", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Americano SCC DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4603809726049": {"code1c": "00-00003874", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Americano Decaf SCC DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4603781299975": {"code1c": "00-00003615", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Cappuccino SCC DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4603781299982": {"code1c": "00-00003616", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Latte macchiato SCC DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4603809726056": {"code1c": "00-00003873", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Hot Chocolate SCC DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4602009952852": {"code1c": "00-00002097", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый Decaf без кофеина 100 г", "capsLot": 100, "category": ""}, "4602009952487": {"code1c": "00-00001789", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый для турки 250 г", "capsLot": 250, "category": ""}, "4602009967214": {"code1c": "00-00002034", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый для турки 500 г", "capsLot": 500, "category": ""}, "4602009952845": {"code1c": "00-00002099", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый для чашки 250 г", "capsLot": 250, "category": ""}, "4602009952999": {"code1c": "00-00002036", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый для чашки 500 г", "capsLot": 500, "category": ""}, "4602009432576": {"code1c": "00-00000257", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Columbia Dulima", "capsLot": 10, "category": "Nespresso"}, "4602009425660": {"code1c": "00-00000223", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Galapagos", "capsLot": 10, "category": "Nespresso"}, "4602009952494": {"code1c": "00-00001790", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый для турки 100 г", "capsLot": 100, "category": ""}, "4602009952838": {"code1c": "00-00002100", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый для чашки 100 г", "capsLot": 100, "category": ""}, "4602009952517": {"code1c": "00-00001792", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый френч-пресс 100 г", "capsLot": 100, "category": ""}, "4602009952500": {"code1c": "00-00001791", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый френч-пресс 250 г", "capsLot": 250, "category": ""}, "4602009967207": {"code1c": "00-00002035", "group": "Кофе молотый", "brand": "Single Cup Coffee", "shortName": "Молотый френч-пресс 500 г", "capsLot": 500, "category": ""}, "4603809726490": {"code1c": "00-00006543", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Сafe au laite SCC DG 10", "capsLot": 10, "category": "Dolce Gusto"}, "4673746767016": {"code1c": "00-00006531", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano DG SCC 10", "capsLot": 10, "category": "Dolce Gusto"}, "4673746767030": {"code1c": "00-00006533", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano Strong SCC DG 10", "capsLot": 10, "category": "Dolce Gusto"}, "4673746767061": {"code1c": "00-00006535", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cappuccino SCC DG 10", "capsLot": 10, "category": "Dolce Gusto"}, "4673746767085": {"code1c": "00-00006534", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Latte macchiato SCC DG 10", "capsLot": 10, "category": "Dolce Gusto"}, "4673746767108": {"code1c": "00-00006532", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Hot Chocolate SCC DG 10", "capsLot": 10, "category": "Dolce Gusto"}, "4673746767122": {"code1c": "00-00006536", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cioccolato SCC DG 10", "capsLot": 10, "category": "Dolce Gusto"}, "4673746767153": {"code1c": "00-00006544", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano Decaf SCC DG 10", "capsLot": 10, "category": "Dolce Gusto"}, "4673746767009": {"code1c": "00-00006620", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Сafe au laite SCC DG 30", "capsLot": 30, "category": "Dolce Gusto"}, "4673746767023": {"code1c": "00-00006622", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Americano SCC DG 30", "capsLot": 30, "category": "Dolce Gusto"}, "4673746767047": {"code1c": "00-00006623", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Americano Strong SCC DG 30", "capsLot": 30, "category": "Dolce Gusto"}, "4673746767078": {"code1c": "00-00006624", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Cappuccino SCC DG 30", "capsLot": 30, "category": "Dolce Gusto"}, "4673746767092": {"code1c": "00-00006625", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Latte macchiato SCC DG 30", "capsLot": 30, "category": "Dolce Gusto"}, "4673746767115": {"code1c": "00-00006626", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Hot Chocolate SCC DG 30", "capsLot": 30, "category": "Dolce Gusto"}, "4673746767139": {"code1c": "00-00006627", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Cioccolato SCC DG 30", "capsLot": 30, "category": "Dolce Gusto"}, "4673746767160": {"code1c": "00-00006628", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Americano Decaf SCC DG 30", "capsLot": 30, "category": "Dolce Gusto"}, "4673746767054": {"code1c": "00-00006629", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Americano Strong SCC DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4673746767146": {"code1c": "00-00006630", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Cioccolato SCC DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4673746767184": {"code1c": "00-00006631", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор Сafe au laite SCC DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4673746767177": {"code1c": "00-00006632", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Сafe au laite SCC DG 16", "capsLot": 16, "category": "Dolce Gusto"}, "4673746767290": {"code1c": "00-00006634", "group": "Кофе в капсулах", "brand": "HOME BARISTA", "shortName": "Набор Сafe au laite HB DG 48", "capsLot": 48, "category": "Dolce Gusto"}, "4673746767375": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Caramel, Vanilla, Chocolate\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767382": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Irish Cream, Миндаль, Кокос\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767399": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Amaretto, Cherry with cognac, Irish Cream\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767405": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Delicate, Balance, Espresso 7\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767412": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Вишня с коньяком, апельсин, клубника со сливками\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767429": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Extra Strong\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767436": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Irish Cream\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767443": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Extra Strong, Intense, Ristretto\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767450": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Decaf\" 60", "capsLot": 60, "category": "Nespresso"}, "4673746767467": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Caramel, Vanilla, Chocolate\" 90", "capsLot": 90, "category": "Nespresso"}, "4673746767474": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Irish Cream, Миндаль, Кокос\" 90", "capsLot": 90, "category": "Nespresso"}, "4673746767481": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Delicate, Balance, Espresso 7\" 90", "capsLot": 90, "category": "Nespresso"}, "4673746767498": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Extra Strong\" 90", "capsLot": 90, "category": "Nespresso"}, "4673746767504": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Irish Cream\" 90", "capsLot": 90, "category": "Nespresso"}, "4673746767511": {"code1c": "", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Набор \"Extra Strong, Intense, Ristretto\" 90", "capsLot": 90, "category": "Nespresso"}, "4603809726063": {"code1c": "00-00007299", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "DECAF Caramel, Vanilla, Irish Cream (30) Набор", "capsLot": 30, "category": "Nespresso"}, "4673746767528": {"code1c": "00-00007408", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Aroma Coffee (100) Набор", "capsLot": 100, "category": "Nespresso"}, "4673746767535": {"code1c": "00-00007409", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Classic Coffee (100) Набор", "capsLot": 100, "category": "Nespresso"}, "4673746767696": {"code1c": "00-00007488", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "MIX Крафт (100) Набор", "capsLot": 100, "category": "Nespresso"}, "4673746767719": {"code1c": "00-00007553", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cafe au laite DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673746767726": {"code1c": "00-00007554", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano Duo DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673746767702": {"code1c": "00-00007552", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673746767603": {"code1c": "00-00007563", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cafe au laite Irish cream DG 16 капсул", "capsLot": 16, "category": "Dolce Gusto"}, "4673746767627": {"code1c": "00-00007562", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cafe au laite Irish cream DG 48 капсул", "capsLot": 48, "category": "Dolce Gusto"}, "4673746767665": {"code1c": "00-00007561", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cafe au laite Vanila DG 16 капсул", "capsLot": 16, "category": "Dolce Gusto"}, "4673746767689": {"code1c": "00-00007560", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cafe au laite Vanila DG 48 капсул", "capsLot": 48, "category": "Dolce Gusto"}, "4673746767634": {"code1c": "00-00007565", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cafe au laite Caramel DG 16 капсул", "capsLot": 16, "category": "Dolce Gusto"}, "4673746767658": {"code1c": "00-00007564", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cafe au laite Caramel DG 48 капсул", "capsLot": 48, "category": "Dolce Gusto"}, "4673746767733": {"code1c": "00-00007637", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "MIX Крафт 2 (100) Набор", "capsLot": 100, "category": "Nespresso"}, "4673746767900": {"code1c": "00-00007689", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Aromatico набор 100 Caffe Gioia", "capsLot": 100, "category": "Nespresso"}, "4673746767924": {"code1c": "00-00007690", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Classico набор 100 Caffe Gioia", "capsLot": 100, "category": "Nespresso"}, "4673746767894": {"code1c": "00-00007687", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Aromatico набор 50 Caffe Gioia", "capsLot": 50, "category": "Nespresso"}, "4673746767917": {"code1c": "00-00007688", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Classico набор 50 Caffe Gioia", "capsLot": 50, "category": "Nespresso"}, "4673746767740": {"code1c": "00-00007718", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "MIX Крафт 3 (100) Набор", "capsLot": 100, "category": "Nespresso"}, "4673746767856": {"code1c": "00-00007682", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Verona Almond Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767887": {"code1c": "00-00007685", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Venezia Delicato Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767863": {"code1c": "00-00007683", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Torino Caramel Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767825": {"code1c": "00-00007679", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Sanremo Irish Cream Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767818": {"code1c": "00-00007678", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Roma Intenso Forte Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767801": {"code1c": "00-00007677", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Palermo Extra Forte Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767849": {"code1c": "00-00007681", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Modena Vanilla Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767795": {"code1c": "00-00007676", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Milano Espresso Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767832": {"code1c": "00-00007680", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Firenze Ristretto Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767870": {"code1c": "00-00007684", "group": "Кофе в капсулах", "brand": "Caffe Gioia", "shortName": "Bergamo Chocolate Caffe Gioia", "capsLot": 10, "category": "Nespresso"}, "4673746767788": {"code1c": "00-00007727", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Pleasure набор DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673746767931": {"code1c": "00-00007729", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Pari набор DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673746767764": {"code1c": "00-00007728", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "MIX набор DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673746767948": {"code1c": "00-00007730", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Bliss набор DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673746767771": {"code1c": "00-00007725", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Trio набор DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673746767757": {"code1c": "00-00007724", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Collection Набор DG 100 капсул", "capsLot": 100, "category": "Dolce Gusto"}, "4673765387110": {"code1c": "00-00008110", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Caramel, Irish Cream, Minda (90) Набор", "capsLot": 90, "category": "Nespresso"}, "4673765387127": {"code1c": "00-00008112", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Delight (90) Набор", "capsLot": 90, "category": "Nespresso"}, "4673765387059": {"code1c": "00-00007953", "group": "Основа для напитков", "brand": "HOME BARISTA", "shortName": "Фруктовый коктейль Фруктовая основа для напитков HB Mix Me, 5 саше", "capsLot": 5, "category": ""}, "4603809726025": {"code1c": "00-00003857", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Амаретто, Вишня с коньяком, Ирландский крем (30)", "capsLot": 30, "category": "Nespresso"}, "4673765387288": {"code1c": "00-00008407", "group": "дрипы", "brand": "Single Cup Coffee", "shortName": "BRAZIL,COLOMBIA дрип 40 шт.", "capsLot": 40, "category": ""}, "4673765387295": {"code1c": "00-00008408", "group": "дрипы", "brand": "Single Cup Coffee", "shortName": "COLOMBIA,TANZANIA дрип 40 шт.", "capsLot": 40, "category": ""}, "4673765387301": {"code1c": "00-00008409", "group": "дрипы", "brand": "Single Cup Coffee", "shortName": "BRAZIL,TANZANIA дрип 40 шт.", "capsLot": 40, "category": ""}, "4673765387363": {"code1c": "00-00008500", "group": "дрипы", "brand": "Single Cup Coffee", "shortName": "BRAZIL дрип 40 шт.", "capsLot": 40, "category": ""}, "4673765387189": {"code1c": "00-00008310", "group": "дрипы", "brand": "Single Cup Coffee", "shortName": "BRAZIL дрип 20 шт.", "capsLot": 20, "category": ""}, "4673765387240": {"code1c": "00-00008316", "group": "дрипы", "brand": "Single Cup Coffee", "shortName": "COLOMBIA дрип 20 шт.", "capsLot": 20, "category": ""}, "4673765387264": {"code1c": "00-00008317", "group": "дрипы", "brand": "Single Cup Coffee", "shortName": "TANZANIA дрип 20 шт.", "capsLot": 20, "category": ""}, "4673765387349": {"code1c": "00-00008411", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Americano Strong DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673765387332": {"code1c": "00-00008410", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Cioccolato DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673765387356": {"code1c": "00-00008412", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Hot Chocolate DG 96 капсул", "capsLot": 96, "category": "Dolce Gusto"}, "4673765387370": {"code1c": "00-00008735", "group": "Основа для напитков", "brand": "HOME BARISTA", "shortName": "Ассорти чай 5 саше Home Barista Mix Me", "capsLot": 5, "category": ""}, "4673765387387": {"code1c": "00-00008736", "group": "Основа для напитков", "brand": "HOME BARISTA", "shortName": "Молочный улун с клубникой чай 5 саше Home Barista Mix Me", "capsLot": 5, "category": ""}, "4673765387394": {"code1c": "00-00008737", "group": "Основа для напитков", "brand": "HOME BARISTA", "shortName": "Молочный улун с персиком чай 5 саше Home Barista Mix Me", "capsLot": 5, "category": ""}, "4673765387400": {"code1c": "00-00008738", "group": "Основа для напитков", "brand": "HOME BARISTA", "shortName": "Молочный улун с имбирем чай 5 саше Home Barista Mix Me", "capsLot": 5, "category": ""}, "4673765387417": {"code1c": "00-00008739", "group": "Основа для напитков", "brand": "HOME BARISTA", "shortName": "Ассам с малиной чай 5 саше Home Barista Mix Me", "capsLot": 5, "category": ""}, "4673765387424": {"code1c": "00-00008740", "group": "Основа для напитков", "brand": "HOME BARISTA", "shortName": "Каркаде с имбирем чай 5 саше Home Barista Mix Me", "capsLot": 5, "category": ""}, "4673765387530": {"code1c": "00-00008924", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Flat White DG 16 капсул", "capsLot": 16, "category": "Dolce Gusto"}, "4673765387769": {"code1c": "00-00009201", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Corica, Apple strudel, Honey (30) Набор", "capsLot": 30, "category": "Nespresso"}, "4673765387752": {"code1c": "00-00009202", "group": "Кофе в капсулах", "brand": "Single Cup Coffee", "shortName": "Honduras, Mexica, Sumatra (30) Набор", "capsLot": 30, "category": "Nespresso"}};
+
+(function omLoadSowyReferenceCache() {
+  try {
+    const raw = localStorage.getItem('sowy_ref_data_v1');
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data && data.WB_BARCODE_MAP && Object.keys(data.WB_BARCODE_MAP).length) {
+      WB_BARCODE_MAP = data.WB_BARCODE_MAP;
+      console.log('[OM] SKU справочник подтянут из SOWY localStorage:', Object.keys(WB_BARCODE_MAP).length, 'SKU');
+    }
+  } catch(e) { console.warn('[OM] не удалось прочитать справочник SOWY:', e); }
+})();
+
+function omNormalizeSkuKey(v) {
+  return String(v == null ? '' : v).trim();
+}
+
+function omBuildCode1cIndex() {
+  const idx = {};
+  try {
+    Object.entries(WB_BARCODE_MAP || {}).forEach(([ean, info]) => {
+      const c = omNormalizeSkuKey(info && info.code1c);
+      if (c && !idx[c]) idx[c] = { ean, info };
+    });
+  } catch(e) {}
+  return idx;
+}
+
+function omSkuRefByCandidates(candidates) {
+  const keys = (candidates || []).map(omNormalizeSkuKey).filter(Boolean);
+  for (const k of keys) {
+    if (WB_BARCODE_MAP && WB_BARCODE_MAP[k]) return { ean: k, info: WB_BARCODE_MAP[k], matchedBy: 'barcode' };
+  }
+  const byCode = omBuildCode1cIndex();
+  for (const k of keys) {
+    if (byCode[k]) return { ean: byCode[k].ean, info: byCode[k].info, matchedBy: 'code1c' };
+  }
+  return { ean: '', info: {}, matchedBy: '' };
+}
+
+function omSkuTypeFromInfo(info) {
+  const cat = String((info && info.category) || '').toLowerCase();
+  if (cat.includes('nespresso')) return 'Nespresso';
+  if (cat.includes('dolce')) return 'Dolce Gusto';
+  return '';
+}
+
+function omSkuMeta(item, source) {
+  item = item || {};
+  const candidates = source === 'wb'
+    ? [item.barcode, item.article, item.supplierArticle, item.vendorCode, item.nmId]
+    : [item.offer_id, item.offerId, item.sku, item.barcode, item.article, item.vendorCode];
+  const ref = omSkuRefByCandidates(candidates);
+  const info = ref.info || {};
+  const barcode = ref.ean || omNormalizeSkuKey(item.barcode) || (source === 'ozon' ? omNormalizeSkuKey(item.sku) : omNormalizeSkuKey(item.article));
+  const code1c = info.code1c || (ref.matchedBy === 'code1c' ? candidates.map(omNormalizeSkuKey).find(k => k && /^([А-ЯA-Z]{2}-|\d{2}-)/i.test(k)) : '') || '';
+  const type = omSkuTypeFromInfo(info);
+  const shortName = info.shortName || item.shortName || item.name || item.subject || '';
+  return {
+    code1c: code1c || '—',
+    barcode: barcode || '—',
+    type: type || '—',
+    shortName: shortName || '—',
+    matched: !!(info && Object.keys(info).length),
+  };
+}
+
+function omSkuTypeHtml(type) {
+  const t = String(type || '');
+  if (t === 'Nespresso') return '<span class="sku-type sku-type-nes">Nespresso</span>';
+  if (t === 'Dolce Gusto') return '<span class="sku-type sku-type-dg">Dolce Gusto</span>';
+  return '<span class="sku-type sku-type-empty">—</span>';
+}
+
 async function sendOrderEmail(order) {
   // email уходит через Apps Script — он умеет MailApp.sendEmail.
   // Если эндпоинт ещё не добавлен в Code.gs, попытка просто вернёт ошибку,
@@ -3605,7 +3743,7 @@ function renderSupplyDetails(source, id, number, data) {
 
   // Плашка о браузерном кэше — показывается если данные взяты из localStorage.
   // Кнопка "обновить" принудительно идёт в Apps Script (forceRefresh=true).
-  if (data.from_browser_cache) {
+  if (data.from_browser_cache && source !== 'wb') {
     const ageTxt = data.browser_cache_age_min < 1
       ? 'только что'
       : (data.browser_cache_age_min < 60
@@ -3701,6 +3839,43 @@ function renderSupplyDetails(source, id, number, data) {
         <div class="supply-card-title">количество</div>
         ${lines.join('')}
       </div>`);
+    }
+
+    // Доп. данные WB API — показываем только если бэк их отдаёт.
+    // В режиме чтения из листа их может не быть, но при прямом API-фолбеке
+    // доступны платная приёмка, фактический/транзитный склад, выгрузка и т.п.
+    {
+      const extraLines = [];
+      if (s.actualWarehouseName && s.actualWarehouseName !== s.warehouseName) {
+        extraLines.push(`<div class="supply-card-row"><span class="label">факт. склад</span><span>${escapeHtml(s.actualWarehouseName)}</span></div>`);
+      }
+      if (s.transitWarehouseName) {
+        extraLines.push(`<div class="supply-card-row"><span class="label">транзит</span><span>${escapeHtml(s.transitWarehouseName)}</span></div>`);
+      }
+      if (s.unloadingQuantity) {
+        extraLines.push(`<div class="supply-card-row"><span class="label">выгружено</span><span>${escapeHtml(String(s.unloadingQuantity))} шт</span></div>`);
+      }
+      if (s.readyForSaleQuantity) {
+        extraLines.push(`<div class="supply-card-row"><span class="label">готово к продаже</span><span>${escapeHtml(String(s.readyForSaleQuantity))} шт</span></div>`);
+      }
+      if (s.acceptanceCost) {
+        extraLines.push(`<div class="supply-card-row"><span class="label">приёмка</span><span>${escapeHtml(String(s.acceptanceCost))} ₽</span></div>`);
+      }
+      if (s.paidAcceptanceCoefficient) {
+        extraLines.push(`<div class="supply-card-row"><span class="label">коэф.</span><span>${escapeHtml(String(s.paidAcceptanceCoefficient))}</span></div>`);
+      }
+      if (s.supplierAssignName) {
+        extraLines.push(`<div class="supply-card-row"><span class="label">поставщик</span><span>${escapeHtml(s.supplierAssignName)}</span></div>`);
+      }
+      if (s.phone) {
+        extraLines.push(`<div class="supply-card-row"><span class="label">тел.</span><span>${escapeHtml(s.phone)}</span></div>`);
+      }
+      if (extraLines.length) {
+        cards.push(`<div class="supply-card">
+          <div class="supply-card-title">доп. данные WB API</div>
+          ${extraLines.join('')}
+        </div>`);
+      }
     }
 
     html += `<div class="supply-cards">${cards.join('')}</div>`;
@@ -3875,45 +4050,63 @@ function renderSupplyDetails(source, id, number, data) {
     }
   } else if (source === 'wb') {
     // FBW: товары уже сгруппированы по баркоду в API. Просто показываем.
+    const totalPlanQty = orders.reduce((sum, g) => sum + (Number(g.quantity) || 0), 0);
+    const totalAcceptedQty = orders.reduce((sum, g) => sum + (Number(g.acceptedQuantity) || 0), 0);
+    html += `<div class="supply-summary-strip">
+      <div class="supply-summary-chip"><div class="supply-summary-label">позиций</div><div class="supply-summary-value">${orders.length}</div></div>
+      <div class="supply-summary-chip"><div class="supply-summary-label">штук по плану</div><div class="supply-summary-value">${totalPlanQty} <span>шт</span></div></div>
+      <div class="supply-summary-chip"><div class="supply-summary-label">принято</div><div class="supply-summary-value">${totalAcceptedQty} <span>шт</span></div></div>
+    </div>`;
     html += `<div class="supply-products-table wb">
       <div class="supply-products-head">
-        <span>артикул</span>
-        <span>nmID / баркод</span>
-        <span style="text-align:right;">план</span>
-        <span style="text-align:right;">принято</span>
+        <span>код 1С</span>
+        <span>ШК</span>
+        <span>SKU WB</span>
+        <span>тип</span>
+        <span>короткое наименование</span>
+        <span class="qty-head">план</span>
+        <span class="qty-head">принято</span>
       </div>`;
     orders.forEach(g => {
+      const meta = omSkuMeta(g, 'wb');
       const sub = [g.techSize, g.color].filter(Boolean).join(' · ');
       const accClass = (g.acceptedQuantity || 0) >= (g.quantity || 0) && (g.quantity || 0) > 0 ? 'ok' : 'partial';
       html += `<div class="supply-products-row">
-        <span class="art">${escapeHtml(g.article || '—')}${sub ? ` <span style="color:var(--text-muted);font-size:11px;">${escapeHtml(sub)}</span>` : ''}</span>
-        <span class="nm">${escapeHtml(String(g.nmId || g.barcode || '—'))}</span>
+        <span class="art">${escapeHtml(meta.code1c)}</span>
+        <span class="nm">${escapeHtml(meta.barcode)}</span>
+        <span class="nm">${escapeHtml(String(g.nmId || '—'))}</span>
+        <span>${omSkuTypeHtml(meta.type)}</span>
+        <span class="name" title="${escapeHtml(meta.shortName)}">${escapeHtml(meta.shortName)}</span>
         <span class="qty">${g.quantity || 0}</span>
         <span class="qty-accepted ${accClass}">${g.acceptedQuantity || 0}</span>
       </div>`;
     });
     html += '</div>';
-    html += `<div style="font-size:12px;color:var(--text-muted);padding:6px 14px 14px;">позиций: <strong style="color:var(--text-body);">${orders.length}</strong></div>`;
   } else if (source === 'ozon') {
     // Считаем итоги: всего товаров (позиций), всего штук
     const totalQty = orders.reduce((sum, p) => sum + (Number(p.quantity) || 0), 0);
     // Итоги сверху, до самой таблицы — так они сразу бросаются в глаза
-    html += `<div style="font-size:13px;color:var(--text-muted);padding:0 14px 6px;display:flex;gap:24px;">
-      <span>позиций: <strong style="color:var(--text-body);font-size:14px;">${orders.length}</strong></span>
-      <span>штук всего: <strong style="color:var(--text-body);font-size:14px;">${totalQty}</strong></span>
+    html += `<div class="supply-summary-strip">
+      <div class="supply-summary-chip"><div class="supply-summary-label">позиций</div><div class="supply-summary-value">${orders.length}</div></div>
+      <div class="supply-summary-chip"><div class="supply-summary-label">штук всего</div><div class="supply-summary-value">${totalQty} <span>шт</span></div></div>
     </div>`;
     html += `<div class="supply-products-table ozon">
       <div class="supply-products-head">
-        <span>SKU</span>
-        <span>offer_id</span>
-        <span>наименование</span>
-        <span style="text-align:right;">кол-во</span>
+        <span>код 1С</span>
+        <span>ШК</span>
+        <span>SKU Ozon</span>
+        <span>тип</span>
+        <span>короткое наименование</span>
+        <span class="qty-head">кол-во</span>
       </div>`;
     orders.forEach(p => {
+      const meta = omSkuMeta(p, 'ozon');
       html += `<div class="supply-products-row">
+        <span class="art">${escapeHtml(meta.code1c)}</span>
+        <span class="nm">${escapeHtml(meta.barcode)}</span>
         <span class="art">${escapeHtml(String(p.sku || '—'))}</span>
-        <span class="nm">${escapeHtml(p.offer_id || '—')}</span>
-        <span class="name">${escapeHtml(p.name || '—')}</span>
+        <span>${omSkuTypeHtml(meta.type)}</span>
+        <span class="name" title="${escapeHtml(meta.shortName)}">${escapeHtml(meta.shortName)}</span>
         <span class="qty">${p.quantity || 0}</span>
       </div>`;
     });
