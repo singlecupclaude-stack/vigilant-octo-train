@@ -511,41 +511,171 @@ body::before {
 }
 .supply-meta-row strong { color: var(--text-body); font-weight: 500; margin-left: 4px; }
 
+/* Карточки-блоки для шапки поставки (как у Ozon в кабинете) */
+.supply-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  margin: 0 14px 16px;
+}
+.supply-card {
+  background: rgba(143, 163, 131, 0.06);
+  border: 1px solid rgba(143, 163, 131, 0.18);
+  border-radius: 4px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.supply-card-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.supply-card-main {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  line-height: 1.4;
+}
+.supply-card-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.supply-card-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-body);
+}
+.supply-card-row .label { color: var(--text-muted); }
+.supply-card-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.supply-card-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.supply-card-flag {
+  font-size: 10px;
+  padding: 2px 7px;
+  background: rgba(199, 144, 93, 0.10);
+  color: var(--accent-copper);
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+}
+/* Тонкий разделитель внутри карточки между блоками (отгрузка ↔ дедлайн) */
+.supply-card-divider {
+  height: 1px;
+  background: rgba(199, 144, 93, 0.15);
+  margin: 6px 0;
+}
+/* Яркая плашка с обратным отсчётом до дедлайна — главный визуальный
+   акцент карточки. Большой шрифт, свой фон, выделяется среди остального.
+   .urgent — для просрочки или меньше суток (красным с подсветкой). */
+.supply-card-deadline-left {
+  margin-top: 8px;
+  padding: 8px 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-copper);
+  background: rgba(199, 144, 93, 0.14);
+  border-radius: 4px;
+  text-align: center;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+.supply-card-deadline-left.urgent {
+  color: #ff7a5c;
+  background: rgba(255, 122, 92, 0.14);
+}
+
 /* Таблица товаров поставки */
 .supply-products-table {
-  margin: 0 14px;
-  font-size: 12px;
+  margin: 8px 14px 14px;
+  font-size: 13px;
+}
+/* Базовая раскладка — переопределяется .ozon / .wb модификаторами */
+.supply-products-head,
+.supply-products-row {
+  display: grid;
+  gap: 14px;
+  align-items: center;
+}
+/* Ozon: SKU (140) / offer_id (140) / наименование (растягивается) / кол-во (90) */
+.supply-products-table.ozon .supply-products-head,
+.supply-products-table.ozon .supply-products-row {
+  grid-template-columns: 140px 150px minmax(0, 1fr) 90px;
+}
+/* WB: артикул (растягивается) / nmID-баркод (160) / план (80) / принято (90) */
+.supply-products-table.wb .supply-products-head,
+.supply-products-table.wb .supply-products-row {
+  grid-template-columns: minmax(0, 1fr) 170px 90px 100px;
+}
+/* Старая разметка для обратной совместимости (если class модификатор не выставлен) */
+.supply-products-table:not(.ozon):not(.wb) .supply-products-head,
+.supply-products-table:not(.ozon):not(.wb) .supply-products-row {
+  grid-template-columns: 1fr 1fr 90px 110px;
 }
 .supply-products-head {
-  display: grid;
-  grid-template-columns: 1fr 1fr 90px 110px;
-  gap: 10px;
-  padding: 6px 10px;
+  padding: 8px 14px;
   font-style: italic;
   color: var(--text-muted);
   font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   border-bottom: 1px dashed rgba(199, 144, 93, 0.25);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .supply-products-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 90px 110px;
-  gap: 10px;
-  padding: 7px 10px;
-  background: rgba(0,0,0,0.18);
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.18);
   border-radius: 3px;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
+  transition: background 0.15s;
+}
+.supply-products-row:hover {
+  background: rgba(199, 144, 93, 0.06);
 }
 .supply-products-row .art {
-  font-family: monospace;
-  font-size: 11px;
+  font-family: 'Menlo', monospace;
+  font-size: 12px;
   color: var(--text-body);
 }
 .supply-products-row .nm {
-  font-family: monospace;
-  font-size: 11px;
+  font-family: 'Menlo', monospace;
+  font-size: 12px;
   color: var(--text-muted);
 }
+.supply-products-row .name {
+  font-size: 13px;
+  color: var(--text-body);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.supply-products-row .qty {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.supply-products-row .qty-accepted {
+  text-align: right;
+  font-size: 14px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.supply-products-row .qty-accepted.ok { color: #8FA383; }
+.supply-products-row .qty-accepted.partial { color: var(--text-muted); }
 
 /* Маркер для ячейки supplyNumber — если поставка найдена в API */
 .supply-old-stub {
@@ -1203,41 +1333,62 @@ input[type="number"]::-webkit-outer-spin-button:hover {
   align-items: center;
   gap: 12px;
   cursor: pointer;
-  padding: 8px 4px;
-  transition: all 0.2s;
+  padding: 11px 12px;
+  border-radius: 4px;
+  border: 1px solid rgba(199, 144, 93, 0.25);
+  background: rgba(199, 144, 93, 0.04);
+  transition: all 0.18s;
 }
-.checkbox-item:hover { background: rgba(180, 180, 158, 0.04); }
+.checkbox-item:hover {
+  background: rgba(199, 144, 93, 0.10);
+  border-color: rgba(199, 144, 93, 0.45);
+}
 .checkbox-item input[type="checkbox"] {
   appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 1px solid var(--stone-line-strong);
-  background: transparent;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(232, 219, 194, 0.55);
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 3px;
   cursor: pointer;
   position: relative;
   transition: all 0.2s;
   flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+.checkbox-item input[type="checkbox"]:hover {
+  border-color: rgba(232, 219, 194, 0.85);
+  background: rgba(0, 0, 0, 0.5);
 }
 .checkbox-item input[type="checkbox"]:checked {
-  background: var(--accent-sage-deep);
-  border-color: var(--accent-sage);
+  background: #8FA383;
+  border-color: #b3c4a7;
+  box-shadow: 0 0 0 1px rgba(143, 163, 131, 0.4), inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 .checkbox-item input[type="checkbox"]:checked::after {
   content: '';
   position: absolute;
   top: 2px;
-  left: 5px;
-  width: 4px;
-  height: 8px;
-  border: solid var(--text-primary);
-  border-width: 0 1.5px 1.5px 0;
+  left: 6px;
+  width: 5px;
+  height: 11px;
+  border: solid #1a1c1b;
+  border-width: 0 2.5px 2.5px 0;
   transform: rotate(45deg);
+}
+.checkbox-item:has(input:checked) {
+  background: rgba(143, 163, 131, 0.14);
+  border-color: rgba(143, 163, 131, 0.55);
+}
+.checkbox-item:has(input:checked) label {
+  color: var(--text-primary);
 }
 .checkbox-item label {
   font-size: 13px;
   color: var(--text-body);
   cursor: pointer;
   letter-spacing: 0.01em;
+  font-weight: 500;
 }
 
 /* Галочка уведомления — визуально выделена, чтобы юзер не путал её
@@ -1768,6 +1919,12 @@ tbody tr.order-row:hover { background: rgba(199, 144, 93, 0.08); }
           <input type="text" name="supplyNumber" />
         </div>
         <div class="field">
+          <label class="field-label" title="внутренний supply_order_id для Ozon API (вида 99671140) или supplyID для WB. Виден в URL карточки заявки в кабинете">
+            ID заказа в ЛК <span style="color:var(--text-muted);font-size:10px;font-weight:400;">(для API)</span>
+          </label>
+          <input type="text" name="lkOrderId" placeholder="напр. 99671140" />
+        </div>
+        <div class="field">
           <label class="field-label">№ заказа на МП</label>
           <input type="text" name="orderNumber" />
         </div>
@@ -1804,7 +1961,6 @@ tbody tr.order-row:hover { background: rgba(199, 144, 93, 0.08); }
       </div>
 
       <div class="checkboxes">
-        <div class="checkbox-item"><input type="checkbox" name="isDispatch" id="cb_disp"><label for="cb_disp">это вывоз</label></div>
         <div class="checkbox-item"><input type="checkbox" name="shippedToMp" id="cb2"><label for="cb2">отгружено на МП</label></div>
         <div class="checkbox-item"><input type="checkbox" name="correctionsMade" id="cb3"><label for="cb3">корректировки внесены</label></div>
         <div class="checkbox-item"><input type="checkbox" name="loadedLk" id="cb4"><label for="cb4">загружен в ЛК</label></div>
@@ -1826,9 +1982,10 @@ tbody tr.order-row:hover { background: rgba(199, 144, 93, 0.08); }
       </details>
 
       <details class="extra-block" id="transportBlock">
-        <summary>транспорт и отгрузка</summary>
-        <div class="checkboxes" style="margin-top: 4px;">
+        <summary>транспорт</summary>
+        <div class="checkboxes" style="margin-top: 4px; margin-bottom: 12px;">
           <div class="checkbox-item"><input type="checkbox" name="carOrdered" id="cb1"><label for="cb1">машина заказана</label></div>
+          <div class="checkbox-item"><input type="checkbox" name="docsHandedOver" id="cb_docs"><label for="cb_docs">документы переданы</label></div>
         </div>
         <div class="form-grid">
           <div class="field">
@@ -1840,13 +1997,18 @@ tbody tr.order-row:hover { background: rgba(199, 144, 93, 0.08); }
             <input type="text" name="carNumber" placeholder="а123бв77" />
           </div>
           <div class="field">
-            <label class="field-label">документы</label>
-            <input type="text" name="docs" placeholder="ТТН №..." />
-          </div>
-          <div class="field">
             <label class="field-label">цена за машину</label>
             <input type="number" step="0.01" name="carPrice" placeholder="0" />
           </div>
+        </div>
+      </details>
+
+      <details class="extra-block" id="dispatchBlock">
+        <summary>вывоз</summary>
+        <div class="checkboxes" style="margin-top: 4px; margin-bottom: 12px;">
+          <div class="checkbox-item"><input type="checkbox" name="isDispatch" id="cb_disp"><label for="cb_disp">это вывоз</label></div>
+        </div>
+        <div class="form-grid">
           <div class="field">
             <label class="field-label">факт. дата вывоза/приезда</label>
             <input type="date" name="actualPickupDate" />
@@ -2363,7 +2525,7 @@ function openDispatchModal() {
           <div class="dispatch-cell-driver">${driver}</div>
           <div class="dispatch-cell-car">${car}</div>
           <div>${escapeHtml(o.warehouseFull || '—')}</div>
-          <div class="dispatch-cell-driver" style="font-size:11px;">${escapeHtml(o.docs || '—')}</div>
+          <div class="dispatch-cell-driver" style="font-size:11px;">${(o.docsHandedOver || (o.docs && String(o.docs).trim())) ? '✓ переданы' : '—'}</div>
           <div class="dispatch-cell-price">${price}</div>
         </div>`;
     });
@@ -2384,6 +2546,42 @@ function openDispatchModal() {
 function closeDispatchModal() { $('dispatchModal').style.display = 'none'; }
 
 // ============== ВНЕШНИЕ ПОСТАВКИ (Ozon / WB API) ==============
+// Ручная синхронизация WB → лист в таблице. Триггеры по времени делают то же
+// самое автоматически (07:00 / 12:00 / 15:00), но пользователь может нажать
+// кнопку и обновить здесь и сейчас. После синка дашборд перечитывает данные.
+async function syncWbFromApi() {
+  const btn = document.getElementById('extSyncBtn');
+  if (!btn) return;
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = '… идём в WB API';
+  btn.style.opacity = '0.6';
+  try {
+    const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'action=syncWb';
+    const res = await fetch(url, { method: 'GET', cache: 'no-store' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      const msg = data.error || `HTTP ${res.status}`;
+      // Если это rate limit — старые данные в листе сохранены, дашборд их и покажет
+      if (data.kept_existing) {
+        toast(`синк не прошёл (${msg.slice(0, 60)}), показываем старые данные`, true);
+      } else {
+        toast('синк не прошёл: ' + msg, true);
+      }
+    } else {
+      toast(`синхронизировано · ${data.count} поставок WB`);
+    }
+    // В любом случае перерисовываем модалку — пользователь увидит новый таймстамп
+    await loadExternalSupplies(false);
+  } catch (e) {
+    toast('синк не прошёл: ' + e.message, true);
+    btn.disabled = false;
+    btn.textContent = orig;
+    btn.style.opacity = '';
+  }
+}
+
 async function loadExternalSupplies(forceRefresh) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR')) {
     toast('сначала настрой Apps Script', true);
@@ -2401,36 +2599,6 @@ async function loadExternalSupplies(forceRefresh) {
     if (forceRefresh) url += '&refresh=1';
     const res = await fetch(url);
     const data = await res.json();
-
-    // Сохраняем УСПЕШНЫЙ список WB в localStorage — это резервная копия,
-    // которая используется когда WB API уходит в 429. Срок — 24 часа.
-    if (data.wb && data.wb.ok && Array.isArray(data.wb.orders) && data.wb.orders.length) {
-      try {
-        localStorage.setItem('omdash_wb_list', JSON.stringify({
-          cached_at: Date.now(),
-          data: data.wb
-        }));
-      } catch (_) {}
-    }
-    // Если WB сейчас в rate limit — пробуем достать последний удачный список
-    // из браузерного кэша. Лучше показать что-то с пометкой "снимок 1 час назад",
-    // чем пустую плашку "лимит запросов".
-    if (data.wb && data.wb.is_rate_limited) {
-      try {
-        const stored = localStorage.getItem('omdash_wb_list');
-        if (stored) {
-          const obj = JSON.parse(stored);
-          if (obj && obj.data && Date.now() - obj.cached_at < 24 * 60 * 60 * 1000) {
-            const ageMin = Math.floor((Date.now() - obj.cached_at) / 60000);
-            data.wb = Object.assign({}, obj.data, {
-              from_browser_cache: true,
-              browser_cache_age_min: ageMin,
-              rate_limit_active: true
-            });
-          }
-        }
-      } catch (_) {}
-    }
 
     // Сохраняем в кэш и строим индекс по номерам/id
     externalCache.ozon = data.ozon;
@@ -2562,6 +2730,11 @@ function supplyCacheGc() {
   try {
     const now = Date.now();
     Object.keys(localStorage).filter(k => k.startsWith(SUPPLY_CACHE_PREFIX)).forEach(k => {
+      // Сразу выкидываем все ozon-записи — кеш больше не используется
+      if (k.indexOf(SUPPLY_CACHE_PREFIX + 'ozon:') === 0) {
+        localStorage.removeItem(k);
+        return;
+      }
       try {
         const obj = JSON.parse(localStorage.getItem(k) || '{}');
         if (!obj.cached_at || now - obj.cached_at > SUPPLY_CACHE_TTL_MS) {
@@ -2575,14 +2748,56 @@ supplyCacheGc();
 
 async function openSupplyDetails(source, id, number, isPreorderID, forceRefresh) {
   if (!source || !id) return;
-  $('supplyDetailsTitle').textContent = `${source.toUpperCase()} · поставка ${number || id}`;
+
+  // Ozon: ищем внутренний ID для этой поставки. Источники в порядке приоритета:
+  //   1. localStorage маппинг (всегда обновляется при сабмите формы — самый
+  //      свежий, не зависит от того, передеплоен ли Apps Script);
+  //   2. поле lkOrderId в строке заказа (приходит из таблицы; работает только
+  //      если Apps Script передеплоен с поддержкой 54-й колонки);
+  //   3. сам id, если он уже короткий (юзер мог вписать настоящий ID в поле
+  //      № поставки вместо номера ЛК).
+  // Это ключевой обходной путь под выпиленный Ozon API.
+  let apiId = id;
+  let displayId = number || id;
+  let apiIdSource = '';
+  if (source === 'ozon') {
+    let mapped = '';
+    // 1. localStorage
+    mapped = ozonIdLookup(number || id) || '';
+    if (mapped) apiIdSource = 'localStorage';
+    // 2. Поле lkOrderId в самой строке заказа
+    if (!mapped) {
+      const orderInTable = allOrders.find(o =>
+        o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+      );
+      if (orderInTable && orderInTable.lkOrderId) {
+        mapped = String(orderInTable.lkOrderId).trim();
+        apiIdSource = 'таблица';
+      }
+    }
+    if (mapped) {
+      apiId = mapped;
+    } else if (/^\d{6,10}$/.test(String(id || '').trim()) && !/^\d{12,}$/.test(String(id || '').trim())) {
+      apiId = id;
+      apiIdSource = 'короткий id';
+    }
+  }
+  // Заголовок модалки — добавляем суффикс, какой ID реально пошёл в API.
+  // Это видно сразу: либо "поставка 2000051161170 → API id: 99671140 (localStorage)",
+  // либо без стрелки — значит подмена не сработала, надо проверить маппинг.
+  let titleSuffix = '';
+  if (source === 'ozon' && apiId !== String(id)) {
+    titleSuffix = ` <span style="color:var(--text-muted);font-weight:400;font-size:13px;">→ API id: ${escapeHtml(apiId)}</span>`;
+  }
+  $('supplyDetailsTitle').innerHTML = `${source.toUpperCase()} · поставка ${escapeHtml(String(displayId))}${titleSuffix}`;
   $('supplyDetailsModal').style.display = 'flex';
 
-  // Шаг 1: пробуем браузерный кеш. Если там свежие данные — рендерим сразу,
-  // не дёргая Apps Script вообще. Кнопка "обновить" в шапке модалки даёт
-  // принудительный обход кеша.
-  if (!forceRefresh) {
-    const cached = supplyCacheGet(source, id, isPreorderID);
+  // Шаг 1: пробуем браузерный кеш — ТОЛЬКО для WB.
+  // Для Ozon кеш отключён: API стабильно отвечает, лимиты не строгие, и кеш
+  // создаёт проблему "после правки кода старые данные продолжают показываться".
+  // Лучше всегда тянуть свежее.
+  if (!forceRefresh && source !== 'ozon') {
+    const cached = supplyCacheGet(source, apiId, isPreorderID);
     if (cached && cached.data && cached.data.ok) {
       const ageMin = Math.floor((Date.now() - cached.cached_at) / 60000);
       const decorated = Object.assign({}, cached.data, {
@@ -2599,31 +2814,32 @@ async function openSupplyDetails(source, id, number, isPreorderID, forceRefresh)
     let url = APPS_SCRIPT_URL +
       (APPS_SCRIPT_URL.includes('?') ? '&' : '?') +
       'details=' + encodeURIComponent(source) +
-      '&id=' + encodeURIComponent(id);
+      '&id=' + encodeURIComponent(apiId);
     if (source === 'wb' && typeof isPreorderID !== 'undefined') {
       url += '&isPreorderID=' + (isPreorderID ? 'true' : 'false');
     }
     const res = await fetch(url);
     const data = await res.json();
-    // В кеш кладём только полные ответы с составом, чтобы не закешировать
-    // "мета без товаров" из-за rate limit
-    if (data && data.ok && (data.goods_count > 0 || data.orders_count > 0)) {
-      supplyCacheSet(source, id, isPreorderID, data);
+    // В кеш кладём только WB и только полные ответы с составом
+    if (source !== 'ozon' && data && data.ok && (data.goods_count > 0 || data.orders_count > 0)) {
+      supplyCacheSet(source, apiId, isPreorderID, data);
     }
     renderSupplyDetails(source, id, number, data);
   } catch (e) {
-    // Если запрос упал, но в кеше есть хоть что-то (даже устаревшее) — показываем
-    const stale = supplyCacheGet(source, id, isPreorderID);
-    if (stale && stale.data && stale.data.ok) {
-      const ageMin = Math.floor((Date.now() - stale.cached_at) / 60000);
-      const decorated = Object.assign({}, stale.data, {
-        from_browser_cache: true,
-        browser_cache_age_min: ageMin,
-        browser_cache_stale: true,
-        fallback_reason: e.message
-      });
-      renderSupplyDetails(source, id, number, decorated);
-      return;
+    // Фолбек на устаревший кеш — только для WB
+    if (source !== 'ozon') {
+      const stale = supplyCacheGet(source, apiId, isPreorderID);
+      if (stale && stale.data && stale.data.ok) {
+        const ageMin = Math.floor((Date.now() - stale.cached_at) / 60000);
+        const decorated = Object.assign({}, stale.data, {
+          from_browser_cache: true,
+          browser_cache_age_min: ageMin,
+          browser_cache_stale: true,
+          fallback_reason: e.message
+        });
+        renderSupplyDetails(source, id, number, decorated);
+        return;
+      }
     }
     $('supplyDetailsBody').innerHTML = `<div class="week-empty" style="color:#e87159;">ошибка: ${escapeHtml(e.message)}</div>`;
   }
@@ -2662,7 +2878,9 @@ async function sendOrderToTelegram(order) {
   if (order.dateFact)       lines.push(`факт: ${escapeHtml(String(order.dateFact))}${order.timeFact ? ' ' + escapeHtml(String(order.timeFact)) : ''}`);
   if (order.driverName)     lines.push(`водитель: ${escapeHtml(String(order.driverName))}`);
   if (order.carNumber)      lines.push(`машина: ${escapeHtml(String(order.carNumber))}`);
-  if (order.docs)           lines.push(`документы: ${escapeHtml(String(order.docs))}`);
+  if (order.docsHandedOver || (order.docs && String(order.docs).trim())) {
+    lines.push(`документы: ✓ переданы`);
+  }
   if (order.invoice1c)      lines.push(`счёт 1С: ${escapeHtml(String(order.invoice1c))}`);
   if (order.orderNumber)    lines.push(`№ заказа на МП: ${escapeHtml(String(order.orderNumber))}`);
   if (order.comment)        lines.push(`комментарий: ${escapeHtml(String(order.comment))}`);
@@ -2712,11 +2930,53 @@ function renderSupplyDetails(source, id, number, data) {
     let html = `<div class="api-banner" style="background:rgba(224, 74, 44, 0.10);border-left-color:#E04A2C;">
       <strong>не удалось получить детали:</strong> ${escapeHtml(data.error || 'неизвестная ошибка')}
     </div>`;
+
+    // Диагностика для Ozon: показываем что было в маппингах. Помогает понять,
+    // почему подмена не сработала (юзер вписал ID, но он не сохранился, либо
+    // в localStorage маппинг для другого номера).
+    if (source === 'ozon') {
+      const mapVal = ozonIdLookup(number || id);
+      const orderInTable = allOrders.find(o =>
+        o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+      );
+      const tableVal = orderInTable && orderInTable.lkOrderId ? String(orderInTable.lkOrderId).trim() : '';
+      if (!mapVal && !tableVal) {
+        html += `<div class="api-banner" style="margin-top:10px;background:rgba(199, 144, 93, 0.06);border-left-color:rgba(199, 144, 93, 0.5);">
+          <strong>в API ушёл номер из ЛК (${escapeHtml(String(number || id))})</strong> — настоящий supply_order_id для этой поставки нигде не найден.<br>
+          <span style="font-size:12px;color:var(--text-muted);">Чтобы получить настоящий ID: открой заявку в кабинете Ozon — внутренний ID будет в адресной строке (вида <code>seller.ozon.ru/app/supply/orders/<u>99671140</u></code>). Впиши его в OM в поле «ID заказа в ЛК» и нажми «обновить». Этот ID можно вписать прямо сейчас — он сохранится локально, и при следующем открытии поставки API использует его.</span>
+        </div>`;
+      } else {
+        html += `<div class="api-banner" style="margin-top:10px;background:rgba(199, 144, 93, 0.06);border-left-color:rgba(199, 144, 93, 0.5);">
+          <strong>в API ушёл ID: ${escapeHtml(String((mapVal || tableVal)))}</strong> ${mapVal ? '<span style="font-size:11px;color:var(--text-muted);">(из localStorage маппинга)</span>' : '<span style="font-size:11px;color:var(--text-muted);">(из колонки таблицы)</span>'} — но Ozon API ответил ошибкой.<br>
+          <span style="font-size:12px;color:var(--text-muted);">Проверь что ID правильный: открой заявку в кабинете и сравни с числом в URL. Если ID неправильный — впиши новый в поле «ID заказа в ЛК» и сохрани.</span>
+        </div>`;
+      }
+    }
+
     if (data.body) html += `<div class="api-debug">${escapeHtml(data.body)}</div>`;
     if (data.tried && data.tried.length) html += `<div class="api-debug">${data.tried.map(escapeHtml).join('<br>')}</div>`;
     if (data.hint) html += `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">${escapeHtml(data.hint)}</div>`;
-    if (data.cabinet_url) {
-      html += `<div class="cabinet-link-row"><a href="${escapeHtml(data.cabinet_url)}" target="_blank" class="cabinet-link">→ открыть в кабинете</a></div>`;
+    // Кнопки в кабинет: ищем внутренний ID сначала в строке заказа, потом в маппинге
+    {
+      const links = [];
+      if (source === 'ozon') {
+        const orderInTable = allOrders.find(o =>
+          o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+        );
+        const tableId = orderInTable && orderInTable.lkOrderId ? String(orderInTable.lkOrderId).trim() : '';
+        const internalId = tableId
+          || ozonIdLookup(number || id)
+          || (/^\d{6,10}$/.test(String(id || '')) ? id : '');
+        if (internalId) {
+          links.push(`<a href="https://seller.ozon.ru/app/supply/orders/${encodeURIComponent(internalId)}?tab=items" target="_blank" class="cabinet-link">→ товары в кабинете</a>`);
+          links.push(`<a href="https://seller.ozon.ru/app/supply/orders/${encodeURIComponent(internalId)}?tab=suppliesAndLogistic" target="_blank" class="cabinet-link">→ отгрузка</a>`);
+        } else if (data.cabinet_url) {
+          links.push(`<a href="${escapeHtml(data.cabinet_url)}" target="_blank" class="cabinet-link">→ открыть в кабинете</a>`);
+        }
+      } else if (data.cabinet_url) {
+        links.push(`<a href="${escapeHtml(data.cabinet_url)}" target="_blank" class="cabinet-link">→ открыть в кабинете</a>`);
+      }
+      if (links.length) html += `<div class="cabinet-link-row">${links.join(' ')}</div>`;
     }
     // Для Ozon добавляем помощник с букмарклетом
     if (source === 'ozon') html += renderOzonHelper();
@@ -2747,33 +3007,241 @@ function renderSupplyDetails(source, id, number, data) {
   // Шапка с метаданными
   if (source === 'wb' && data.supply) {
     const s = data.supply;
-    const items = [];
-    if (s.state) items.push(`статус: <strong>${escapeHtml(s.state)}</strong>`);
-    if (s.warehouseName) items.push(`склад: <strong>${escapeHtml(s.warehouseName)}</strong>`);
-    if (s.transitWarehouseName) items.push(`транзит: <strong>${escapeHtml(s.transitWarehouseName)}</strong>`);
-    if (s.boxType) items.push(`упаковка: <strong>${escapeHtml(s.boxType)}</strong>`);
-    if (s.created) items.push(`создана: <strong>${escapeHtml(String(s.created).slice(0,10))}</strong>`);
-    if (s.planned) items.push(`плановая: <strong>${escapeHtml(String(s.planned).slice(0,10))}</strong>`);
-    if (s.factDate) items.push(`факт: <strong>${escapeHtml(String(s.factDate).slice(0,10))}</strong>`);
-    if (typeof s.quantity !== 'undefined') items.push(`товаров: <strong>${s.quantity}</strong>${s.acceptedQuantity ? ` (принято ${s.acceptedQuantity})` : ''}`);
-    if (s.acceptanceCost) items.push(`платная приёмка: <strong>${Number(s.acceptanceCost).toLocaleString('ru-RU')} ₽</strong>`);
-    html += `<div class="supply-meta">
-      <div class="supply-meta-row">${items.map(x => '<span>' + x + '</span>').join('')}</div>
+    const cards = [];
+
+    // Карточка 1: статус и параметры
+    {
+      const lines = [];
+      if (s.id) lines.push(`<div class="supply-card-row"><span class="label">supplyID</span><span>${escapeHtml(String(s.id))}</span></div>`);
+      if (s.preorderID && String(s.preorderID) !== String(s.id)) {
+        lines.push(`<div class="supply-card-row"><span class="label">preorderID</span><span>${escapeHtml(String(s.preorderID))}</span></div>`);
+      }
+      if (s.boxType) lines.push(`<div class="supply-card-row"><span class="label">упаковка</span><span>${escapeHtml(s.boxType)}</span></div>`);
+      if (s.created) {
+        const d = new Date(s.created);
+        const txt = isNaN(d) ? String(s.created).slice(0,10) : d.toLocaleDateString('ru-RU');
+        lines.push(`<div class="supply-card-row"><span class="label">создана</span><span>${escapeHtml(txt)}</span></div>`);
+      }
+      if (s.state) lines.push(`<div class="supply-card-flags"><span class="supply-card-flag">${escapeHtml(s.state)}</span></div>`);
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">статус и параметры</div>
+        ${lines.join('')}
+      </div>`);
+    }
+
+    // Карточка 2: склад назначения
+    if (s.warehouseName || s.transitWarehouseName) {
+      const main = s.warehouseName
+        ? `<div class="supply-card-main">${escapeHtml(s.warehouseName)}</div>`
+        : `<div class="supply-card-empty">склад не указан</div>`;
+      const sub = s.transitWarehouseName
+        ? `<div class="supply-card-sub">транзит: ${escapeHtml(s.transitWarehouseName)}</div>`
+        : '';
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">склад назначения</div>
+        ${main}
+        ${sub}
+      </div>`);
+    }
+
+    // Карточка 3: даты + плашка с фактом
+    if (s.planned || s.factDate) {
+      let block = '';
+      if (s.planned) {
+        const d = new Date(s.planned);
+        const txt = isNaN(d) ? String(s.planned).slice(0,10)
+          : d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+        block += `<div class="supply-card-main">${escapeHtml(txt)}</div>
+                  <div class="supply-card-sub">плановая дата приёмки</div>`;
+      }
+      if (s.factDate) {
+        const d = new Date(s.factDate);
+        const txt = isNaN(d) ? String(s.factDate).slice(0,10)
+          : d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+        block += `${s.planned ? '<div class="supply-card-divider"></div>' : ''}
+                  <div class="supply-card-deadline-left">принято ${escapeHtml(txt)}</div>`;
+      }
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">даты приёмки</div>
+        ${block}
+      </div>`);
+    }
+
+    // Карточка 4: количество (товары / принято)
+    if (typeof s.quantity !== 'undefined' || typeof s.boxAmount !== 'undefined') {
+      const lines = [];
+      if (typeof s.quantity !== 'undefined') {
+        lines.push(`<div class="supply-card-main">${escapeHtml(String(s.quantity))} <span style="font-size:13px;color:var(--text-muted);font-weight:400;">шт</span></div>`);
+      }
+      if (typeof s.acceptedQuantity !== 'undefined' && s.acceptedQuantity > 0) {
+        const pct = s.quantity > 0 ? Math.round((s.acceptedQuantity / s.quantity) * 100) : 0;
+        const cls = s.acceptedQuantity >= s.quantity && s.quantity > 0 ? 'supply-card-deadline-left' : 'supply-card-deadline-left urgent';
+        lines.push(`<div class="${cls}">принято ${escapeHtml(String(s.acceptedQuantity))} · ${pct}%</div>`);
+      }
+      if (typeof s.boxAmount !== 'undefined' && s.boxAmount > 0) {
+        lines.push(`<div class="supply-card-row"><span class="label">коробов</span><span>${escapeHtml(String(s.boxAmount))}</span></div>`);
+      }
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">количество</div>
+        ${lines.join('')}
+      </div>`);
+    }
+
+    html += `<div class="supply-cards">${cards.join('')}</div>`;
+
+    // Кнопка "редактировать данные в ОМ" + ссылка в кабинет WB сверху таблицы
+    const linkedRow = (function() {
+      const o = (allOrders || []).find(o =>
+        o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+      );
+      return o;
+    })();
+    const cabinetUrl = data.cabinet_url ||
+      `https://seller.wildberries.ru/supplies-management/all-supplies/${encodeURIComponent(id)}/products`;
+    html += `<div class="cabinet-link-row" style="padding-bottom:10px;">
+      ${linkedRow ? `<button class="cabinet-link" data-row="${linkedRow.rowNum}" id="goToOrderBtn" style="font-size:11px;">✎ редактировать данные в ОМ</button>` : ''}
+      <a href="${escapeHtml(cabinetUrl)}" target="_blank" class="cabinet-link" style="font-size:11px;">→ открыть в кабинете WB</a>
     </div>`;
   } else if (source === 'ozon' && data.supply) {
     const s = data.supply;
-    const items = [];
-    if (s.state_label) items.push(`статус: <strong>${escapeHtml(s.state_label)}</strong>`);
-    if (s.number) items.push(`№ заявки: <strong>${escapeHtml(s.number)}</strong>`);
-    if (s.supply_id) items.push(`supply_id: <strong>${escapeHtml(s.supply_id)}</strong>`);
-    if (s.warehouse) items.push(`склад: <strong>${escapeHtml(s.warehouse)}</strong>`);
-    if (!s.warehouse && s.dropoff_warehouse_id) items.push(`склад отгрузки ID: <strong>${s.dropoff_warehouse_id}</strong>`);
-    if (s.storage_warehouse_id) items.push(`склад хранения ID: <strong>${s.storage_warehouse_id}</strong>`);
-    if (s.created) items.push(`создана: <strong>${escapeHtml(String(s.created).slice(0,10))}</strong>`);
-    if (s.planned) items.push(`плановая: <strong>${escapeHtml(String(s.planned).slice(0,10))}</strong>`);
-    html += `<div class="supply-meta">
-      <div class="supply-meta-row">${items.map(x => '<span>' + x + '</span>').join('')}</div>
-    </div>`;
+
+    // Карточки-блоки. Каждая — отдельная сущность как у Ozon в кабинете.
+    const cards = [];
+
+    // Карточка 1: статус + ID
+    {
+      const lines = [];
+      // state_label (DATA_FILLING и т.д.) — это технический строковый код,
+      // сам по себе мало что говорит юзеру. Раньше показывался крупно главным
+      // в карточке, теперь убрали — статус и так понятен по другим карточкам
+      // (дедлайн, время отгрузки, склад).
+      if (s.number) lines.push(`<div class="supply-card-row"><span class="label">№ заявки</span><span>${escapeHtml(s.number)}</span></div>`);
+      if (data.cabinet_id) lines.push(`<div class="supply-card-row"><span class="label">ID в кабинете</span><span>${escapeHtml(data.cabinet_id)}</span></div>`);
+      if (s.created) {
+        const d = new Date(s.created);
+        const txt = isNaN(d) ? String(s.created).slice(0,10) : d.toLocaleDateString('ru-RU');
+        lines.push(`<div class="supply-card-row"><span class="label">создана</span><span>${escapeHtml(txt)}</span></div>`);
+      }
+      if (Array.isArray(s.flags) && s.flags.length) {
+        lines.push(`<div class="supply-card-flags">${s.flags.map(f => `<span class="supply-card-flag">${escapeHtml(f)}</span>`).join('')}</div>`);
+      }
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">статус и параметры</div>
+        ${lines.join('')}
+      </div>`);
+    }
+
+    // Карточка 2: склад отгрузки
+    if (s.warehouse || s.warehouse_address) {
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">склад отгрузки</div>
+        ${s.warehouse ? `<div class="supply-card-main">${escapeHtml(s.warehouse)}</div>` : ''}
+        ${s.warehouse_address ? `<div class="supply-card-sub">${escapeHtml(s.warehouse_address)}</div>` : ''}
+      </div>`);
+    }
+
+    // Карточка 3: куда везём — склад хранения и/или кластер назначения.
+    // Для кроссдок-поставок склад хранения обычно появляется позже, а
+    // кластер показывает в какой регион поедет товар после кроссдокинга.
+    if (s.storage_warehouse_name || s.cluster_name || s.cluster_id) {
+      let main, sub;
+      if (s.storage_warehouse_name) {
+        main = `<div class="supply-card-main">${escapeHtml(s.storage_warehouse_name)}</div>`;
+        sub = s.cluster_name
+          ? `<div class="supply-card-sub">кластер: ${escapeHtml(s.cluster_name)}</div>`
+          : (s.cluster_id ? `<div class="supply-card-sub">кластер ID: ${escapeHtml(s.cluster_id)}</div>` : '');
+      } else if (s.cluster_name) {
+        // Склад ещё не назначен, но кластер уже знаем
+        main = `<div class="supply-card-main">${escapeHtml(s.cluster_name)}</div>`;
+        sub = '';
+      } else {
+        main = `<div class="supply-card-empty">склад ещё не назначен</div>`;
+        sub = `<div class="supply-card-sub">кластер ID: ${escapeHtml(s.cluster_id)}</div>`;
+      }
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">куда везём · кластер</div>
+        ${main}
+        ${sub}
+      </div>`);
+    }
+
+    // Карточка 4: дата/время отгрузки + дедлайн заполнения данных в одной
+    // карточке. Дедлайн — критичный для юзера показатель, оставшееся время
+    // выделяем ярко (accent-copper, жирный, крупный) чтобы сразу бросалось.
+    if (s.timeslot_text || s.data_filling_deadline) {
+      let block = '';
+      if (s.timeslot_text) {
+        block += `<div class="supply-card-main">${escapeHtml(s.timeslot_text)}</div>
+                  <div class="supply-card-sub">по московскому времени</div>`;
+      }
+      if (s.data_filling_deadline) {
+        const d = new Date(s.data_filling_deadline);
+        const txtFull = isNaN(d) ? s.data_filling_deadline
+          : d.toLocaleString('ru-RU', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' });
+        const msLeft = isNaN(d) ? 0 : (d.getTime() - Date.now());
+        let leftTxt = '';
+        let leftClass = 'supply-card-deadline-left';
+        if (msLeft > 0) {
+          const days = Math.floor(msLeft / 86400000);
+          const hours = Math.floor((msLeft % 86400000) / 3600000);
+          leftTxt = days > 0 ? `осталось ${days} дн ${hours} ч` : `осталось ${hours} ч`;
+          // Если меньше суток — делаем красным (срочно)
+          if (msLeft < 24 * 3600 * 1000) leftClass += ' urgent';
+        } else if (!isNaN(d)) {
+          leftTxt = 'просрочено';
+          leftClass += ' urgent';
+        }
+        block += `<div class="supply-card-divider"></div>
+                  <div class="supply-card-row"><span class="label">дедлайн заполнения</span><span>${escapeHtml(txtFull)}</span></div>
+                  ${leftTxt ? `<div class="${leftClass}">${escapeHtml(leftTxt)}</div>` : ''}`;
+      }
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">дата и время отгрузки</div>
+        ${block}
+      </div>`);
+    }
+
+    html += `<div class="supply-cards">${cards.join('')}</div>`;
+    // Ссылка в кабинет — Ozon URL хочет внутренний ID (вида 102449664), который
+    // юзер вписывает в поле "ID заказа в ЛК". API его иногда возвращает, иногда
+    // нет (для DATA_FILLING-заявок в supply_id может быть публичный номер
+    // 2000... — он в URL не работает). Поэтому источники в порядке приоритета:
+    //   1. data.cabinet_id — тот ID по которому реально пришёл ответ API
+    //   2. lkOrderId из формы OM
+    //   3. localStorage маппинг
+    const orderInTable = allOrders.find(o =>
+      o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+    );
+    const cabinetUrlId = data.cabinet_id
+      || (orderInTable && orderInTable.lkOrderId ? String(orderInTable.lkOrderId).trim() : '')
+      || ozonIdLookup(number || id)
+      || '';
+
+    // Кнопка "редактировать в ОМ" — ищем связанный заказ. Стоит вместе со
+    // ссылками в кабинет, не внизу таблицы — чтобы быстрее добраться.
+    const linkedOmOzon = (allOrders || []).find(o =>
+      o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+    );
+    const editOmBtn = linkedOmOzon
+      ? `<button class="cabinet-link" data-row="${linkedOmOzon.rowNum}" id="goToOrderBtn" style="font-size:11px;">✎ редактировать данные в ОМ</button>`
+      : '';
+
+    if (cabinetUrlId) {
+      html += `<div class="cabinet-link-row" style="padding-top:4px;padding-bottom:10px;">
+        ${editOmBtn}
+        <a href="https://seller.ozon.ru/app/supply/orders/${encodeURIComponent(cabinetUrlId)}?tab=suppliesAndLogistic" target="_blank" class="cabinet-link" style="font-size:11px;">→ полные данные в кабинете</a>
+        <a href="https://seller.ozon.ru/app/supply/orders/${encodeURIComponent(cabinetUrlId)}?tab=items" target="_blank" class="cabinet-link" style="font-size:11px;">→ товары в кабинете</a>
+        ${data.raw_meta ? (function(){ window.__lastOzonRaw = data.raw_meta; return ''; })() : ''}
+      </div>`;
+    } else {
+      html += `<div class="api-banner" style="margin:8px 14px;background:rgba(199, 144, 93, 0.06);border-left-color:rgba(199, 144, 93, 0.5);font-size:12px;">
+        Чтобы получить прямую ссылку в кабинет — открой заявку в ЛК Ozon, скопируй <strong>число из URL</strong> (вида <code>seller.ozon.ru/app/supply/orders/<u>102449664</u></code>) и впиши в карточку заказа в OM в поле «ID заказа в ЛК».
+      </div>
+      <div class="cabinet-link-row" style="padding-top:4px;padding-bottom:10px;">
+        ${editOmBtn}
+        <a href="https://seller.ozon.ru/app/supply/orders" target="_blank" class="cabinet-link" style="font-size:11px;">→ список заявок в кабинете</a>
+      </div>`;
+    }
   }
 
   if (!orders.length) {
@@ -2791,7 +3259,7 @@ function renderSupplyDetails(source, id, number, data) {
     }
   } else if (source === 'wb') {
     // FBW: товары уже сгруппированы по баркоду в API. Просто показываем.
-    html += `<div class="supply-products-table">
+    html += `<div class="supply-products-table wb">
       <div class="supply-products-head">
         <span>артикул</span>
         <span>nmID / баркод</span>
@@ -2800,17 +3268,25 @@ function renderSupplyDetails(source, id, number, data) {
       </div>`;
     orders.forEach(g => {
       const sub = [g.techSize, g.color].filter(Boolean).join(' · ');
+      const accClass = (g.acceptedQuantity || 0) >= (g.quantity || 0) && (g.quantity || 0) > 0 ? 'ok' : 'partial';
       html += `<div class="supply-products-row">
         <span class="art">${escapeHtml(g.article || '—')}${sub ? ` <span style="color:var(--text-muted);font-size:11px;">${escapeHtml(sub)}</span>` : ''}</span>
         <span class="nm">${escapeHtml(String(g.nmId || g.barcode || '—'))}</span>
-        <span style="text-align:right;font-weight:500;">${g.quantity || 0}</span>
-        <span style="text-align:right;color:${(g.acceptedQuantity || 0) >= (g.quantity || 0) ? '#8FA383' : 'var(--text-muted)'};">${g.acceptedQuantity || 0}</span>
+        <span class="qty">${g.quantity || 0}</span>
+        <span class="qty-accepted ${accClass}">${g.acceptedQuantity || 0}</span>
       </div>`;
     });
     html += '</div>';
-    html += `<div style="font-size:11px;color:var(--text-muted);padding:10px 14px;">позиций: <strong>${orders.length}</strong></div>`;
+    html += `<div style="font-size:12px;color:var(--text-muted);padding:6px 14px 14px;">позиций: <strong style="color:var(--text-body);">${orders.length}</strong></div>`;
   } else if (source === 'ozon') {
-    html += `<div class="supply-products-table">
+    // Считаем итоги: всего товаров (позиций), всего штук
+    const totalQty = orders.reduce((sum, p) => sum + (Number(p.quantity) || 0), 0);
+    // Итоги сверху, до самой таблицы — так они сразу бросаются в глаза
+    html += `<div style="font-size:13px;color:var(--text-muted);padding:0 14px 6px;display:flex;gap:24px;">
+      <span>позиций: <strong style="color:var(--text-body);font-size:14px;">${orders.length}</strong></span>
+      <span>штук всего: <strong style="color:var(--text-body);font-size:14px;">${totalQty}</strong></span>
+    </div>`;
+    html += `<div class="supply-products-table ozon">
       <div class="supply-products-head">
         <span>SKU</span>
         <span>offer_id</span>
@@ -2821,20 +3297,16 @@ function renderSupplyDetails(source, id, number, data) {
       html += `<div class="supply-products-row">
         <span class="art">${escapeHtml(String(p.sku || '—'))}</span>
         <span class="nm">${escapeHtml(p.offer_id || '—')}</span>
-        <span>${escapeHtml(p.name || '—')}</span>
-        <span style="text-align:right;font-weight:500;">${p.quantity || 0}</span>
+        <span class="name">${escapeHtml(p.name || '—')}</span>
+        <span class="qty">${p.quantity || 0}</span>
       </div>`;
     });
     html += '</div>';
   }
 
-  // Связь с OM
-  const linked = findOrderBySupplyNumber(number || id);
-  if (linked) {
-    html += `<div class="cabinet-link-row">
-      <button class="cabinet-link" data-row="${linked.rowNum}" id="goToOrderBtn">→ открыть заказ #${escapeHtml(String(linked.num))} в OM</button>
-    </div>`;
-  }
+  // Кнопка "редактировать данные в ОМ" перенесена в верхнюю плашку с
+  // ссылками в кабинет, рядом с самим заголовком модалки. Внизу больше
+  // не дублируем — иначе после длинной таблицы товаров неудобно.
 
   $('supplyDetailsBody').innerHTML = html;
 
@@ -2856,6 +3328,58 @@ function renderSupplyDetails(source, id, number, data) {
       openSupplyDetails(source, id, number, isPre, true);
     });
   }
+}
+
+// ─── Маппинг "номер из ЛК → внутренний supply_order_id" ─────────────────
+// Ozon API понимает только внутренний ID (вида 99671140), но в карточке OM
+// мы храним номер из ЛК (вида 2000049576713). Между ними нет арифметической
+// связи — настоящий ID можно достать только из URL кабинета.
+//
+// Маппинг живёт в localStorage. Юзер вставляет пары через помощник в карточке
+// поставки, либо использует букмарклет на странице списка поставок Ozon.
+// Когда дашборд видит, что для номера есть запись в маппинге — посылает в API
+// настоящий ID, и /v3/supply-order/get отвечает корректно.
+const OZON_ID_MAP_KEY = 'omdash_ozon_id_map';
+
+function ozonIdMapGet() {
+  try { return JSON.parse(localStorage.getItem(OZON_ID_MAP_KEY) || '{}') || {}; }
+  catch (_) { return {}; }
+}
+function ozonIdMapSave(map) {
+  try { localStorage.setItem(OZON_ID_MAP_KEY, JSON.stringify(map)); return true; }
+  catch (_) { return false; }
+}
+function ozonIdLookup(numberFromLK) {
+  const k = String(numberFromLK || '').trim();
+  if (!k) return null;
+  const map = ozonIdMapGet();
+  return map[k] || null;
+}
+// Парсит вставленный пользователем текст в пары "номер → ID".
+// Принимает: JSON массив объектов {number, id}, JSON объект {number: id},
+// или строки с двумя числами в каждой (через любой разделитель).
+function parseOzonIdPairs(raw) {
+  if (!raw) return [];
+  const txt = String(raw).trim();
+  try {
+    const j = JSON.parse(txt);
+    if (Array.isArray(j)) {
+      return j.filter(x => x && x.number && x.id).map(x => ({
+        number: String(x.number).trim(), id: String(x.id).trim()
+      }));
+    }
+    if (j && typeof j === 'object') {
+      return Object.keys(j).map(k => ({ number: String(k).trim(), id: String(j[k]).trim() }));
+    }
+  } catch (_) {}
+  return txt.split(/[\r\n]+/).map(line => {
+    const nums = line.match(/\d{6,}/g);
+    if (!nums || nums.length < 2) return null;
+    const long  = nums.find(n => n.length >= 12);
+    const short = nums.find(n => n.length <= 10 && n !== long);
+    if (long && short) return { number: long, id: short };
+    return { number: nums[0], id: nums[1] };
+  }).filter(Boolean);
 }
 
 // Букмарклет для извлечения настоящего supply_order_id из кабинета Ozon.
@@ -2889,72 +3413,203 @@ function buildOzonBookmarklet() {
   return 'javascript:' + encodeURIComponent(code.replace(/\s+/g, ' '));
 }
 
-// Помощник для Ozon — объясняет как получить настоящий ID + букмарклет
+// Букмарклет №2: на странице СПИСКА заявок (seller.ozon.ru/app/supply/orders)
+// собирает все пары (supply_order_number, supply_order_id) — из ссылок и из
+// JSON-данных на странице — и кладёт в буфер как готовый JSON для импорта в OM.
+function buildOzonListBookmarklet() {
+  const code = `(function(){
+    var pairs={};
+    document.querySelectorAll('a[href*="/app/supply/orders/"]').forEach(function(a){
+      var idMatch=a.href.match(/\\\\/orders\\\\/(\\\\d{6,12})(?:[/?#]|$)/);
+      if(!idMatch)return;
+      var id=idMatch[1];
+      var ctx=(a.textContent||'')+' '+(a.parentElement?a.parentElement.textContent:'');
+      var num=ctx.match(/\\\\b(2\\\\d{12})\\\\b/);
+      if(num)pairs[num[1]]=id;
+    });
+    var html=document.documentElement.innerHTML;
+    var rx=/"supply_order_id"\\\\s*:\\\\s*"?(\\\\d{6,12})"?[^}]*?"supply_order_number"\\\\s*:\\\\s*"?(\\\\d{12,15})"?/g;
+    var m;
+    while((m=rx.exec(html))){pairs[m[2]]=m[1];}
+    var rx2=/"supply_order_number"\\\\s*:\\\\s*"?(\\\\d{12,15})"?[^}]*?"supply_order_id"\\\\s*:\\\\s*"?(\\\\d{6,12})"?/g;
+    while((m=rx2.exec(html))){pairs[m[1]]=m[2];}
+    var keys=Object.keys(pairs);
+    if(!keys.length){
+      alert('Пары не найдены.\\\\n\\\\nОткрой список заявок Ozon (seller.ozon.ru/app/supply/orders), прокрути до самого низа чтобы все строки прогрузились, и кликни закладку.');
+      return;
+    }
+    var json=JSON.stringify(pairs,null,2);
+    navigator.clipboard.writeText(json).then(function(){
+      alert('Найдено пар: '+keys.length+'\\\\n\\\\nJSON скопирован в буфер.\\\\nВернись в OM, открой любую Ozon-поставку и нажми "вставить связки из буфера".');
+    }).catch(function(){
+      prompt('Скопируй вручную:',json);
+    });
+  })();`;
+  return 'javascript:' + encodeURIComponent(code.replace(/\s+/g, ' '));
+}
+
+// Помощник для Ozon — букмарклеты + импорт маппинга + ссылки в кабинет
 function renderOzonHelper() {
-  const bm = buildOzonBookmarklet();
+  const bm1 = buildOzonBookmarklet();
+  const bm2 = buildOzonListBookmarklet();
+  const map = ozonIdMapGet();
+  const mapSize = Object.keys(map).length;
   return `<div class="ozon-helper">
-    <div class="ozon-helper-title">↗ Как получить настоящий supply_order_id</div>
+    <div class="ozon-helper-title">↗ Маппинг номер ЛК → внутренний supply_order_id</div>
     <div class="ozon-helper-body">
-      <p style="margin:0 0 10px;">Номер из ЛК (вида <code>2000051161170</code>) — это <strong>supply_order_number</strong>, его API не понимает. Нужен <strong>supply_order_id</strong> (внутренний). Два способа достать его из кабинета Ozon:</p>
-      <ol style="margin:0 0 12px;padding-left:20px;line-height:1.7;">
-        <li><strong>URL заявки.</strong> Открой нужную заявку в кабинете и посмотри адресную строку — числовой ID обычно прямо там (например <code>seller.ozon.ru/app/supply/orders/<u>12345678</u></code>).</li>
-        <li><strong>DevTools.</strong> На странице заявки нажми F12 → вкладка Network → перезагрузи страницу. В списке запросов найди XHR с <code>/supply-order/</code> или <code>/v3/supply-order/get</code>, в payload или URL будет нужный ID.</li>
+      <p style="margin:0 0 10px;">Номер из ЛК (<code>2000049576713</code>) — это <strong>supply_order_number</strong>, его API не понимает. Нужен <strong>supply_order_id</strong> (внутренний, <code>99671140</code>). Между ними нет связи — ID живёт только в URL кабинета.</p>
+      <p style="margin:0 0 10px;">В дашборде есть <strong>маппинг номеров → ID</strong> в localStorage. Один раз импортировал — дальше дашборд сам подсовывает правильный ID при запросах к API, и состав поставок начнёт открываться.</p>
+      <p style="margin:6px 0 14px;font-size:12px;color:var(--text-muted);">в маппинге сейчас: <strong>${mapSize}</strong> ${mapSize === 1 ? 'связка' : (mapSize >= 2 && mapSize <= 4 ? 'связки' : 'связок')}</p>
+
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+        <a class="ozon-bookmarklet" href="${bm2}" onclick="event.preventDefault();alert('Перетащи на панель закладок браузера (не кликай здесь).');" draggable="true">📎 OZON · собрать связки со списка</a>
+        <a class="ozon-bookmarklet" href="${bm1}" onclick="event.preventDefault();alert('Перетащи на панель закладок браузера.');" draggable="true">📎 OZON · ID одной заявки</a>
+      </div>
+
+      <p style="margin:0 0 8px;font-size:12px;"><strong>Как пользоваться:</strong></p>
+      <ol style="margin:0 0 12px;padding-left:20px;line-height:1.7;font-size:12px;">
+        <li>Перетащи на панель закладок браузера кнопку <strong>«собрать связки со списка»</strong>.</li>
+        <li>Открой в новой вкладке: <a href="https://seller.ozon.ru/app/supply/orders?filter=TransitAndAcceptance" target="_blank" style="color:var(--accent-copper);">поставки в пути</a> · <a href="https://seller.ozon.ru/app/supply/orders?filter=SupplyPreparation" target="_blank" style="color:var(--accent-copper);">в подготовке</a>. Прокрути до конца, чтобы все строки прогрузились.</li>
+        <li>Кликни закладку — она соберёт пары и положит в буфер.</li>
+        <li>Вернись сюда, нажми кнопку ниже:</li>
       </ol>
-      <p style="margin:0 0 8px;"><strong>Или закладка-помощник:</strong> перетащи кнопку ниже на панель закладок браузера. Когда откроешь заявку в кабинете Ozon — кликнешь закладку, и она найдёт ID на странице и скопирует в буфер.</p>
-      <a class="ozon-bookmarklet" href="${bm}" onclick="event.preventDefault();alert('Перетащи эту кнопку на панель закладок браузера (не кликай по ней здесь).');" draggable="true">📎 OZON · достать supply_order_id</a>
-      <p style="margin:10px 0 0;font-size:11px;color:var(--text-muted);">Когда узнаешь настоящий ID — впиши его в OM в № поставки вместо номера из ЛК. API сразу заработает и подтянет состав поставки.</p>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="cabinet-link" type="button" onclick="importOzonIdMapFromClipboard()">📥 вставить связки из буфера</button>
+        <button class="cabinet-link" type="button" onclick="exportOzonIdMap()">📤 показать текущий маппинг</button>
+        ${mapSize > 0 ? '<button class="cabinet-link" type="button" onclick="clearOzonIdMap()" style="opacity:0.6;">очистить</button>' : ''}
+      </div>
+
+      <p style="margin:14px 0 0;font-size:11px;color:var(--text-muted);">Альтернатива: открой одну заявку в кабинете, скопируй число из URL и впиши в поле «№ поставки» в OM вместо номера из ЛК. Сработает, но потеряется красивый номер из ЛК — лучше используй маппинг.</p>
     </div>
   </div>`;
+}
+
+async function importOzonIdMapFromClipboard() {
+  let raw = '';
+  try { raw = await navigator.clipboard.readText(); }
+  catch (_) {
+    raw = prompt('Браузер не дал доступ к буферу. Вставь сюда вручную:') || '';
+  }
+  if (!raw.trim()) { toast('буфер пуст', true); return; }
+  const pairs = parseOzonIdPairs(raw);
+  if (!pairs.length) { toast('не нашёл пар в тексте', true); return; }
+  const map = ozonIdMapGet();
+  let added = 0, updated = 0;
+  pairs.forEach(p => {
+    if (map[p.number] === p.id) return;
+    if (map[p.number]) updated++;
+    else added++;
+    map[p.number] = p.id;
+  });
+  ozonIdMapSave(map);
+  toast(`импортировано ${pairs.length} · добавлено ${added}, обновлено ${updated}`);
+  // Перерисуем helper, чтобы счётчик обновился
+  const helperHost = document.querySelector('#supplyDetailsBody .ozon-helper');
+  if (helperHost) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderOzonHelper();
+    helperHost.replaceWith(wrapper.firstElementChild);
+  }
+}
+function exportOzonIdMap() {
+  const map = ozonIdMapGet();
+  const json = JSON.stringify(map, null, 2);
+  const keys = Object.keys(map);
+  if (!keys.length) { alert('Маппинг пуст.'); return; }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(json).then(
+      () => toast(`${keys.length} связок скопировано в буфер`),
+      () => prompt('Текущий маппинг (скопируй вручную):', json)
+    );
+  } else {
+    prompt('Текущий маппинг (скопируй вручную):', json);
+  }
+}
+function clearOzonIdMap() {
+  if (!confirm('Очистить весь маппинг номер→ID?')) return;
+  localStorage.removeItem(OZON_ID_MAP_KEY);
+  toast('маппинг очищен');
+  const helperHost = document.querySelector('#supplyDetailsBody .ozon-helper');
+  if (helperHost) {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = renderOzonHelper();
+    helperHost.replaceWith(wrapper.firstElementChild);
+  }
+}
+
+// Показывает сырой JSON ответа Ozon API в модалке-оверлее с кнопкой "копировать".
+// Нужен для отладки — чтобы понять какие поля API реально отдаёт по этой
+// поставке, и какие из них стоит вытаскивать в шапку.
+function showOzonRawDebug(jsonStr) {
+  let pretty = jsonStr;
+  try { pretty = JSON.stringify(JSON.parse(jsonStr), null, 2); } catch (_) {}
+  // Создаём поверх всего временную модалку
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:32px;';
+  overlay.innerHTML = `
+    <div style="background:#1a1c1b;border:1px solid #C7905D;border-radius:6px;max-width:900px;width:100%;max-height:90vh;display:flex;flex-direction:column;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid rgba(199,144,93,0.2);">
+        <h3 style="margin:0;color:#C7905D;font-family:Fraunces,serif;font-style:italic;font-weight:400;">сырой ответ Ozon /v3/supply-order/get</h3>
+        <button type="button" id="dbgClose" style="background:none;border:none;color:#C7905D;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <div style="padding:14px 18px;border-bottom:1px solid rgba(199,144,93,0.1);font-size:12px;color:#9a9a8a;">
+        Нажми «копировать» и пришли мне этот JSON — я по нему точно настрою какие поля показывать в шапке поставки.
+        <button type="button" id="dbgCopy" class="cabinet-link" style="margin-left:12px;font-size:11px;">📋 копировать в буфер</button>
+      </div>
+      <pre id="dbgJson" style="margin:0;padding:18px;overflow:auto;color:#e0d8c4;font-family:Menlo,monospace;font-size:11px;line-height:1.5;white-space:pre-wrap;word-break:break-all;flex:1;">${escapeHtml(pretty)}</pre>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#dbgClose').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#dbgCopy').addEventListener('click', () => {
+    navigator.clipboard.writeText(pretty).then(
+      () => toast('JSON скопирован — пришли его в чат'),
+      () => toast('не удалось скопировать, выдели текст вручную', true)
+    );
+  });
 }
 
 function renderExternalSupplies(data) {
   const ozon = data.ozon || {};
   const wb = data.wb || {};
-  // Если из браузерного кэша — wb.ok=true и orders заполнены, но было fallback
-  const fromBrowserCache = !!wb.from_browser_cache;
+  // Источник данных: 'wb_sheet' (новый, из листа) или старая логика
+  const fromSheet = wb.source === 'wb_sheet';
   const wbList = (wb.ok && wb.orders) ? wb.orders : [];
   const ozonList = (ozon.ok && ozon.orders) ? ozon.orders : [];
   const wbOpen = wbList.filter(s => !s.done).length;
   const ozonOpen = ozonList.length;
-  const fromCache = wb.from_cache;
-  const isRateLimited = !!wb.is_rate_limited || !!wb.rate_limit_active;
 
   let title = `активные поставки в МП · WB ${wbOpen} · Ozon ${ozonOpen}`;
-  if (fromBrowserCache) title += ' · снимок';
-  else if (fromCache) title += ' · из кэша';
-  if (isRateLimited && !fromBrowserCache) title += ' · WB лимит';
-  $('externalModalTitle').textContent = title;
-
-  // Считаем сколько секунд до момента когда кеш истечёт и API снова можно дёрнуть.
-  // Если cached_at/cache_ttl нет (старый сервер) — секунд 0, кнопка активна.
-  let secondsLeft = 0;
-  if (wb.cached_at && wb.cache_ttl) {
-    const expiresAt = wb.cached_at + wb.cache_ttl * 1000;
-    secondsLeft = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+  if (fromSheet && wb.synced_at) {
+    const ageMin = Math.floor((Date.now() - wb.synced_at) / 60000);
+    if (ageMin >= 60) title += ` · WB ${Math.floor(ageMin/60)}ч назад`;
+    else title += ` · WB ${ageMin}м назад`;
   }
-  // Кнопку «обновить из API» блокируем, если:
-  //   а) WB сейчас в rate limit (любой forceRefresh всё равно вернёт тот же 429)
-  //   б) данные свежие из кеша и до истечения ещё больше 30 секунд
-  const refreshLocked = isRateLimited || (fromCache && secondsLeft > 30);
+  $('externalModalTitle').textContent = title;
 
   let html = '';
 
-  // Шапка с кнопкой обновления и обратным отсчётом
+  // Тулбар: статус последней синхронизации WB-листа + кнопка ручного синка
   let statusLine = '';
-  if (fromBrowserCache && isRateLimited) {
-    const ageMin = wb.browser_cache_age_min || 0;
-    const ageTxt = ageMin < 1 ? 'только что' : (ageMin < 60 ? `${ageMin} мин назад` : `${Math.floor(ageMin/60)} ч ${ageMin%60} мин назад`);
-    statusLine = `<span class="ext-cache-status ext-cache-rl">WB API в лимите · показываем снимок (${ageTxt})</span>`;
-  } else if (isRateLimited) {
-    statusLine = `<span class="ext-cache-status ext-cache-rl" id="extCountdownLabel">WB API заблокирован · повтор через ${formatSeconds(secondsLeft)}</span>`;
-  } else if (fromCache && secondsLeft > 0) {
-    statusLine = `<span class="ext-cache-status" id="extCountdownLabel">данные WB из кэша · обновление через ${formatSeconds(secondsLeft)}</span>`;
-  } else if (fromCache) {
-    statusLine = `<span class="ext-cache-status">данные WB из кэша</span>`;
+  if (fromSheet) {
+    if (wb.synced_at) {
+      const ageMin = Math.floor((Date.now() - wb.synced_at) / 60000);
+      let ageTxt;
+      if (ageMin < 1) ageTxt = 'только что';
+      else if (ageMin < 60) ageTxt = `${ageMin} мин назад`;
+      else ageTxt = `${Math.floor(ageMin/60)} ч ${ageMin%60} мин назад`;
+      statusLine = `<span class="ext-cache-status">данные из листа · синхронизировано ${escapeHtml(ageTxt)} · авто 07:00 / 12:00 / 15:00</span>`;
+    } else if (!wb.ok) {
+      statusLine = `<span class="ext-cache-status ext-cache-rl">${escapeHtml(wb.error || 'лист пуст')}</span>`;
+    } else {
+      statusLine = `<span class="ext-cache-status">данные из листа</span>`;
+    }
   }
   html += `<div class="ext-toolbar">
     ${statusLine}
-    <button class="cabinet-link" id="extRefreshBtn" onclick="loadExternalSupplies(true)" ${refreshLocked ? 'disabled' : ''} style="font-size:11px;${refreshLocked ? 'opacity:0.45;cursor:not-allowed;' : ''}">↻ обновить из API</button>
+    <button class="cabinet-link" id="extSyncBtn" onclick="syncWbFromApi()" style="font-size:11px;">↻ синхронизировать сейчас</button>
   </div>`;
 
   // ============ WB ============
@@ -3011,6 +3666,11 @@ function renderExternalSupplies(data) {
     <div class="dispatch-section-title">
       <span>Ozon — заявки на поставку FBO</span>
       <span class="dispatch-section-count">${ozonList.length}</span>
+    </div>
+    <div class="cabinet-link-row" style="padding-bottom:8px;">
+      <a href="https://seller.ozon.ru/app/supply/orders?filter=TransitAndAcceptance" target="_blank" class="cabinet-link" style="font-size:11px;">→ в пути</a>
+      <a href="https://seller.ozon.ru/app/supply/orders?filter=SupplyPreparation" target="_blank" class="cabinet-link" style="font-size:11px;">→ в подготовке</a>
+      <a href="https://seller.ozon.ru/app/supply/orders" target="_blank" class="cabinet-link" style="font-size:11px;">→ все заявки</a>
     </div>`;
   if (!ozon.ok) {
     html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(ozon.error || 'неизвестная ошибка')}</div>`;
@@ -3098,6 +3758,17 @@ document.addEventListener('keydown', (e) => {
   });
 });
 
+// Скрытое сочетание для отладки: Alt+J на открытой Ozon-поставке покажет
+// сырой JSON ответа API. Используется когда нужно посмотреть какие поля
+// API реально отдаёт.
+document.addEventListener('keydown', (e) => {
+  if (e.altKey && (e.key === 'j' || e.key === 'J' || e.code === 'KeyJ')) {
+    if (window.__lastOzonRaw) {
+      showOzonRawDebug(JSON.stringify(window.__lastOzonRaw));
+    }
+  }
+});
+
 async function loadData() {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR')) {
     $('setupBanner').style.display = 'block';
@@ -3139,6 +3810,24 @@ async function loadData() {
     if (!data.ok) throw new Error(data.error || 'unknown error');
     allOrders = data.orders || [];
     allMessages = data.messages || [];
+
+    // Синхронизация lkOrderId из таблицы в localStorage маппинг.
+    // Если Apps Script передеплоен с поддержкой 54-й колонки — все заказы,
+    // у которых есть lkOrderId в таблице, сразу попадают в браузерный маппинг.
+    // Это даёт работу даже когда юзер вписал ID на одном устройстве, открыл
+    // дашборд на другом — связки прорастут автоматически.
+    {
+      const map = ozonIdMapGet();
+      let changed = false;
+      allOrders.forEach(o => {
+        if (o.lkOrderId && o.supplyNumber) {
+          const k = String(o.supplyNumber).trim();
+          const v = String(o.lkOrderId).trim();
+          if (k && v && map[k] !== v) { map[k] = v; changed = true; }
+        }
+      });
+      if (changed) ozonIdMapSave(map);
+    }
     // Используем справочники с сервера если они непустые, иначе оставляем fallback
     if (data.warehouses && Object.keys(data.warehouses).length) {
       warehousesByMp = data.warehouses;
@@ -3264,18 +3953,24 @@ function mpClass(mp) {
   return '';
 }
 
-// Прогресс по правилам пользователя:
-//   1 кружок: загружен в ЛК
-//   2 кружка: + есть № счёта 1С
-//   3 кружка: + внесены данные машины (ФИО водителя или № машины)
-//   4 кружка: + поставка закрыта (корректировки внесены)
+// Прогресс по правилам пользователя — строгая лестница, без коротких путей.
+// Каждая точка означает: "выполнен этот шаг И все предыдущие".
+//   1 точка: загружен в ЛК
+//   2 точки: + есть № счёта 1С
+//   3 точки: + внесены данные машины (ФИО водителя или № машины)
+//   4 точки: + корректировки внесены = поставка закрыта
+// Галочка "документы переданы" — это просто информация, в прогрессе не учитывается.
 function calcProgress(o) {
+  const hasLk = !!o.loadedLk;
+  const hasInvoice = !!(o.invoice1c && String(o.invoice1c).trim());
+  const hasCar = !!((o.driverName && String(o.driverName).trim()) ||
+                    (o.carNumber && String(o.carNumber).trim()));
+  const hasCorrections = !!o.correctionsMade;
   let p = 0;
-  if (o.loadedLk) p = 1;
-  if (o.invoice1c && String(o.invoice1c).trim()) p = Math.max(p, 2);
-  if ((o.driverName && String(o.driverName).trim()) || (o.carNumber && String(o.carNumber).trim())) p = Math.max(p, 3);
-  // Закрыто: либо явно отмечено "корректировки внесены", либо есть факт. поставка на МП
-  if (o.correctionsMade || o.dateFact) p = 4;
+  if (hasLk) p = 1;
+  if (p === 1 && hasInvoice) p = 2;
+  if (p === 2 && hasCar) p = 3;
+  if (p === 3 && hasCorrections) p = 4;
   return p;
 }
 
@@ -3375,7 +4070,7 @@ function renderTable() {
           <span class="flag ${progress >= 1 ? 'on' : ''}" title="загружен в ЛК"></span>
           <span class="flag ${progress >= 2 ? 'on' : ''}" title="№ счёта 1С"></span>
           <span class="flag ${progress >= 3 ? 'on' : ''}" title="данные машины"></span>
-          <span class="flag ${progress >= 4 ? 'on done' : ''}" title="закрыт"></span>
+          <span class="flag ${progress >= 4 ? 'on done' : ''}" title="корректировки внесены"></span>
         </td>
         <td><span class="sos ${sosVal === 0 ? 'zero' : ''}">${sosVal}</span></td>
         <td class="cell-comment">${escapeHtml(o.comment || '')}</td>
@@ -3430,6 +4125,7 @@ function editOrder(o) {
   form.elements.dateFact.value = o.dateFact || '';
   form.elements.timeFact.value = o.timeFact || '';
   form.elements.supplyNumber.value = o.supplyNumber || '';
+  if (form.elements.lkOrderId) form.elements.lkOrderId.value = o.lkOrderId || '';
   form.elements.orderNumber.value = o.orderNumber || '';
   form.elements.productionOrderNum.value = o.productionOrderNum || '';
   form.elements.pallets.value = o.pallets || '';
@@ -3450,7 +4146,13 @@ function editOrder(o) {
   // 4b. Транспорт
   form.elements.driverName.value = o.driverName || '';
   form.elements.carNumber.value = o.carNumber || '';
-  form.elements.docs.value = o.docs || '';
+  // docs (старое текстовое поле) → docsHandedOver (новый чекбокс).
+  // Если в строке заказа есть либо явный флаг docsHandedOver, либо непустой
+  // старый docs — считаем что документы переданы.
+  if (form.elements.docsHandedOver) {
+    form.elements.docsHandedOver.checked = !!o.docsHandedOver ||
+                                            !!(o.docs && String(o.docs).trim());
+  }
   form.elements.carPrice.value = o.carPrice || '';
   form.elements.actualPickupDate.value = o.actualPickupDate || '';
   form.elements.returnCarNumber.value = o.returnCarNumber || '';
@@ -3460,9 +4162,12 @@ function editOrder(o) {
   form.elements.paidReceptionPrice.value = o.paidReceptionPrice || '';
 
   // Автораскрытие блоков если в них есть данные
-  const hasTransport = !!(o.driverName || o.carNumber || o.docs || o.carPrice || o.actualPickupDate || o.returnCarNumber);
+  // Транспорт: водитель/машина/цена/документы. Вывоз перенесён в свой блок.
+  const hasTransport = !!(o.driverName || o.carNumber || o.docsHandedOver || o.docs || o.carPrice);
+  const hasDispatch = !!(o.isDispatch || o.actualPickupDate || o.returnCarNumber);
   const hasFinance = !!(o.transitPrice || o.paidReceptionPrice);
   $('transportBlock').open = hasTransport;
+  if ($('dispatchBlock')) $('dispatchBlock').open = hasDispatch;
   $('financeBlock').open = hasFinance;
 
   // 5. Переключаем форму в режим правки
@@ -3588,14 +4293,24 @@ $('orderForm').addEventListener('submit', async e => {
   const fd = new FormData(form);
   const payload = {};
   for (const [k,v] of fd.entries()) payload[k] = v;
-  ['carOrdered','correctionsMade','loadedLk','shippedToMp','isDispatch'].forEach(k => {
-    payload[k] = form.elements[k].checked;
+  ['carOrdered','correctionsMade','loadedLk','shippedToMp','isDispatch','docsHandedOver'].forEach(k => {
+    if (form.elements[k]) payload[k] = form.elements[k].checked;
   });
 
   // Галочка "отправить уведомление" — НЕ улетает в payload (в таблице её нет),
   // а используется только как локальный триггер: после успешной записи
   // шлём уведомление в TG и на email.
   const wantNotify = !!(form.elements.notifySend && form.elements.notifySend.checked);
+
+  // Сразу синхронизируем lkOrderId в localStorage маппинг — это страховка
+  // на случай если Apps Script ещё не передеплоен с поддержкой 54-й колонки.
+  // Тогда поле в таблицу не сохранится, но в браузере связка номер→ID
+  // останется, и подмена для API будет работать.
+  if (payload.supplyNumber && payload.lkOrderId && (payload.mp || '').toLowerCase().includes('ozon')) {
+    const map = ozonIdMapGet();
+    map[String(payload.supplyNumber).trim()] = String(payload.lkOrderId).trim();
+    ozonIdMapSave(map);
+  }
 
   // Режим правки — добавляем rowNum и флаг update
   const isUpdate = !!editingRowNum;
