@@ -1683,6 +1683,205 @@ tbody tr.order-row:hover { background: rgba(199, 144, 93, 0.08); }
 }
 .sos.zero { color: var(--text-soft); opacity: 0.5; font-weight: 300; }
 
+.orders-table-expanded {
+  width: 100%;
+  min-width: 1120px;
+  table-layout: fixed;
+}
+.orders-table-expanded th,
+.orders-table-expanded td {
+  padding-left: 6px;
+  padding-right: 6px;
+  font-size: 12px;
+}
+.orders-table-expanded th { font-size: 11px; }
+.orders-table-expanded th:nth-child(1), .orders-table-expanded td:nth-child(1) { width: 34px; }
+.orders-table-expanded th:nth-child(2), .orders-table-expanded td:nth-child(2) { width: 58px; }
+.orders-table-expanded th:nth-child(3), .orders-table-expanded td:nth-child(3) { width: 62px; text-align: center; }
+.orders-table-expanded th:nth-child(4), .orders-table-expanded td:nth-child(4) { width: 112px; }
+.orders-table-expanded th:nth-child(5), .orders-table-expanded td:nth-child(5) { width: 128px; }
+.orders-table-expanded th:nth-child(6), .orders-table-expanded td:nth-child(6) { width: 78px; }
+.orders-table-expanded th:nth-child(7), .orders-table-expanded td:nth-child(7) { width: 82px; }
+.orders-table-expanded th:nth-child(8), .orders-table-expanded td:nth-child(8) { width: 96px; }
+.orders-table-expanded th:nth-child(9), .orders-table-expanded td:nth-child(9) { width: 92px; }
+.orders-table-expanded th:nth-child(10), .orders-table-expanded td:nth-child(10) { width: 78px; }
+.orders-table-expanded th:nth-child(11), .orders-table-expanded td:nth-child(11) { width: 58px; text-align:center; }
+.orders-table-expanded th:nth-child(12), .orders-table-expanded td:nth-child(12) { width: 82px; }
+.orders-table-expanded th:nth-child(13), .orders-table-expanded td:nth-child(13) { width: 112px; }
+.orders-table-expanded th:nth-child(14), .orders-table-expanded td:nth-child(14) { width: 116px; }
+.orders-table-expanded td:nth-child(5),
+.orders-table-expanded td:nth-child(6),
+.orders-table-expanded td:nth-child(9),
+.orders-table-expanded td:nth-child(10) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell-small {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+.cell-strong {
+  color: var(--text-body);
+  font-weight: 500;
+}
+.cell-warehouse {
+  min-width: 0;
+  max-width: 128px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell-driver {
+  min-width: 140px;
+}
+.cell-car {
+  font-family: monospace;
+  white-space: nowrap;
+}
+.cell-status {
+  text-align: center;
+  white-space: nowrap;
+}
+.om-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 12px;
+  border: 1px solid var(--stone-line);
+  font-size: 10px;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: rgba(0,0,0,.16);
+}
+.om-badge.on {
+  color: var(--accent-sage);
+  border-color: rgba(143,163,131,.55);
+  background: rgba(143,163,131,.12);
+}
+.om-badge.off {
+  color: var(--text-soft);
+  opacity: .72;
+}
+.shipment-kind {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  max-width: 112px;
+}
+.shipment-kind .kind {
+  width: fit-content;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(199,144,93,.45);
+  color: var(--accent-copper);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  background: rgba(199,144,93,.08);
+}
+.shipment-kind .wh {
+  color: var(--text-body);
+  font-size: 11px;
+  line-height: 1.2;
+  max-height: 28px;
+  overflow: hidden;
+}
+.order-progress-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 22px;
+  border: 1px solid rgba(199,144,93,.42);
+  border-radius: 14px;
+  color: var(--accent-copper);
+  background: rgba(199,144,93,.08);
+  font-family: monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+.order-progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+.order-date-duo { display:flex; flex-direction:column; gap:2px; font-size:12px; line-height:1.25; }
+.order-date-duo .fact { color: var(--text-muted); font-size:11px; }
+.order-status-stack { display:flex; flex-direction:column; gap:2px; align-items:flex-start; }
+.order-status-line { display:flex; align-items:center; justify-content:space-between; gap:4px; width:100%; font-size:9px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.02em; }
+.order-status-line .om-badge { transform: scale(.82); transform-origin:left center; }
+.order-transport { display:flex; flex-direction:column; gap:2px; font-size:11px; line-height:1.2; }
+.order-transport .driver { color:var(--text-body); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:96px; }
+.order-transport .car { font-family:monospace; color:var(--text-muted); }
+.order-transport .pickup { margin-top:3px; }
+.order-comment-compact { display:flex; flex-direction:column; gap:4px; }
+.order-comment-compact .comment { max-height:30px; overflow:hidden; font-family:'Fraunces',serif; font-style:italic; color:var(--text-muted); line-height:1.25; }
+.order-date-duo .plan,
+.order-date-duo .fact { white-space: nowrap; }
+.orders-table-expanded .supply-linked { padding: 2px 5px; }
+.orders-table-expanded .cell-mp { padding: 2px 6px; font-size: 10px; }
+
+.order-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 10px;
+}
+.order-detail-card {
+  border: 1px solid var(--stone-line);
+  background: rgba(0,0,0,.14);
+  border-radius: 4px;
+  padding: 14px 14px 12px;
+}
+.order-detail-card.wide { grid-column: span 3; }
+.order-detail-card h4 {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+.order-detail-line {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 2px 0;
+}
+.order-detail-label { color: var(--text-muted); }
+.order-detail-value { color: var(--text-body); }
+.order-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+.order-edit-btn {
+  border: 1px solid var(--accent-copper);
+  color: var(--accent-copper);
+  background: rgba(199,144,93,.08);
+  padding: 10px 18px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.order-edit-btn:hover {
+  background: rgba(199,144,93,.16);
+}
+@media (max-width: 900px) {
+  .order-detail-grid { grid-template-columns: 1fr; }
+  .order-detail-card.wide { grid-column: span 1; }
+}
+
 .toast {
   position: fixed;
   bottom: 32px;
@@ -2250,6 +2449,59 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
   .chat-panel .om-nav { grid-template-columns: 1fr; }
   .chat-panel .om-nav-btn { height: 36px !important; }
 }
+
+
+/* ── v18: расширяем рабочую область и возвращаем таблице нормальную читаемость ── */
+.wrap {
+  max-width: none !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+.header {
+  margin-left: -18px !important;
+  margin-right: -18px !important;
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+.table-wrap {
+  max-height: 300px;
+}
+.orders-table-expanded {
+  min-width: 1180px !important;
+  table-layout: fixed;
+}
+.orders-table-expanded th,
+.orders-table-expanded td {
+  padding-left: 7px !important;
+  padding-right: 7px !important;
+  font-size: 12px !important;
+}
+.orders-table-expanded th { font-size: 11px !important; }
+.orders-table-expanded th:nth-child(1), .orders-table-expanded td:nth-child(1) { width: 34px !important; }
+.orders-table-expanded th:nth-child(2), .orders-table-expanded td:nth-child(2) { width: 62px !important; }
+.orders-table-expanded th:nth-child(3), .orders-table-expanded td:nth-child(3) { width: 76px !important; text-align:center; }
+.orders-table-expanded th:nth-child(4), .orders-table-expanded td:nth-child(4) { width: 126px !important; }
+.orders-table-expanded th:nth-child(5), .orders-table-expanded td:nth-child(5) { width: 142px !important; }
+.orders-table-expanded th:nth-child(6), .orders-table-expanded td:nth-child(6) { width: 84px !important; }
+.orders-table-expanded th:nth-child(7), .orders-table-expanded td:nth-child(7) { width: 86px !important; }
+.orders-table-expanded th:nth-child(8), .orders-table-expanded td:nth-child(8) { width: 98px !important; }
+.orders-table-expanded th:nth-child(9), .orders-table-expanded td:nth-child(9) { width: 96px !important; }
+.orders-table-expanded th:nth-child(10), .orders-table-expanded td:nth-child(10) { width: 82px !important; }
+.orders-table-expanded th:nth-child(11), .orders-table-expanded td:nth-child(11) { width: 62px !important; text-align:center; }
+.orders-table-expanded th:nth-child(12), .orders-table-expanded td:nth-child(12) { width: 88px !important; }
+.orders-table-expanded th:nth-child(13), .orders-table-expanded td:nth-child(13) { width: 116px !important; }
+.orders-table-expanded th:nth-child(14), .orders-table-expanded td:nth-child(14) { width: 118px !important; }
+.order-transport .driver { max-width: 104px !important; }
+.order-status-stack { gap: 3px !important; }
+.order-status-line { font-size: 10px !important; }
+@media (min-width: 1400px) {
+  .wrap { padding-left: 24px !important; padding-right: 24px !important; }
+  .header { margin-left: -24px !important; margin-right: -24px !important; padding-left: 24px !important; padding-right: 24px !important; }
+  .orders-table-expanded { min-width: 1240px !important; }
+}
+
 </style>
 </head>
 <body class="app-locked">
@@ -2393,25 +2645,27 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
     </div>
 
     <div class="table-wrap">
-      <table>
+      <table class="orders-table-expanded">
         <thead>
           <tr>
             <th>№</th>
             <th>МП</th>
-            <th>склад МП</th>
-            <th>план</th>
-            <th>факт</th>
-            <th>поставка</th>
-            <th>заказ</th>
-            <th>палл.</th>
-            <th>счёт 1С</th>
             <th>прогресс</th>
-            <th>SOS</th>
-            <th>комментарий</th>
+            <th>отгрузка</th>
+            <th>склад МП</th>
+            <th>юр лицо</th>
+            <th>план / факт</th>
+            <th>поставка</th>
+            <th>заказ МП</th>
+            <th>заказ произв.</th>
+            <th>палл./кор.</th>
+            <th>статусы</th>
+            <th>транспорт</th>
+            <th>SOS / комментарий</th>
           </tr>
         </thead>
         <tbody id="ordersBody">
-          <tr><td colspan="12"><div class="loading"><div class="spinner"></div><div>загружаем данные</div></div></td></tr>
+          <tr><td colspan="14"><div class="loading"><div class="spinner"></div><div>загружаем данные</div></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -2776,6 +3030,16 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
       <button type="button" class="modal-close" onclick="closeSupplyDetailsModal()">✕</button>
     </div>
     <div class="modal-body" id="supplyDetailsBody"></div>
+  </div>
+</div>
+
+<div id="orderDetailsModal" class="modal-overlay" style="display:none;">
+  <div class="modal-card modal-card-wide">
+    <div class="modal-head">
+      <h3 class="modal-title" id="orderDetailsTitle">карточка поставки</h3>
+      <button type="button" class="modal-close" onclick="closeOrderDetailsModal()">✕</button>
+    </div>
+    <div class="modal-body" id="orderDetailsBody"></div>
   </div>
 </div>
 
@@ -3367,8 +3631,8 @@ function stopExtCountdown() {
 // Кеш делится по ключу `${source}:${id}` (для WB — плюс isPreorderID).
 // Только успешные ответы с непустым составом попадают в кеш — иначе
 // смысла не было бы (мы бы и закешировали "пусто из-за 429").
-const SUPPLY_CACHE_PREFIX = 'omdash_supply_';
-const SUPPLY_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 часа
+const SUPPLY_CACHE_PREFIX = 'omdash_supply_v9_';
+const SUPPLY_CACHE_TTL_MS = 5 * 60 * 1000; // 5 минут
 
 function supplyCacheKey(source, id, isPreorderID) {
   let k = SUPPLY_CACHE_PREFIX + source + ':' + id;
@@ -3470,7 +3734,7 @@ async function openSupplyDetails(source, id, number, isPreorderID, forceRefresh)
   // Для Ozon кеш отключён: API стабильно отвечает, лимиты не строгие, и кеш
   // создаёт проблему "после правки кода старые данные продолжают показываться".
   // Лучше всегда тянуть свежее.
-  if (!forceRefresh && source !== 'ozon') {
+  if (!forceRefresh && false && source !== 'ozon') {
     const cached = supplyCacheGet(source, apiId, isPreorderID);
     if (cached && cached.data && cached.data.ok) {
       const ageMin = Math.floor((Date.now() - cached.cached_at) / 60000);
@@ -3495,7 +3759,7 @@ async function openSupplyDetails(source, id, number, isPreorderID, forceRefresh)
     const res = await fetch(url);
     const data = await res.json();
     // В кеш кладём только WB и только полные ответы с составом
-    if (source !== 'ozon' && data && data.ok && (data.goods_count > 0 || data.orders_count > 0)) {
+    if (false && source !== 'ozon' && data && data.ok && (data.goods_count > 0 || data.orders_count > 0)) {
       supplyCacheSet(source, apiId, isPreorderID, data);
     }
     renderSupplyDetails(source, id, number, data);
@@ -3763,133 +4027,122 @@ function renderSupplyDetails(source, id, number, data) {
     const s = data.supply;
     const cards = [];
 
-    // Карточка 1: статус и параметры
+    const parseOmDate = (val) => {
+      if (!val) return null;
+      if (val instanceof Date && !isNaN(val)) return val;
+      const str = String(val).trim();
+      if (!str) return null;
+      let m = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      m = str.match(/^(\d{2})\.(\d{2})\.(\d{4})/);
+      if (m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+      const d = new Date(str);
+      return isNaN(d) ? null : d;
+    };
+    const fmtDateDot = (val) => {
+      const d = parseOmDate(val);
+      if (!d) return val ? String(val).slice(0, 10) : '';
+      return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+    const fmtOzonLikeDate = (val) => {
+      const d = parseOmDate(val);
+      if (!d) return val ? String(val).slice(0, 10) : '';
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }).replace('.', '');
+    };
+
+    const linkedRow = (allOrders || []).find(o =>
+      o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+    );
+
+    // Карточка 1 — строго под формат Ozon:
+    // № заявки / ID в кабинете / создана / флаги.
     {
       const lines = [];
-      if (s.id) lines.push(`<div class="supply-card-row"><span class="label">supplyID</span><span>${escapeHtml(String(s.id))}</span></div>`);
-      if (s.preorderID && String(s.preorderID) !== String(s.id)) {
-        lines.push(`<div class="supply-card-row"><span class="label">preorderID</span><span>${escapeHtml(String(s.preorderID))}</span></div>`);
-      }
-      if (s.boxType) lines.push(`<div class="supply-card-row"><span class="label">упаковка</span><span>${escapeHtml(s.boxType)}</span></div>`);
-      if (s.created) {
-        const d = new Date(s.created);
-        const txt = isNaN(d) ? String(s.created).slice(0,10) : d.toLocaleDateString('ru-RU');
-        lines.push(`<div class="supply-card-row"><span class="label">создана</span><span>${escapeHtml(txt)}</span></div>`);
-      }
-      if (s.state) lines.push(`<div class="supply-card-flags"><span class="supply-card-flag">${escapeHtml(s.state)}</span></div>`);
+      const requestNumber = s.id || number || id || '';
+      const cabinetId = (s.preorderID && String(s.preorderID) !== String(requestNumber)) ? s.preorderID : '';
+      if (requestNumber) lines.push(`<div class="supply-card-row"><span class="label">№ заявки</span><span>${escapeHtml(String(requestNumber))}</span></div>`);
+      if (cabinetId) lines.push(`<div class="supply-card-row"><span class="label">ID в кабинете</span><span>${escapeHtml(String(cabinetId))}</span></div>`);
+      if (s.created) lines.push(`<div class="supply-card-row"><span class="label">создана</span><span>${escapeHtml(fmtDateDot(s.created))}</span></div>`);
+
+      const flags = [];
+      if (s.transitWarehouseName) flags.push('кроссдок');
+      flags.push('FBO');
+      lines.push(`<div class="supply-card-flags">${flags.map(f => `<span class="supply-card-flag">${escapeHtml(f)}</span>`).join('')}</div>`);
+
       cards.push(`<div class="supply-card">
         <div class="supply-card-title">статус и параметры</div>
         ${lines.join('')}
       </div>`);
     }
 
-    // Карточка 2: склад назначения
-    if (s.warehouseName || s.transitWarehouseName) {
-      const main = s.warehouseName
-        ? `<div class="supply-card-main">${escapeHtml(s.warehouseName)}</div>`
-        : `<div class="supply-card-empty">склад не указан</div>`;
-      const sub = s.transitWarehouseName
-        ? `<div class="supply-card-sub">транзит: ${escapeHtml(s.transitWarehouseName)}</div>`
-        : '';
+    // Карточка 2 — склад отгрузки. Если WB отдаёт транзитный склад,
+    // прямо подписываем это как «транзит», чтобы было понятно как у Ozon с кроссдоком.
+    {
+      const shipWh = s.transitWarehouseName || s.actualWarehouseName || '';
+      const isTransit = !!s.transitWarehouseName;
       cards.push(`<div class="supply-card">
-        <div class="supply-card-title">склад назначения</div>
-        ${main}
-        ${sub}
+        <div class="supply-card-title">склад отгрузки</div>
+        ${shipWh ? `<div class="supply-card-main">${isTransit ? 'транзит · ' : ''}${escapeHtml(shipWh)}</div>` : '<div class="supply-card-empty">склад не указан</div>'}
       </div>`);
     }
 
-    // Карточка 3: даты + плашка с фактом
-    if (s.planned || s.factDate) {
-      let block = '';
-      if (s.planned) {
-        const d = new Date(s.planned);
-        const txt = isNaN(d) ? String(s.planned).slice(0,10)
-          : d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
-        block += `<div class="supply-card-main">${escapeHtml(txt)}</div>
-                  <div class="supply-card-sub">плановая дата приёмки</div>`;
-      }
-      if (s.factDate) {
-        const d = new Date(s.factDate);
-        const txt = isNaN(d) ? String(s.factDate).slice(0,10)
-          : d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
-        block += `${s.planned ? '<div class="supply-card-divider"></div>' : ''}
-                  <div class="supply-card-deadline-left">принято ${escapeHtml(txt)}</div>`;
-      }
+    // Карточка 3 — склад назначения.
+    {
       cards.push(`<div class="supply-card">
-        <div class="supply-card-title">даты приёмки</div>
+        <div class="supply-card-title">склад назначения</div>
+        ${s.warehouseName ? `<div class="supply-card-main">${escapeHtml(s.warehouseName)}</div>` : '<div class="supply-card-empty">склад не указан</div>'}
+      </div>`);
+    }
+
+    // Карточка 4 — дата как у Ozon: «дата и время отгрузки»,
+    // но у WB времени нет, поэтому показываем только дату.
+    {
+      let block = '';
+      const plannedDate = parseOmDate(s.planned);
+      if (plannedDate) {
+        block += `<div class="supply-card-main">${escapeHtml(fmtDateDot(plannedDate))}</div>
+                  <div class="supply-card-sub">по московскому времени</div>`;
+      } else if (s.planned) {
+        block += `<div class="supply-card-main">${escapeHtml(String(s.planned).slice(0, 10))}</div>
+                  <div class="supply-card-sub">по московскому времени</div>`;
+      } else {
+        block += `<div class="supply-card-empty">дата не указана</div>`;
+      }
+
+      if (plannedDate) {
+        const deadline = new Date(plannedDate.getTime());
+        deadline.setDate(deadline.getDate() - 1);
+        deadline.setHours(13, 0, 0, 0);
+        const deadlineText = deadline.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const msLeft = deadline.getTime() - Date.now();
+        let leftTxt = '';
+        let leftClass = 'supply-card-deadline-left';
+        if (msLeft > 0) {
+          const days = Math.floor(msLeft / 86400000);
+          const hours = Math.floor((msLeft % 86400000) / 3600000);
+          leftTxt = days > 0 ? `осталось ${days} дн ${hours} ч` : `осталось ${hours} ч`;
+          if (msLeft < 24 * 3600 * 1000) leftClass += ' urgent';
+        } else {
+          leftTxt = 'просрочено';
+          leftClass += ' urgent';
+        }
+        block += `<div class="supply-card-divider"></div>
+                  <div class="supply-card-row"><span class="label">дедлайн заполнения</span><span>${escapeHtml(deadlineText)}</span></div>
+                  ${leftTxt ? `<div class="${leftClass}">${escapeHtml(leftTxt)}</div>` : ''}`;
+      }
+
+      cards.push(`<div class="supply-card">
+        <div class="supply-card-title">дата и время отгрузки</div>
         ${block}
       </div>`);
     }
 
-    // Карточка 4: количество (товары / принято)
-    if (typeof s.quantity !== 'undefined' || typeof s.boxAmount !== 'undefined') {
-      const lines = [];
-      if (typeof s.quantity !== 'undefined') {
-        lines.push(`<div class="supply-card-main">${escapeHtml(String(s.quantity))} <span style="font-size:13px;color:var(--text-muted);font-weight:400;">шт</span></div>`);
-      }
-      if (typeof s.acceptedQuantity !== 'undefined' && s.acceptedQuantity > 0) {
-        const pct = s.quantity > 0 ? Math.round((s.acceptedQuantity / s.quantity) * 100) : 0;
-        const cls = s.acceptedQuantity >= s.quantity && s.quantity > 0 ? 'supply-card-deadline-left' : 'supply-card-deadline-left urgent';
-        lines.push(`<div class="${cls}">принято ${escapeHtml(String(s.acceptedQuantity))} · ${pct}%</div>`);
-      }
-      if (typeof s.boxAmount !== 'undefined' && s.boxAmount > 0) {
-        lines.push(`<div class="supply-card-row"><span class="label">коробов</span><span>${escapeHtml(String(s.boxAmount))}</span></div>`);
-      }
-      cards.push(`<div class="supply-card">
-        <div class="supply-card-title">количество</div>
-        ${lines.join('')}
-      </div>`);
-    }
-
-    // Доп. данные WB API — показываем только если бэк их отдаёт.
-    // В режиме чтения из листа их может не быть, но при прямом API-фолбеке
-    // доступны платная приёмка, фактический/транзитный склад, выгрузка и т.п.
-    {
-      const extraLines = [];
-      if (s.actualWarehouseName && s.actualWarehouseName !== s.warehouseName) {
-        extraLines.push(`<div class="supply-card-row"><span class="label">факт. склад</span><span>${escapeHtml(s.actualWarehouseName)}</span></div>`);
-      }
-      if (s.transitWarehouseName) {
-        extraLines.push(`<div class="supply-card-row"><span class="label">транзит</span><span>${escapeHtml(s.transitWarehouseName)}</span></div>`);
-      }
-      if (s.unloadingQuantity) {
-        extraLines.push(`<div class="supply-card-row"><span class="label">выгружено</span><span>${escapeHtml(String(s.unloadingQuantity))} шт</span></div>`);
-      }
-      if (s.readyForSaleQuantity) {
-        extraLines.push(`<div class="supply-card-row"><span class="label">готово к продаже</span><span>${escapeHtml(String(s.readyForSaleQuantity))} шт</span></div>`);
-      }
-      if (s.acceptanceCost) {
-        extraLines.push(`<div class="supply-card-row"><span class="label">приёмка</span><span>${escapeHtml(String(s.acceptanceCost))} ₽</span></div>`);
-      }
-      if (s.paidAcceptanceCoefficient) {
-        extraLines.push(`<div class="supply-card-row"><span class="label">коэф.</span><span>${escapeHtml(String(s.paidAcceptanceCoefficient))}</span></div>`);
-      }
-      if (s.supplierAssignName) {
-        extraLines.push(`<div class="supply-card-row"><span class="label">поставщик</span><span>${escapeHtml(s.supplierAssignName)}</span></div>`);
-      }
-      if (s.phone) {
-        extraLines.push(`<div class="supply-card-row"><span class="label">тел.</span><span>${escapeHtml(s.phone)}</span></div>`);
-      }
-      if (extraLines.length) {
-        cards.push(`<div class="supply-card">
-          <div class="supply-card-title">доп. данные WB API</div>
-          ${extraLines.join('')}
-        </div>`);
-      }
-    }
-
     html += `<div class="supply-cards">${cards.join('')}</div>`;
 
-    // Кнопка "редактировать данные в ОМ" + ссылка в кабинет WB сверху таблицы
-    const linkedRow = (function() {
-      const o = (allOrders || []).find(o =>
-        o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
-      );
-      return o;
-    })();
+    // Кнопки — как у Ozon: сразу под карточками и справа.
     const cabinetUrl = data.cabinet_url ||
       `https://seller.wildberries.ru/supplies-management/all-supplies/${encodeURIComponent(id)}/products`;
-    html += `<div class="cabinet-link-row" style="padding-bottom:10px;">
+    html += `<div class="cabinet-link-row" style="padding-top:4px;padding-bottom:10px;">
       ${linkedRow ? `<button class="cabinet-link" data-row="${linkedRow.rowNum}" id="goToOrderBtn" style="font-size:11px;">✎ редактировать данные в ОМ</button>` : ''}
       <a href="${escapeHtml(cabinetUrl)}" target="_blank" class="cabinet-link" style="font-size:11px;">→ открыть в кабинете WB</a>
     </div>`;
@@ -4051,10 +4304,14 @@ function renderSupplyDetails(source, id, number, data) {
   } else if (source === 'wb') {
     // FBW: товары уже сгруппированы по баркоду в API. Просто показываем.
     const totalPlanQty = orders.reduce((sum, g) => sum + (Number(g.quantity) || 0), 0);
+    const totalReadyQty = orders.reduce((sum, g) => sum + (Number(g.readyForSaleQuantity) || 0), 0);
+    const totalUnloadingQty = orders.reduce((sum, g) => sum + (Number(g.unloadingQuantity) || 0), 0);
     const totalAcceptedQty = orders.reduce((sum, g) => sum + (Number(g.acceptedQuantity) || 0), 0);
     html += `<div class="supply-summary-strip">
       <div class="supply-summary-chip"><div class="supply-summary-label">позиций</div><div class="supply-summary-value">${orders.length}</div></div>
       <div class="supply-summary-chip"><div class="supply-summary-label">штук по плану</div><div class="supply-summary-value">${totalPlanQty} <span>шт</span></div></div>
+      ${totalUnloadingQty ? `<div class="supply-summary-chip"><div class="supply-summary-label">выгружено</div><div class="supply-summary-value">${totalUnloadingQty} <span>шт</span></div></div>` : ''}
+      ${totalReadyQty ? `<div class="supply-summary-chip"><div class="supply-summary-label">готово к продаже</div><div class="supply-summary-value">${totalReadyQty} <span>шт</span></div></div>` : ''}
       <div class="supply-summary-chip"><div class="supply-summary-label">принято</div><div class="supply-summary-value">${totalAcceptedQty} <span>шт</span></div></div>
     </div>`;
     html += `<div class="supply-products-table wb">
@@ -4554,7 +4811,7 @@ $('sosCard').addEventListener('click', openSosModal);
 $('dispatchCard').addEventListener('click', openDispatchModal);
 
 // клик по фону модалки = закрыть
-['weekModal', 'sosModal', 'dispatchModal', 'externalModal', 'supplyDetailsModal'].forEach(id => {
+['weekModal', 'sosModal', 'dispatchModal', 'externalModal', 'supplyDetailsModal', 'orderDetailsModal'].forEach(id => {
   $(id).addEventListener('click', (e) => {
     if (e.target.id === id) $(id).style.display = 'none';
   });
@@ -4562,7 +4819,7 @@ $('dispatchCard').addEventListener('click', openDispatchModal);
 // Esc — закрыть любую открытую
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
-  ['weekModal', 'sosModal', 'dispatchModal', 'externalModal', 'supplyDetailsModal'].forEach(id => {
+  ['weekModal', 'sosModal', 'dispatchModal', 'externalModal', 'supplyDetailsModal', 'orderDetailsModal'].forEach(id => {
     if ($(id).style.display === 'flex') $(id).style.display = 'none';
   });
 });
@@ -4582,7 +4839,7 @@ async function loadData() {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR')) {
     $('setupBanner').style.display = 'block';
     setStatus('не настроено', 'error');
-    $('ordersBody').innerHTML = '<tr><td colspan="12"><div class="empty">подключи Apps Script</div></td></tr>';
+    $('ordersBody').innerHTML = '<tr><td colspan="14"><div class="empty">подключи Apps Script</div></td></tr>';
     return;
   }
   setStatus('загружаем', 'loading');
@@ -4660,7 +4917,7 @@ async function loadData() {
     setStatus(isTimeout ? 'офлайн · таймаут' : 'офлайн · нажми чтобы повторить', 'error');
     console.error('[OM] loadData failed:', e);
     $('ordersBody').innerHTML = `
-      <tr><td colspan="12">
+      <tr><td colspan="21">
         <div class="empty" style="text-align:left; padding: 32px 40px; line-height: 1.7;">
           <div style="font-size:16px; color:var(--accent-copper); margin-bottom:12px;">список заказов не загрузился</div>
           <div style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">причина: <code style="color:var(--text-body); background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:2px;">${escapeHtml(reason)}</code></div>
@@ -4838,6 +5095,161 @@ function resetFilters() {
   renderTable();
 }
 
+
+function orderShipmentType(o) {
+  const mp = String(o.mp || '').toLowerCase();
+  const wh = String(o.warehouseFrom || '').toLowerCase();
+  if (wh.includes('транзит') || wh.includes('transit')) return 'транзит';
+  if (wh.includes('кросс') || wh.includes('cross')) return 'кроссдок';
+  if (mp.includes('ozon') || mp.includes('озон')) return 'кроссдок';
+  if (mp === 'wb' || mp.includes('wild')) return 'транзит';
+  return o.warehouseFrom ? 'отгрузка' : '—';
+}
+
+function renderShipmentCell(o) {
+  const type = orderShipmentType(o);
+  const wh = o.warehouseFrom || '—';
+  return `<div class="shipment-kind"><span class="kind">${escapeHtml(type)}</span><span class="wh">${escapeHtml(wh)}</span></div>`;
+}
+
+function boolBadge(val, yesText='да', noText='нет') {
+  return `<span class="om-badge ${val ? 'on' : 'off'}">${val ? yesText : noText}</span>`;
+}
+
+function renderProgressCell(progress) {
+  return `<div>
+    <span class="order-progress-mini">${progress}/4</span>
+    <div class="order-progress-dots">
+      <span class="flag ${progress >= 1 ? 'on' : ''}" title="загружен в ЛК"></span>
+      <span class="flag ${progress >= 2 ? 'on' : ''}" title="№ счёта 1С"></span>
+      <span class="flag ${progress >= 3 ? 'on' : ''}" title="данные машины"></span>
+      <span class="flag ${progress >= 4 ? 'on done' : ''}" title="корректировки внесены"></span>
+    </div>
+  </div>`;
+}
+
+function renderDateDuo(o) {
+  return `<div class="order-date-duo">
+    <span>${escapeHtml(o.datePlan || '—')}</span>
+    <span class="fact">${escapeHtml(o.dateFact || '—')}</span>
+  </div>`;
+}
+
+function renderOrderStatuses(o) {
+  return `<div class="order-status-stack">
+    <div class="order-status-line"><span>отгр.</span>${boolBadge(!!o.shippedToMp)}</div>
+    <div class="order-status-line"><span>правки</span>${boolBadge(!!o.correctionsMade)}</div>
+    <div class="order-status-line"><span>ЛК</span>${boolBadge(!!o.loadedLk)}</div>
+  </div>`;
+}
+
+function renderTransportCell(o) {
+  return `<div class="order-transport">
+    <span class="driver">${escapeHtml(o.driverName || '—')}</span>
+    <span class="car">${escapeHtml(o.carNumber || '—')}</span>
+    <span class="pickup">${boolBadge(!!o.isDispatch, 'вывоз', 'не вывоз')}</span>
+  </div>`;
+}
+
+function formatBoolText(val) {
+  return val ? 'да' : 'нет';
+}
+
+function detailLine(label, value) {
+  const v = (value === true || value === false) ? formatBoolText(value) : (value || '—');
+  return `<div class="order-detail-line"><div class="order-detail-label">${escapeHtml(label)}</div><div class="order-detail-value">${escapeHtml(String(v))}</div></div>`;
+}
+
+function openOrderDetails(o) {
+  const type = orderShipmentType(o);
+  const progress = calcProgress(o);
+  const titleNum = o.supplyNumber || o.num || '—';
+  $('orderDetailsTitle').textContent = `поставка · ${titleNum}`;
+  const body = $('orderDetailsBody');
+  body.innerHTML = `
+    <div class="order-detail-grid">
+      <div class="order-detail-card">
+        <h4>статус и параметры</h4>
+        ${detailLine('№ в OM', o.num)}
+        ${detailLine('МП', o.mp)}
+        ${detailLine('№ поставки', o.supplyNumber)}
+        ${detailLine('№ заказа МП', o.orderNumber)}
+        ${detailLine('ID заказа в ЛК', o.lkOrderId)}
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+          <span class="supply-card-flag">${escapeHtml(type)}</span>
+          ${o.shippedToMp ? '<span class="supply-card-flag">отгружено МП</span>' : ''}
+        </div>
+      </div>
+      <div class="order-detail-card">
+        <h4>маршрут</h4>
+        ${detailLine('склад отгрузки', o.warehouseFrom)}
+        ${detailLine('склад МП', o.warehouseFull)}
+        ${detailLine('тип', type)}
+        ${detailLine('вывоз', o.isDispatch ? 'вывоз' : 'не вывоз')}
+      </div>
+      <div class="order-detail-card">
+        <h4>план / факт</h4>
+        ${detailLine('плановая дата', o.datePlan)}
+        ${detailLine('факт. дата', o.dateFact)}
+        ${detailLine('отгр. Реутов', o.dateShipReutov)}
+        ${detailLine('время факт.', o.timeFact)}
+        ${detailLine('неделя', o.week)}
+      </div>
+      <div class="order-detail-card">
+        <h4>документы и статусы</h4>
+        ${detailLine('юр лицо', o.legalEntity)}
+        ${detailLine('заказ на производство', o.productionOrderNum)}
+        ${detailLine('счёт 1С', o.invoice1c)}
+        ${detailLine('загружен в ЛК', o.loadedLk)}
+        ${detailLine('корректировки внесены', o.correctionsMade)}
+        ${detailLine('отгружено на МП', o.shippedToMp)}
+        ${detailLine('документы переданы', o.docsHandedOver)}
+      </div>
+      <div class="order-detail-card">
+        <h4>объём</h4>
+        ${detailLine('паллеты / короба', formatQty(o))}
+        ${detailLine('паллеты', o.pallets)}
+        ${detailLine('короба', o.boxes)}
+        ${detailLine('SOS', o.sosLevel)}
+        ${detailLine('прогресс', `${progress}/4`)}
+      </div>
+      <div class="order-detail-card">
+        <h4>транспорт</h4>
+        ${detailLine('ФИО водителя', o.driverName)}
+        ${detailLine('номер машины', o.carNumber)}
+        ${detailLine('дата вывоза', o.actualPickupDate)}
+        ${detailLine('№ возврата', o.returnCarNumber)}
+        ${detailLine('цена машины', o.carPrice)}
+      </div>
+      <div class="order-detail-card">
+        <h4>финансы</h4>
+        ${detailLine('транзит', o.transitPrice)}
+        ${detailLine('платная приёмка', o.paidReceptionPrice)}
+      </div>
+      <div class="order-detail-card wide">
+        <h4>комментарии</h4>
+        ${detailLine('комментарий', o.comment)}
+        ${detailLine('претензии', o.claims)}
+      </div>
+    </div>
+    <div class="order-detail-actions">
+      <button type="button" class="order-edit-btn" id="orderDetailEditBtn">редактировать</button>
+    </div>
+  `;
+  $('orderDetailsModal').style.display = 'flex';
+  const btn = document.getElementById('orderDetailEditBtn');
+  if (btn) {
+    btn.onclick = () => {
+      closeOrderDetailsModal();
+      editOrder(o);
+    };
+  }
+}
+
+function closeOrderDetailsModal() {
+  $('orderDetailsModal').style.display = 'none';
+}
+
 function renderTable() {
   const search = $('searchInput').value.trim().toLowerCase();
   const mpFilter = $('filterMp').value;
@@ -4856,7 +5268,7 @@ function renderTable() {
     return true;
   });
   if (!filtered.length) {
-    $('ordersBody').innerHTML = '<tr><td colspan="12"><div class="empty">пусто</div></td></tr>';
+    $('ordersBody').innerHTML = '<tr><td colspan="14"><div class="empty">пусто</div></td></tr>';
     return;
   }
   const html = filtered.slice(0, 100).map(o => {
@@ -4865,29 +5277,31 @@ function renderTable() {
     const progress = calcProgress(o);
     const palletsTxt = formatQty(o);
     return `
-      <tr class="order-row" data-row="${o.rowNum}" title="нажми чтобы редактировать">
+      <tr class="order-row" data-row="${o.rowNum}" title="нажми чтобы открыть карточку поставки">
         <td class="cell-num">${escapeHtml(o.num || '—')}</td>
         <td>${o.mp ? `<span class="cell-mp ${mpCls}">${escapeHtml(o.mp)}</span>` : '—'}</td>
-        <td>${escapeHtml(o.warehouseFull || '—')}</td>
-        <td>${escapeHtml(o.datePlan || '—')}</td>
-        <td>${escapeHtml(o.dateFact || '—')}</td>
+        <td>${renderProgressCell(progress)}</td>
+        <td>${renderShipmentCell(o)}</td>
+        <td class="cell-warehouse">${escapeHtml(o.warehouseFull || '—')}</td>
+        <td class="cell-small">${escapeHtml(o.legalEntity || '—')}</td>
+        <td>${renderDateDuo(o)}</td>
         <td>${renderSupplyCell(o)}</td>
         <td>${escapeHtml(o.orderNumber || '—')}</td>
+        <td>${escapeHtml(o.productionOrderNum || '—')}</td>
         <td>${escapeHtml(palletsTxt)}</td>
-        <td>${escapeHtml(o.invoice1c || '—')}</td>
+        <td>${renderOrderStatuses(o)}</td>
+        <td>${renderTransportCell(o)}</td>
         <td>
-          <span class="flag ${progress >= 1 ? 'on' : ''}" title="загружен в ЛК"></span>
-          <span class="flag ${progress >= 2 ? 'on' : ''}" title="№ счёта 1С"></span>
-          <span class="flag ${progress >= 3 ? 'on' : ''}" title="данные машины"></span>
-          <span class="flag ${progress >= 4 ? 'on done' : ''}" title="корректировки внесены"></span>
+          <div class="order-comment-compact">
+            <span class="sos ${sosVal === 0 ? 'zero' : ''}">${sosVal}</span>
+            <span class="comment">${escapeHtml(o.comment || '')}</span>
+          </div>
         </td>
-        <td><span class="sos ${sosVal === 0 ? 'zero' : ''}">${sosVal}</span></td>
-        <td class="cell-comment">${escapeHtml(o.comment || '')}</td>
       </tr>`;
   }).join('');
   $('ordersBody').innerHTML = html;
 
-  // Клик по строке — открыть в форме на редактирование, НО клик по номеру
+  // Клик по строке — открыть карточку поставки, НО клик по номеру
   // поставки (.supply-linked / .supply-clickable-only) →
   //   • для WB — детали через API
   //   • для Ozon — пробуем API (вдруг это настоящий supply_order_id);
@@ -4906,7 +5320,7 @@ function renderTable() {
       }
       const rowNum = parseInt(tr.dataset.row, 10);
       const order = allOrders.find(o => o.rowNum === rowNum);
-      if (order) editOrder(order);
+      if (order) openOrderDetails(order);
     });
   });
 }
