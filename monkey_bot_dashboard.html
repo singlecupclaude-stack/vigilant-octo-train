@@ -341,6 +341,9 @@ body::before{
         <button class="menu-btn" onclick="goStep('platform')">
           <span class="bi">📦</span><span class="bt">Создать заказ</span><span class="ba">›</span>
         </button>
+        <button class="menu-btn" onclick="prepReverseUpload()">
+          <span class="bi">🔁</span><span class="bt">Заказник → Сборка</span><span class="ba">›</span>
+        </button>
         <button class="menu-btn admin-btn" id="menuGetDb" onclick="adminGetDb()">
           <span class="bi">📊</span><span class="bt">Получить базу данных</span><span class="ba">›</span>
         </button>
@@ -401,6 +404,22 @@ body::before{
           <div class="dz-chosen" id="dzChosen"></div>
         </div>
         <button class="proc-btn" id="procBtn" onclick="processOrder()">ОБРАБОТАТЬ →</button>
+      </div>
+
+      <!-- step-reverse-upload -->
+      <div id="step-reverse-upload" style="display:none">
+        <button class="back-btn" onclick="goStep('menu')">← Назад</button>
+        <div class="step-title">ЗАКАЗНИК → СБОРКА</div>
+        <div class="step-sub">Загрузите любой сформированный заказник: WB, Ozon, Яндекс.Маркет или Сбер. Monkey сам определит колонки и соберёт файл формата 1С.</div>
+        <div class="dz" id="reverseDropZone"
+             ondragover="revDzOver(event,true)" ondragleave="revDzOver(event,false)" ondrop="revDzDrop(event)">
+          <input type="file" accept=".xlsx,.xls" id="reverseFileInput" onchange="reverseFileChosen(this)">
+          <span class="dz-icon">🔁</span>
+          <div class="dz-title">ПЕРЕТАЩИТЕ ЗАКАЗНИК</div>
+          <div class="dz-sub">или нажмите для выбора · .xlsx / .xls</div>
+          <div class="dz-chosen" id="reverseDzChosen"></div>
+        </div>
+        <button class="proc-btn" id="reverseProcBtn" onclick="processReverseOrder()">СДЕЛАТЬ СБОРКУ →</button>
       </div>
 
       <!-- step-result -->
@@ -581,6 +600,8 @@ body::before{
 
 <!-- SheetJS + JSZip -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Для безопасного оформления шапки XLSX. Если CDN не загрузится, файл всё равно создастся без стилей. -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 
@@ -599,6 +620,8 @@ var S = {
   platform: null,
   orderFile: null,
   orderFileName: '',
+  reverseFile: null,
+  reverseFileName: '',
   obshFiles: []       // [{name, data: ArrayBuffer}]
 };
 
@@ -1070,7 +1093,7 @@ function showTab(id,btn){
 //  ORDER FLOW
 // ════════════════════════════════════════════
 function goStep(name){
-  ['menu','platform','ozon-type','upload','result'].forEach(function(s){
+  ['menu','platform','ozon-type','upload','reverse-upload','result'].forEach(function(s){
     var el=document.getElementById('step-'+s);
     if(el) el.style.display='none';
   });
@@ -1137,6 +1160,213 @@ async function processOrder(){
     toast('❌ '+e.message,'err');
     console.error(e);
   }finally{hideSpinner();}
+}
+
+
+// ════════════════════════════════════════════
+//  REVERSE FLOW: ЗАКАЗНИК → СБОРКА 1С
+// ════════════════════════════════════════════
+function prepReverseUpload(){ resetReverseDz(); goStep('reverse-upload'); }
+function resetReverseDz(){
+  S.reverseFile=null; S.reverseFileName='';
+  var ch=document.getElementById('reverseDzChosen'); if(ch){ch.style.display='none'; ch.textContent='';}
+  var btn=document.getElementById('reverseProcBtn'); if(btn) btn.classList.remove('show');
+  var inp=document.getElementById('reverseFileInput'); if(inp) inp.value='';
+}
+function revDzOver(e,on){e.preventDefault();document.getElementById('reverseDropZone').classList.toggle('dragover',on);}
+function revDzDrop(e){
+  e.preventDefault();document.getElementById('reverseDropZone').classList.remove('dragover');
+  if(e.dataTransfer.files[0]) setReverseFile(e.dataTransfer.files[0]);
+}
+function reverseFileChosen(inp){if(inp.files[0])setReverseFile(inp.files[0]);}
+function setReverseFile(f){
+  S.reverseFile=f; S.reverseFileName=f.name.replace(/\.[^.]+$/,'').replace(/^Заказ[_\s-]*/i,'').replace(/_коробы|_палеты/ig,'');
+  var ch=document.getElementById('reverseDzChosen');
+  ch.textContent='📎 '+f.name+' ('+(f.size/1024).toFixed(0)+' KB)';
+  ch.style.display='block';
+  document.getElementById('reverseProcBtn').classList.add('show');
+}
+async function processReverseOrder(){
+  if(!S.reverseFile){toast('Выберите заказник','err');return;}
+  if(!S.bdRows){toast('БД не загружена','err');return;}
+  showSpinner('Конвертируем заказник в сборку…');
+  try{
+    var buf=await S.reverseFile.arrayBuffer();
+    var rows=parseMarketplaceOrderToSborka(buf,S.bdRows);
+    renderReverseResult(rows,S.reverseFileName||'заказник');
+    goStep('result');
+    toast('✅ Сборка создана!','ok');
+  }catch(e){
+    toast('❌ '+e.message,'err');
+    console.error(e);
+  }finally{hideSpinner();}
+}
+
+function normCell(v){return String(v==null?'':v).trim();}
+function normKey(v){return normCell(v).toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ');}
+function numVal(v){var n=parseFloat(String(v==null?'':v).replace(',','.').replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;}
+function cleanQty(v){var n=numVal(v); return Math.round(n*1000)/1000;}
+function getAny(row,names){for(var i=0;i<names.length;i++){if(row[names[i]]!==undefined&&row[names[i]]!=='')return row[names[i]];}return '';}
+function firstExistingKey(row,names){for(var i=0;i<names.length;i++){if(row[names[i]]!==undefined)return names[i];}return null;}
+function bdGet(r,names){for(var i=0;i<names.length;i++){if(r[names[i]]!==undefined&&r[names[i]]!=='')return r[names[i]];}return '';}
+function bdIndexes(bdRows){
+  var byCode={}, byBarcode={};
+  bdRows.forEach(function(r){
+    var code=normCell(bdGet(r,['Код 1С','Код 1С_bd']));
+    var bc=normCell(bdGet(r,['Штрих код Single Cup','Штрих код Single Cup_bd','Штрихкод','Баркод']));
+    if(code) byCode[code]=r;
+    if(bc) byBarcode[bc]=r;
+  });
+  return {byCode:byCode,byBarcode:byBarcode};
+}
+function findHeaderRow(raw){
+  for(var i=0;i<Math.min(raw.length,12);i++){
+    var keys=(raw[i]||[]).map(normKey);
+    var joined='|'+keys.join('|')+'|';
+    if(joined.includes('|артикул|')&&joined.includes('|количество|')) return i;
+    if(joined.includes('|баркод|')&&joined.includes('|количество|')) return i;
+    if(joined.includes('|ваш sku|')&&joined.includes('|количество товаров в поставке|')) return i;
+    if(joined.includes('|артикул товара продавца|')&&joined.includes('|план поставки (шт.)|')) return i;
+    if(joined.includes('|штрихкоды|')&&joined.includes('|количество товаров в поставке|')) return i;
+  }
+  return -1;
+}
+function rowsFromSheet(ws){
+  var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  var hr=findHeaderRow(raw); if(hr<0) return [];
+  var headers=raw[hr].map(function(h){return normCell(h);});
+  var out=[];
+  for(var i=hr+1;i<raw.length;i++){
+    var obj={}, empty=true;
+    headers.forEach(function(h,j){ if(h){ obj[h]=raw[i][j]!==undefined?raw[i][j]:''; if(normCell(obj[h])!=='') empty=false; } });
+    if(!empty) out.push(obj);
+  }
+  return out;
+}
+function detectOrderType(row){
+  if(firstExistingKey(row,['Артикул товара продавца'])&&firstExistingKey(row,['План поставки (шт.)'])) return 'SBER';
+  if(firstExistingKey(row,['Ваш SKU','Штрихкоды'])&&firstExistingKey(row,['Количество товаров в поставке'])) return 'YM';
+  if(firstExistingKey(row,['Баркод'])&&firstExistingKey(row,['Количество'])) return 'WildBerries';
+  if(firstExistingKey(row,['артикул','Артикул'])&&firstExistingKey(row,['количество','Количество'])) return 'Ozon';
+  return '';
+}
+function getKratnostByMarketplace(bd,type){
+  // В БД кратность хранится как «Кратность обычная» и «Кратность ВБ».
+  // Для WB берём отдельную кратность ВБ, для остальных площадок — обычную.
+  var wbKrat=numVal(bdGet(bd,['Кратность ВБ','Кратность WB','Кратность WildBerries']));
+  var commonKrat=numVal(bdGet(bd,['Кратность обычная','Кратность короба','Кратность','Кол-во в коробе','Количество в коробе']));
+  if(type==='WildBerries'&&wbKrat>0) return wbKrat;
+  return commonKrat>0?commonKrat:wbKrat;
+}
+function sborkaRowFromOrder(row,idx){
+  var type=detectOrderType(row);
+  var code='', barcode='', qty=0;
+  if(type==='SBER'){
+    code=normCell(getAny(row,['Артикул товара продавца']));
+    qty=cleanQty(getAny(row,['План поставки (шт.)']));
+  } else if(type==='Ozon'){
+    code=normCell(getAny(row,['артикул','Артикул']));
+    qty=cleanQty(getAny(row,['количество','Количество']));
+  } else if(type==='WildBerries'){
+    barcode=normCell(getAny(row,['Баркод']));
+    qty=cleanQty(getAny(row,['Количество']));
+  } else if(type==='YM'){
+    barcode=normCell(getAny(row,['Штрихкоды','Ваш SKU']));
+    qty=cleanQty(getAny(row,['Количество товаров в поставке']));
+  }
+  var bd=code?idx.byCode[code]:null;
+  if(!bd&&barcode) bd=idx.byBarcode[barcode];
+  if(!bd&&code) bd=idx.byBarcode[code];
+  if(!bd) return null;
+  var bdCode=normCell(bdGet(bd,['Код 1С']));
+  var krat=getKratnostByMarketplace(bd,type);
+  var boxes=krat>0?Math.round((qty/krat)*100)/100:'';
+  return {
+    'Код 1С': bdCode,
+    'Группа товаров': bdGet(bd,['Группа товаров']),
+    'Короткое наименование': bdGet(bd,['Короткое наименование']),
+    'Итого кол-во': qty,
+    'Кратность короба': krat||'',
+    'Кол-во коробов': boxes,
+    'Приоритет': '',
+    'Сборка': '',
+    'Маркетплейс': type
+  };
+}
+function parseMarketplaceOrderToSborka(buf,bdRows){
+  var wb=XLSX.read(buf,{type:'array'});
+  var idx=bdIndexes(bdRows);
+  var rows=[];
+  wb.SheetNames.forEach(function(sn){
+    rowsFromSheet(wb.Sheets[sn]).forEach(function(r){
+      var sr=sborkaRowFromOrder(r,idx);
+      if(sr) rows.push(sr);
+    });
+  });
+  if(!rows.length) throw new Error('Не удалось распознать заказник или найти позиции в БД. Поддерживаются заказники WB, Ozon, Я.Маркет и Сбер.');
+  // Консолидация дублей по Код 1С + площадка
+  var map={}, order=[];
+  rows.forEach(function(r){
+    var k=String(r['Код 1С'])+'__'+String(r['Маркетплейс']);
+    if(!map[k]){map[k]=Object.assign({},r);order.push(k);} else {
+      map[k]['Итого кол-во']=cleanQty(numVal(map[k]['Итого кол-во'])+numVal(r['Итого кол-во']));
+      var krat=numVal(map[k]['Кратность короба']);
+      map[k]['Кол-во коробов']=krat>0?Math.round((numVal(map[k]['Итого кол-во'])/krat)*100)/100:'';
+    }
+  });
+  return order.map(function(k){return map[k];});
+}
+function marketplaceTitleName(type){
+  return {Ozon:'Ozon',WildBerries:'WildBerries',YM:'Яндекс.Маркет',SBER:'Сбер'}[type]||'маркетплейс';
+}
+function safeSheetName(name){
+  return String(name||'Сборочный лист').replace(/[\/\?\*\[\]:]/g,' ').slice(0,31)||'Сборочный лист';
+}
+function sborkaToWb(rows,baseName){
+  // Эталонный 1С-внешний вид: 1 строка — название сборки + итог, 2 строка — шапка, 3+ — данные.
+  // Без технических колонок «Сборка» и «Маркетплейс».
+  var headers=['Код 1С','Группа товаров','Короткое наименование','Итого кол-во','Кратность короба','Кол-во коробов','Приоритет'];
+  var type=rows[0]?rows[0]['Маркетплейс']:'';
+  var totalQty=rows.reduce(function(sum,r){return sum+numVal(r['Итого кол-во']);},0);
+  var title='Сборка заказа '+marketplaceTitleName(type)+' '+(baseName||'');
+  var aoa=[];
+  aoa.push([title,'','','','','',cleanQty(totalQty)]);
+  aoa.push(headers);
+  rows.forEach(function(r){aoa.push(headers.map(function(h){return r[h]!==undefined?r[h]:'';}));});
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[
+    {wch:14},{wch:22},{wch:44},{wch:12},{wch:16},{wch:14},{wch:20}
+  ];
+  ws['!autofilter']={ref:'A2:G'+Math.max(2,aoa.length)};
+  // Чёрная шапка как в эталонной сборке. SheetJS CE просто проигнорирует .s, xlsx-js-style запишет стиль валидно.
+  var headerStyle={
+    font:{bold:true,color:{rgb:'FFFFFFFF'}},
+    fill:{patternType:'solid',fgColor:{rgb:'FF000000'}},
+    alignment:{horizontal:'center',vertical:'center',wrapText:true},
+    border:{
+      top:{style:'thin',color:{rgb:'FF808080'}},bottom:{style:'thin',color:{rgb:'FF808080'}},
+      left:{style:'thin',color:{rgb:'FF808080'}},right:{style:'thin',color:{rgb:'FF808080'}}
+    }
+  };
+  for(var hc=0;hc<headers.length;hc++){
+    var haddr=XLSX.utils.encode_cell({r:1,c:hc});
+    if(ws[haddr]) ws[haddr].s=headerStyle;
+  }
+  // Числовой формат для количества / кратности / коробов
+  for(var r=3;r<=aoa.length;r++){
+    ['D','E','F'].forEach(function(c){var cell=ws[c+r]; if(cell) cell.z='0.00';});
+  }
+  XLSX.utils.book_append_sheet(wb,ws,safeSheetName('Сборочный лист'));
+  return wb;
+}
+function renderReverseResult(rows,baseName){
+  var btns=document.getElementById('dlBtns');
+  var sub=document.getElementById('rcSub');
+  var fn='Сборка_заказа_'+baseName+'.xlsx';
+  var url=URL.createObjectURL(wbToBlob(sborkaToWb(rows,baseName)));
+  btns.innerHTML='<a class="dl-btn" href="'+url+'" download="'+fn+'">⬇ СКАЧАТЬ '+fn+'</a>';
+  sub.textContent='Сборка создана в формате 1С: '+rows.length+' поз. · кратность и короба рассчитаны из БД';
 }
 
 // ════════════════════════════════════════════
