@@ -159,6 +159,7 @@ body::before{
 .badge-wb  {background:var(--wb-d);  color:var(--wb);}
 .badge-ym  {background:var(--ym-d);  color:var(--ym);}
 .badge-sber{background:var(--sber-d);color:var(--sber);}
+.badge-mvideo{background:rgba(245,166,35,.12);color:var(--mk);}
 .badge-unk {background:rgba(240,180,41,.1);color:var(--warn);}
 
 /* ── RESULT ── */
@@ -265,6 +266,22 @@ body::before{
 .res-card-open:hover{background:#0891b2;}
 .res-pwd-toggle{background:var(--s2);border:1px solid var(--border);color:var(--dim);width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .res-pwd-toggle:hover{color:var(--text);border-color:var(--text);}
+
+
+/* ── ОБЩИЕ СБОРКИ: две функции ── */
+.obsh-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:18px;align-items:start;max-width:1240px;}
+.obsh-card{background:rgba(14,18,24,.94);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:0 18px 48px rgba(0,0,0,.28);backdrop-filter:blur(8px);}
+.obsh-card.gold{border-color:rgba(245,166,35,.35);}
+.obsh-card.blue{border-color:rgba(79,156,249,.28);}
+.obsh-card-title{font-family:var(--display);font-size:24px;letter-spacing:2px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.obsh-card-title.gold{color:var(--mk);}
+.obsh-card-title.blue{color:var(--blue);}
+.obsh-card-sub{font-size:12px;color:var(--dim);line-height:1.55;margin-bottom:16px;}
+.obsh-mini{font-family:var(--mono);font-size:10px;color:var(--dim);line-height:1.55;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:14px;}
+.obsh-result{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.obsh-result .dl-btn{font-size:17px;padding:10px 18px;margin:0;}
+.badge-mvideo{background:rgba(245,166,35,.12);color:#f5a623;}
+
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -316,8 +333,10 @@ body::before{
   <div class="topbar">
     <div class="logo">🐒 <span class="mk">MONKEY</span>.BOT</div>
     <div class="tab-row">
-      <button class="tb active" onclick="showTab('order',this)">Создать заказ</button>
-      <button class="tb" onclick="showTab('obsh',this)">Общая сборка</button>
+      <button class="tb active" onclick="showTab('order',this);goStep('menu')">Главная</button>
+      <button class="tb" onclick="showTab('order',this);goStep('platform')">Создать заказ</button>
+      <button class="tb" onclick="showTab('order',this);prepReverseUpload()">Заказник → Сборка</button>
+      <button class="tb" onclick="showTab('obsh',this)">Общие сборки</button>
       <button class="tb" id="dbTabBtn" onclick="showTab('db',this)">База данных</button>
       <button class="tb" onclick="showTab('projects',this)">🗂 Проекты</button>
     </div>
@@ -344,10 +363,13 @@ body::before{
         <button class="menu-btn" onclick="prepReverseUpload()">
           <span class="bi">🔁</span><span class="bt">Заказник → Сборка</span><span class="ba">›</span>
         </button>
+        <button class="menu-btn" onclick="showTab('obsh',document.querySelectorAll('.tb')[3])">
+          <span class="bi">🧩</span><span class="bt">Общие сборки</span><span class="ba">›</span>
+        </button>
         <button class="menu-btn admin-btn" id="menuGetDb" onclick="adminGetDb()">
           <span class="bi">📊</span><span class="bt">Получить базу данных</span><span class="ba">›</span>
         </button>
-        <button class="menu-btn admin-btn" id="menuUpdateDb" onclick="showTab('db',document.querySelectorAll('.tb')[2])">
+        <button class="menu-btn admin-btn" id="menuUpdateDb" onclick="showTab('db',document.querySelectorAll('.tb')[4])">
           <span class="bi">🔄</span><span class="bt">Обновить базу данных</span><span class="ba">›</span>
         </button>
       </div>
@@ -438,20 +460,75 @@ body::before{
 
     <!-- ══ TAB: OBSH ══ -->
     <div class="panel" id="tab-obsh">
-      <div style="max-width:560px">
-        <div class="step-title">ОБЩАЯ СБОРКА</div>
-        <div class="step-sub">Загрузите файлы для нескольких площадок. Имена должны содержать: <strong>Ozon</strong>, <strong>WildBerries</strong> (или <strong>WB</strong>), <strong>YM</strong>, <strong>SBER</strong>.</div>
-        <div class="multi-dz" id="multiDz"
-             ondragover="mdOver(event,true)" ondragleave="mdOver(event,false)" ondrop="mdDrop(event)">
-          <input type="file" accept=".xlsx,.xls" multiple id="multiInput" onchange="mdAdd(this.files)">
-          <span class="dz-icon" style="font-size:36px">📁</span>
-          <div class="dz-title" style="font-size:18px">ДОБАВИТЬ ФАЙЛЫ</div>
-          <div class="dz-sub">Несколько файлов · перетащите или нажмите</div>
+      <div style="max-width:1240px">
+        <div class="step-title">ОБЩИЕ СБОРКИ</div>
+        <div class="step-sub">Здесь две разные функции: старая общая сборка по площадкам и новая сводная таблица по юрлицу.</div>
+
+        <div class="obsh-grid">
+          <!-- Вариант 1: старая общая сборка -->
+          <div class="obsh-card blue">
+            <div class="obsh-card-title blue">📦 Общая сборка по площадкам</div>
+            <div class="obsh-card-sub">Старая логика: загружаем несколько сборок 1С по маркетплейсам, Манки раскладывает их по площадкам и отдаёт архив.</div>
+            <div class="obsh-mini">Имена файлов должны содержать: <b>Ozon</b>, <b>WildBerries</b> / <b>WB</b>, <b>YM</b>, <b>SBER</b>.</div>
+            <div class="multi-dz" id="legacyMultiDz" style="max-width:100%"
+                 ondragover="legacyMdOver(event,true)" ondragleave="legacyMdOver(event,false)" ondrop="legacyMdDrop(event)">
+              <input type="file" accept=".xlsx,.xls" multiple id="legacyMultiInput" onchange="legacyMdAdd(this.files)">
+              <span class="dz-icon" style="font-size:36px">📁</span>
+              <div class="dz-title" style="font-size:18px">ДОБАВИТЬ СБОРКИ</div>
+              <div class="dz-sub">Несколько файлов · архив по площадкам</div>
+            </div>
+            <div class="files-list" id="legacyFilesList" style="max-width:100%"></div>
+
+            <div class="obsh-mini" style="margin-top:14px">
+              <b>Проверка общего заказа</b> · можно подгрузить файл общего заказа: бот добавит его в <b>Лист3</b> формы и сделает проверку на <b>Лист2!H1</b> — там должно быть <b>ИСТИНА</b>.
+            </div>
+            <div class="multi-dz" id="legacyCheckDz" style="max-width:100%;padding:18px 20px"
+                 ondragover="legacyCheckOver(event,true)" ondragleave="legacyCheckOver(event,false)" ondrop="legacyCheckDrop(event)">
+              <input type="file" accept=".xlsx,.xls" id="legacyCheckInput" onchange="legacyCheckChosen(this)">
+              <span class="dz-icon" style="font-size:28px">🔎</span>
+              <div class="dz-title" style="font-size:16px">ФАЙЛ ОБЩЕГО ЗАКАЗА ДЛЯ ПРОВЕРКИ</div>
+              <div class="dz-sub">Необязательно · попадёт в Лист3, проверка будет на Лист2!H1</div>
+              <div class="dz-chosen" id="legacyCheckChosen" style="display:none"></div>
+            </div>
+
+            <button class="proc-btn" id="legacyObshBtn" onclick="processObshByMarketplace()" style="max-width:100%">
+              ✅ СДЕЛАТЬ ОБЩУЮ СБОРКУ ПО ПЛОЩАДКАМ →
+            </button>
+            <div class="obsh-result" id="legacyObshResult"></div>
+          </div>
+
+          <!-- Вариант 2: новая сводная сборка -->
+          <div class="obsh-card gold">
+            <div class="obsh-card-title gold">🧩 Сводная по юрлицу</div>
+            <div class="obsh-card-sub">Новая логика: принимает сборки, заказники и любые Excel-файлы с кодом 1С / штрихкодом / артикулом и количеством. Консолидирует всё в красивую таблицу по выбранному юрлицу.</div>
+            <div class="proj-form-grid" style="margin-bottom:14px">
+              <div class="proj-field" style="min-width:180px">
+                <label class="proj-label">Юрлицо *</label>
+                <select class="proj-input" id="obshLegal" onchange="updateObshFilePreview()">
+                  <option value="ООО">ООО Кофепод</option>
+                  <option value="ИП">ИП Тимашков</option>
+                </select>
+              </div>
+              <div class="proj-field" style="flex:1;min-width:180px">
+                <label class="proj-label">Номер заказа *</label>
+                <input type="text" class="proj-input" id="obshOrderNo" placeholder="Например: 28-26ИП" oninput="updateObshFilePreview()">
+              </div>
+            </div>
+            <div class="obsh-mini">Имя файла: <span id="obshFilePreview" style="color:var(--mk)">Общая сборка 28-26ИП 08.05.2026 ИП.xlsx</span></div>
+            <div class="multi-dz" id="multiDz" style="max-width:100%"
+                 ondragover="mdOver(event,true)" ondragleave="mdOver(event,false)" ondrop="mdDrop(event)">
+              <input type="file" accept=".xlsx,.xls" multiple id="multiInput" onchange="mdAdd(this.files)">
+              <span class="dz-icon" style="font-size:36px">📊</span>
+              <div class="dz-title" style="font-size:18px">ДОБАВИТЬ ФАЙЛЫ</div>
+              <div class="dz-sub">Сборки, заказники или любые Excel-файлы · можно пачкой</div>
+            </div>
+            <div class="files-list" id="filesList" style="max-width:100%"></div>
+            <button class="proc-btn" id="obshBtn" onclick="processObsh()" style="max-width:100%">
+              ✅ СДЕЛАТЬ СВОДНУЮ СБОРКУ →
+            </button>
+            <div class="obsh-result" id="obshResult"></div>
+          </div>
         </div>
-        <div class="files-list" id="filesList"></div>
-        <button class="proc-btn" id="obshBtn" onclick="processObsh()" style="max-width:560px">
-          ✅ СДЕЛАТЬ ОБЩУЮ СБОРКУ →
-        </button>
       </div>
     </div>
 
@@ -623,7 +700,9 @@ var S = {
   reverseFile: null,
   reverseFileName: '',
   reverseFiles: [],
-  obshFiles: []       // [{name, data: ArrayBuffer}]
+  obshFiles: [],      // сводная общая сборка по юрлицу
+  legacyObshFiles: [], // старая общая сборка по площадкам
+  legacyCheckFile: null // файл общего заказа для проверки
 };
 
 // Учётные данные (менять здесь)
@@ -1080,6 +1159,7 @@ function showTab(id,btn){
   document.getElementById('tab-'+id).classList.add('active');
   btn.classList.add('active');
   if(id==='db') renderDbSection();
+  if(id==='obsh') setTimeout(updateObshFilePreview,0);
   if(id==='projects'){
     allData=null;
     (async function(){
@@ -1233,8 +1313,22 @@ async function processReverseOrder(){
 function normCell(v){return String(v==null?'':v).trim();}
 function normKey(v){return normCell(v).toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ');}
 function numVal(v){var n=parseFloat(String(v==null?'':v).replace(',','.').replace(/[^0-9.\-]/g,''));return isNaN(n)?0:n;}
+var wholeNumFmt='# ##0';
 function cleanQty(v){var n=numVal(v); return Math.round(n*1000)/1000;}
-function getAny(row,names){for(var i=0;i<names.length;i++){if(row[names[i]]!==undefined&&row[names[i]]!=='')return row[names[i]];}return '';}
+function getAny(row,names){
+  for(var i=0;i<names.length;i++){
+    if(row[names[i]]!==undefined&&row[names[i]]!=='') return row[names[i]];
+  }
+  // fallback: case-insensitive / normalized header match
+  var keys=Object.keys(row||{});
+  for(var n=0;n<names.length;n++){
+    var want=normKey(names[n]);
+    for(var k=0;k<keys.length;k++){
+      if(normKey(keys[k])===want && row[keys[k]]!==undefined && row[keys[k]]!=='') return row[keys[k]];
+    }
+  }
+  return '';
+}
 function firstExistingKey(row,names){for(var i=0;i<names.length;i++){if(row[names[i]]!==undefined)return names[i];}return null;}
 function bdGet(r,names){for(var i=0;i<names.length;i++){if(r[names[i]]!==undefined&&r[names[i]]!=='')return r[names[i]];}return '';}
 function bdIndexes(bdRows){
@@ -1366,7 +1460,31 @@ function sborkaToWb(rows,baseName){
   ws['!cols']=[
     {wch:14},{wch:22},{wch:44},{wch:12},{wch:16},{wch:14},{wch:20}
   ];
+  // Заголовок сборки: A1:F1 объединены, G1 — общий итог отдельно.
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:5}}];
+  ws['!rows']=[{hpt:24},{hpt:28}];
   ws['!autofilter']={ref:'A2:G'+Math.max(2,aoa.length)};
+
+  var titleStyle={
+    font:{bold:true,sz:15,color:{rgb:'FF000000'}},
+    alignment:{horizontal:'center',vertical:'center',wrapText:true},
+    border:{
+      top:{style:'thin',color:{rgb:'FFD9D9D9'}},bottom:{style:'thin',color:{rgb:'FFD9D9D9'}},
+      left:{style:'thin',color:{rgb:'FFD9D9D9'}},right:{style:'thin',color:{rgb:'FFD9D9D9'}}
+    }
+  };
+  var totalStyle={
+    font:{bold:true,sz:12,color:{rgb:'FF000000'}},
+    alignment:{horizontal:'center',vertical:'center'},
+    numFmt:wholeNumFmt,
+    border:{
+      top:{style:'thin',color:{rgb:'FFD9D9D9'}},bottom:{style:'thin',color:{rgb:'FFD9D9D9'}},
+      left:{style:'thin',color:{rgb:'FFD9D9D9'}},right:{style:'thin',color:{rgb:'FFD9D9D9'}}
+    }
+  };
+  if(ws['A1']) ws['A1'].s=titleStyle;
+  if(ws['G1']){ ws['G1'].s=totalStyle; ws['G1'].z=wholeNumFmt; }
+
   // Чёрная шапка как в эталонной сборке. SheetJS CE просто проигнорирует .s, xlsx-js-style запишет стиль валидно.
   var headerStyle={
     font:{bold:true,color:{rgb:'FFFFFFFF'}},
@@ -1383,7 +1501,7 @@ function sborkaToWb(rows,baseName){
   }
   // Числовой формат для количества / кратности / коробов
   for(var r=3;r<=aoa.length;r++){
-    ['D','E','F'].forEach(function(c){var cell=ws[c+r]; if(cell) cell.z='0.00';});
+    ['D','E','F'].forEach(function(c){var cell=ws[c+r]; if(cell) cell.z=wholeNumFmt;});
   }
   XLSX.utils.book_append_sheet(wb,ws,safeSheetName('Сборочный лист'));
   return wb;
@@ -1729,65 +1847,279 @@ function downloadZip(btn,baseName){
 }
 
 // ════════════════════════════════════════════
-//  ОБЩАЯ СБОРКА
+//  ОБЩАЯ СБОРКА ПО ПЛОЩАДКАМ — СТАРАЯ ЛОГИКА
 // ════════════════════════════════════════════
-var MP_KW={Ozon:'badge-ozon',WildBerries:'badge-wb',WB:'badge-wb',YM:'badge-ym',SBER:'badge-sber',Sber:'badge-sber'};
-var BADGE_LBL={'badge-ozon':'OZON','badge-wb':'WB','badge-ym':'YM','badge-sber':'SBER'};
-function detectMp(name){ for(var k in MP_KW){ if(name.includes(k)) return MP_KW[k]; } return null; }
-
-function mdOver(e,on){e.preventDefault();document.getElementById('multiDz').classList.toggle('dragover',on);}
-function mdDrop(e){e.preventDefault();document.getElementById('multiDz').classList.remove('dragover');mdAddFiles(e.dataTransfer.files);}
-function mdAdd(files){mdAddFiles(files); document.getElementById('multiInput').value='';}
-
-function mdAddFiles(files){
-  Array.from(files).forEach(function(f){
-    if(!S.obshFiles.find(function(x){return x.name===f.name;})){
+var LEGACY_BADGE_LBL={'badge-ozon':'OZON','badge-wb':'WB','badge-ym':'YM','badge-sber':'SBER','badge-mvideo':'МВИДЕО'};
+function normMpName(name){
+  return String(name||'')
+    .toLowerCase()
+    .replace(/ё/g,'е')
+    .replace(/[\s_\-–—.]+/g,'')
+    .trim();
+}
+function legacyPlatformFromName(name){
+  var s=normMpName(name);
+  if(s.includes('ozon')||s.includes('озон')) return 'Ozon';
+  if(s.includes('wildberries')||s.includes('вайлдбериз')||s.includes('вайлдберрис')||s.includes('wb')||s.includes('вб')) return 'WildBerries';
+  if(s.includes('yandex')||s.includes('яндексмаркет')||s.includes('яндекс')||s.includes('ym')||s.includes('ямаркет')||s.includes('ям')) return 'YM';
+  if(s.includes('sber')||s.includes('сбермегамаркет')||s.includes('сбермаркет')||s.includes('сбер')) return 'SBER';
+  if(s.includes('mvideo')||s.includes('мвидео')) return 'M-video';
+  return '';
+}
+function legacyDetectMp(name){
+  var mp=legacyPlatformFromName(name);
+  return {'Ozon':'badge-ozon','WildBerries':'badge-wb','YM':'badge-ym','SBER':'badge-sber','M-video':'badge-mvideo'}[mp]||null;
+}
+function legacyMdOver(e,on){e.preventDefault();document.getElementById('legacyMultiDz').classList.toggle('dragover',on);}
+function legacyMdDrop(e){e.preventDefault();document.getElementById('legacyMultiDz').classList.remove('dragover');legacyMdAddFiles(e.dataTransfer.files);}
+function legacyMdAdd(files){legacyMdAddFiles(files); document.getElementById('legacyMultiInput').value='';}
+function legacyMdAddFiles(files){
+  Array.from(files||[]).forEach(function(f){
+    if(!/\.xlsx?$/i.test(f.name)) return;
+    if(!S.legacyObshFiles.find(function(x){return x.name===f.name&&x.size===f.size;})){
       var reader=new FileReader();
-      reader.onload=function(e){ S.obshFiles.push({name:f.name,buf:e.target.result}); renderFilesList(); };
+      reader.onload=function(e){ S.legacyObshFiles.push({name:f.name,size:f.size,buf:e.target.result}); legacyRenderFilesList(); };
       reader.readAsArrayBuffer(f);
     }
   });
 }
-function mdRemove(name){ S.obshFiles=S.obshFiles.filter(function(x){return x.name!==name;}); renderFilesList(); }
-
-function renderFilesList(){
-  var el=document.getElementById('filesList');
-  var btn=document.getElementById('obshBtn');
-  if(!S.obshFiles.length){el.innerHTML='';btn.classList.remove('show');return;}
+function legacyMdRemove(name){ S.legacyObshFiles=S.legacyObshFiles.filter(function(x){return x.name!==name;}); legacyRenderFilesList(); }
+function legacyRenderFilesList(){
+  var el=document.getElementById('legacyFilesList');
+  var btn=document.getElementById('legacyObshBtn');
+  if(!el||!btn) return;
+  if(!S.legacyObshFiles.length){el.innerHTML='';btn.classList.remove('show');return;}
   btn.classList.add('show');
-  el.innerHTML=S.obshFiles.map(function(f){
-    var mp=detectMp(f.name);
-    var tag=mp?'<span class="fc-mp '+mp+'">'+BADGE_LBL[mp]+'</span>':'<span class="fc-mp badge-unk">⚠ ?</span>';
-    return '<div class="fc"><span class="fc-name">📎 '+f.name+'</span>'+tag
-      +'<button class="fc-rm" onclick="mdRemove(\''+f.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" >×</button></div>';
+  el.innerHTML=S.legacyObshFiles.map(function(f){
+    var mp=legacyDetectMp(f.name);
+    var tag=mp?'<span class="fc-mp '+mp+'">'+LEGACY_BADGE_LBL[mp]+'</span>':'<span class="fc-mp badge-unk">⚠ ?</span>';
+    return '<div class="fc"><span class="fc-name">📎 '+projEscape(f.name)+'</span>'+tag
+      +'<button class="fc-rm" onclick="legacyMdRemove(\''+f.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" >×</button></div>';
   }).join('');
 }
+function legacyCheckOver(e,on){e.preventDefault();var dz=document.getElementById('legacyCheckDz'); if(dz) dz.classList.toggle('dragover',on);}
+function legacyCheckDrop(e){e.preventDefault();var dz=document.getElementById('legacyCheckDz'); if(dz) dz.classList.remove('dragover'); if(e.dataTransfer.files[0]) legacySetCheckFile(e.dataTransfer.files[0]);}
+function legacyCheckChosen(inp){ if(inp.files&&inp.files[0]) legacySetCheckFile(inp.files[0]); }
+function legacySetCheckFile(f){
+  if(!/\.xlsx?$/i.test(f.name)){toast('Файл проверки должен быть Excel','err');return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    S.legacyCheckFile={name:f.name,size:f.size,buf:e.target.result};
+    var ch=document.getElementById('legacyCheckChosen');
+    if(ch){ch.textContent='🔎 '+f.name+' ('+(f.size/1024).toFixed(0)+' KB)';ch.style.display='block';}
+  };
+  reader.readAsArrayBuffer(f);
+}
+function legacyCheckBoolValue(v){
+  if(v===true) return true;
+  if(typeof v==='number') return v===1;
+  var s=String(v==null?'':v).trim().toLowerCase();
+  return s==='true'||s==='истина'||s==='да'||s==='1';
+}
+function legacyValidateCommonOrderFile(){
+  if(!S.legacyCheckFile) return {status:'skip',message:'Файл общего заказа для проверки не загружен.'};
+  try{
+    var wb=XLSX.read(S.legacyCheckFile.buf,{type:'array',cellFormula:true,cellNF:true,cellStyles:false});
+    var sheetName=wb.SheetNames.find(function(n){return String(n).toLowerCase().replace(/\s+/g,'')==='лист2';}) || wb.SheetNames[1];
+    if(!sheetName) return {status:'err',message:'В файле проверки нет Лист2.'};
+    var ws=wb.Sheets[sheetName];
+    var cell=ws&&ws['H1'];
+    var val=cell ? (cell.v!==undefined?cell.v:cell.w) : '';
+    var ok=legacyCheckBoolValue(val);
+    return {status:ok?'ok':'err',message:ok?'Проверка общего заказа пройдена: Лист2!H1 = ИСТИНА.':'Проверка НЕ пройдена: Лист2!H1 = '+(val===''?'пусто':String(val))+'; должно быть ИСТИНА.'};
+  }catch(e){
+    return {status:'err',message:'Не удалось прочитать файл проверки: '+e.message};
+  }
+}
+function legacyCapsFromName(name){
+  var s=String(name||'');
+  var m=s.match(/(\d+)\s*капсул/i);
+  if(m) return parseFloat(m[1])||0;
+  m=s.match(/\b(?:DG|HB|SCC)\s*(\d+)\b/i);
+  if(m) return parseFloat(m[1])||0;
+  m=s.match(/\((\d+)\)/);
+  if(m) return parseFloat(m[1])||0;
+  return 0;
+}
+function legacyPlatformKey(mp){
+  var raw=String(mp||'');
+  var s=normMpName(raw);
+  if(s.includes('ozon')||s.includes('озон')) return 'Ozon';
+  if(s.includes('wildberries')||s.includes('вайлдбериз')||s.includes('вайлдберрис')||s.includes('wb')||s.includes('вб')) return 'WB';
+  if(s.includes('yandex')||s.includes('яндексмаркет')||s.includes('яндекс')||s.includes('ym')||s.includes('ямаркет')||s.includes('ям')) return 'YM';
+  if(s.includes('sber')||s.includes('сбермегамаркет')||s.includes('сбермаркет')||s.includes('сбер')) return 'SBER';
+  if(s.includes('mvideo')||s.includes('мвидео')) return 'М-видео';
+  return '';
+}
+function legacyFullFormRows(allRows){
+  var rows=(allRows||[]).map(function(r){
+    return {
+      'Сборка': normCell(r['Сборка']),
+      'Код 1С': normCell(r['Код 1С']),
+      'Группа товаров': normCell(r['Группа товаров']),
+      'Короткое наименование': normCell(r['Короткое наименование']),
+      'Итого кол-во': cleanQty(numVal(r['Итого кол-во'])),
+      'Приоритет': r['Приоритет_файл']!==undefined && r['Приоритет_файл']!=='' ? r['Приоритет_файл'] : (r['Приоритет']||'')
+    };
+  }).filter(function(r){return r['Код 1С'];});
+  return legacySortByPriority(rows);
+}
+function legacyFormRowsToAoa(rows){
+  var headers=['Сборка','Код 1С','Группа товаров','Короткое наименование','Итого кол-во','Приоритет'];
+  return [headers].concat((rows||[]).map(function(r){return headers.map(function(h){return r[h]!==undefined?r[h]:'';});}));
+}
+function legacySimpleFullWb(formRows){
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(legacyFormRowsToAoa(formRows));
+  ws['!cols']=[{wch:46},{wch:16},{wch:22},{wch:48},{wch:14},{wch:12}];
+  ws['!autofilter']={ref:'A1:F'+Math.max(1,(formRows||[]).length+1)};
+  XLSX.utils.book_append_sheet(wb,ws,'Лист1');
+  return wb;
+}
+function legacyGetCheckAoa(){
+  if(!S.legacyCheckFile) return null;
+  try{
+    var wb=XLSX.read(S.legacyCheckFile.buf,{type:'array'});
+    var sheetName=wb.SheetNames.find(function(n){return String(n).toLowerCase().replace(/\s+/g,'')==='лист3';}) || wb.SheetNames[0];
+    if(!sheetName) return null;
+    return XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{header:1,defval:''});
+  }catch(e){
+    console.warn('legacyGetCheckAoa',e);
+    return null;
+  }
+}
+function legacyFindHeaderRow(aoa){
+  for(var r=0;r<Math.min((aoa||[]).length,30);r++){
+    var row=aoa[r]||[];
+    var joined=row.map(function(x){return normKey(x);}).join('|');
+    if(joined.includes('код 1с')||joined.includes('код1с')) return r;
+  }
+  return 0;
+}
+function legacyHeaderIndex(headers, aliases, fallback){
+  var normAliases=aliases.map(normKey);
+  for(var i=0;i<(headers||[]).length;i++){
+    var h=normKey(headers[i]);
+    if(normAliases.some(function(a){return h===a || (a.length>2 && h.includes(a));})) return i;
+  }
+  return fallback;
+}
+function legacyMapQtyFromAoa(aoa){
+  var out={};
+  if(!aoa||!aoa.length) return out;
+  var hr=legacyFindHeaderRow(aoa);
+  var headers=aoa[hr]||[];
+  var codeIdx=legacyHeaderIndex(headers,['Код 1С','Код1С','Артикул'],0);
+  var qtyIdx=legacyHeaderIndex(headers,['Итого кол-во','Итого кол во','Итого количество','Количество','Кол-во','Кол во'],3);
+  for(var r=hr+1;r<aoa.length;r++){
+    var row=aoa[r]||[];
+    var code=normCell(row[codeIdx]);
+    if(!code||code==='nan') continue;
+    var q=numVal(row[qtyIdx]);
+    if(!q) continue;
+    out[code]=(out[code]||0)+q;
+  }
+  return out;
+}
+function legacyMapQtyFromFormRows(formRows){
+  var out={};
+  (formRows||[]).forEach(function(r){
+    var code=normCell(r['Код 1С']); if(!code) return;
+    out[code]=(out[code]||0)+numVal(r['Итого кол-во']);
+  });
+  return out;
+}
+function legacyBuildCheckRows(formRows, checkAoa){
+  var formMap=legacyMapQtyFromFormRows(formRows);
+  var checkMap=legacyMapQtyFromAoa(checkAoa);
+  var codes={}; Object.keys(formMap).forEach(function(k){codes[k]=1;}); Object.keys(checkMap).forEach(function(k){codes[k]=1;});
+  var list=Object.keys(codes).sort();
+  var ok=true;
+  var rows=[['Код 1С','В сборках','В общем заказе','Разница','Статус','Комментарий','','ИТОГ']];
+  list.forEach(function(code){
+    var a=+(formMap[code]||0), b=+(checkMap[code]||0);
+    var diff=+(a-b).toFixed(6);
+    var rowOk=Math.abs(diff)<0.000001;
+    if(!rowOk) ok=false;
+    rows.push([code,cleanQty(a),cleanQty(b),cleanQty(diff),rowOk?'OK':'ОШИБКА',rowOk?'':'Количество не совпадает','','']);
+  });
+  if(!checkAoa){
+    ok=false;
+    rows=[['Код 1С','В сборках','В общем заказе','Разница','Статус','Комментарий','','ИТОГ'],['','','','','НЕТ ФАЙЛА','Файл общего заказа не загружен','','']];
+  }
+  rows[0][7]=ok;
+  return {ok:ok, rows:rows};
+}
+function legacyCommonOrderFormToWb(formRows){
+  var wb=XLSX.utils.book_new();
+  var ws1=XLSX.utils.aoa_to_sheet(legacyFormRowsToAoa(formRows));
+  ws1['!cols']=[{wch:46},{wch:16},{wch:22},{wch:48},{wch:14},{wch:12}];
+  ws1['!autofilter']={ref:'A1:F'+Math.max(1,(formRows||[]).length+1)};
+  XLSX.utils.book_append_sheet(wb,ws1,'Лист1');
 
-// Определяем Приоритет из имени файла: "18. Сборка..." → 18, иначе ''
-function extractPriority(filename){
-  var m=filename.match(/^(\d+)\./);
-  return m?parseInt(m[1]):'';
+  var checkAoa=legacyGetCheckAoa();
+  var check=legacyBuildCheckRows(formRows,checkAoa);
+  var ws2=XLSX.utils.aoa_to_sheet(check.rows);
+  ws2['!cols']=[{wch:16},{wch:14},{wch:16},{wch:12},{wch:12},{wch:32},{wch:3},{wch:12}];
+  ws2['!autofilter']={ref:'A1:H'+Math.max(1,check.rows.length)};
+  XLSX.utils.book_append_sheet(wb,ws2,'Лист2');
+
+  if(checkAoa){
+    var ws3=XLSX.utils.aoa_to_sheet(checkAoa);
+    ws3['!cols']=[{wch:16},{wch:22},{wch:42},{wch:14},{wch:16},{wch:14},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:12},{wch:8},{wch:16},{wch:16},{wch:16},{wch:16},{wch:12},{wch:12},{wch:12},{wch:12},{wch:16},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,ws3,'Лист3');
+  }
+  wb.__legacyCheckOk=check.ok;
+  return wb;
+}
+function legacyCheckResultFromGeneratedWb(formWb){
+  if(!S.legacyCheckFile) return {status:'skip',message:'Файл общего заказа для проверки не загружен.'};
+  var ok=!!(formWb && formWb.__legacyCheckOk);
+  return {status:ok?'ok':'err',message:ok?'Проверка пройдена: в full_форма_общего_заказа.xlsx на Лист2!H1 = ИСТИНА.':'Проверка НЕ пройдена: в full_форма_общего_заказа.xlsx на Лист2!H1 = ЛОЖЬ. Откройте Лист2 и посмотрите расхождения.'};
 }
 
-async function processObsh(){
-  if(!S.obshFiles.length){toast('Добавьте файлы','err');return;}
-  showSpinner('Делаем общую сборку…');
+
+function legacyExtractPriority(filename){
+  var m=String(filename||'').match(/^(\d+)\./);
+  return m?parseInt(m[1]):'';
+}
+function priorityNumber(v){
+  var n=parseFloat(String(v==null?'':v).replace(',','.'));
+  return isNaN(n)?999999:n;
+}
+function legacySortByPriority(rows){
+  return (rows||[]).sort(function(a,b){
+    var pa=priorityNumber(a['Приоритет_файл']!==undefined?a['Приоритет_файл']:a['Приоритет']);
+    var pb=priorityNumber(b['Приоритет_файл']!==undefined?b['Приоритет_файл']:b['Приоритет']);
+    if(pa!==pb) return pa-pb;
+    return String(a['Сборка']||'').localeCompare(String(b['Сборка']||''),'ru',{numeric:true}) ||
+           String(a['Короткое наименование']||'').localeCompare(String(b['Короткое наименование']||''),'ru',{numeric:true});
+  });
+}
+function renderLegacyObshResult(blob,fileName,checkResult){
+  var box=document.getElementById('legacyObshResult');
+  if(!box) return;
+  var url=URL.createObjectURL(blob);
+  var checkHtml='';
+  if(checkResult){
+    var cls=checkResult.status==='ok'?'ok':(checkResult.status==='err'?'err':'inf');
+    checkHtml='<div class="obsh-mini" style="margin-top:10px;color:var(--'+(cls==='ok'?'ok':cls==='err'?'crit':'dim')+')">'+projEscape(checkResult.message)+'</div>';
+  }
+  box.innerHTML='<a class="dl-btn zip" href="'+url+'" download="'+projEscape(fileName)+'">📦 СКАЧАТЬ '+projEscape(fileName)+'</a>'
+    +'<div class="obsh-mini" style="margin-top:10px">В архив добавлены <b>full.xlsx</b> с колонками Сборка / Код 1С / Группа / Наименование / Кол-во / Приоритет и <b>full_форма_общего_заказа.xlsx</b> с Лист1, Лист2-проверкой и Лист3-файлом общего заказа.</div>'+checkHtml;
+}
+async function processObshByMarketplace(){
+  if(!S.legacyObshFiles.length){toast('Добавьте файлы','err');return;}
+  showSpinner('Делаем общую сборку по площадкам…');
   try{
-    var mpGroups={Ozon:[],WildBerries:[],YM:[],SBER:[]};
-    var mpKw={Ozon:['Ozon'],WildBerries:['WildBerries','WB'],YM:['YM'],SBER:['SBER','Sber']};
-    S.obshFiles.forEach(function(f){
-      for(var mp in mpKw){
-        if(mpKw[mp].some(function(k){return f.name.includes(k);})){
-          mpGroups[mp].push(f); return;
-        }
-      }
+    var mpGroups={Ozon:[],WildBerries:[],YM:[],SBER:[], 'M-video':[]};
+    S.legacyObshFiles.forEach(function(f){
+      var mp=legacyPlatformFromName(f.name);
+      if(mp&&mpGroups[mp]) mpGroups[mp].push(f);
     });
 
-    // Фиксированный порядок колонок в итоговом файле
     var COL_ORDER=['Код 1С','Группа товаров','Короткое наименование','Итого кол-во',
                    'Кратность короба','Кол-во коробов','Приоритет','Сборка','Маркетплейс','Приоритет_файл'];
-    var PRIORITY_ALIAS={};  // нет алиасов — все ключи прямые
-
     function reorderRow(row){
       var out={};
       COL_ORDER.forEach(function(c){ out[c]=row[c]!==undefined?row[c]:''; });
@@ -1802,13 +2134,11 @@ async function processObsh(){
       if(!grp.length) continue;
       var combined=[];
       grp.forEach(function(f){
-        var priority=extractPriority(f.name);
+        var priority=legacyExtractPriority(f.name);
         var wb=XLSX.read(f.buf,{type:'array'});
         var ws=wb.Sheets[wb.SheetNames[0]];
-        // Читаем: строка 0 мусор (1С), строка 1 — шапка, строка 2+ данные
         var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
         if(raw.length<2) return;
-        // Определяем шапку: если raw[1] непустая — это шапка (формат 1С)
         var headers, startRow;
         if(raw.length>=3 && raw[1] && raw[1].some(function(h){return h!=='';})){
           headers=raw[1]; startRow=2;
@@ -1818,11 +2148,9 @@ async function processObsh(){
         for(var i=startRow;i<raw.length;i++){
           var rawRow={};
           headers.forEach(function(h,j){ if(h!=='') rawRow[String(h)]=raw[i][j]!==undefined?raw[i][j]:''; });
-          // Фильтр пустых строк
           var kod=String(rawRow['Код 1С']||'').trim();
           if(!kod||kod==='nan') return;
-          // Приоритет — из колонки внутри файла (уже в rawRow если есть)
-          rawRow['Приоритет_файл']=priority;  // число из имени файла: "18. ..." → 18
+          rawRow['Приоритет_файл']=priority;
           rawRow['Сборка']=f.name;
           rawRow['Маркетплейс']=mp;
           combined.push(rawRow);
@@ -1830,7 +2158,6 @@ async function processObsh(){
       });
       if(!combined.length) continue;
 
-      // Консолидация дублей по Код 1С внутри площадки
       var colsToSum=['Итого кол-во','Кол-во коробов'];
       var consMap={};
       var consOrder=[];
@@ -1847,11 +2174,10 @@ async function processObsh(){
           });
         }
       });
-      var consolidatedRows=consOrder.map(function(k){return reorderRow(consMap[k]);});
+      var consolidatedRows=legacySortByPriority(consOrder.map(function(k){return reorderRow(consMap[k]);}));
 
       var wbOut=XLSX.utils.book_new();
       var wsOut=XLSX.utils.json_to_sheet(consolidatedRows,{header:COL_ORDER});
-      // Переименовываем Приоритет_файл → Приоритет в заголовке Excel
       var range=XLSX.utils.decode_range(wsOut['!ref']);
       for(var ci=range.s.c;ci<=range.e.c;ci++){
         var addr=XLSX.utils.encode_cell({r:0,c:ci});
@@ -1865,26 +2191,470 @@ async function processObsh(){
 
     if(!allRows.length) throw new Error('Ни один файл не определён по площадке. Проверьте имена файлов.');
 
-    var fullWb=XLSX.utils.book_new();
-    var fullWs=XLSX.utils.json_to_sheet(allRows,{header:COL_ORDER});
-    var frange=XLSX.utils.decode_range(fullWs['!ref']);
-    for(var ci=frange.s.c;ci<=frange.e.c;ci++){
-      var faddr=XLSX.utils.encode_cell({r:0,c:ci});
-      if(fullWs[faddr]&&fullWs[faddr].v==='Приоритет_файл') fullWs[faddr].v='Приоритет';
-    }
-    XLSX.utils.book_append_sheet(fullWb,fullWs,'Все площадки');
+    var formRows=legacyFullFormRows(allRows);
+    var fullWb=legacySimpleFullWb(formRows);
     zip.file('full.xlsx',XLSX.write(fullWb,{type:'array',bookType:'xlsx'}));
 
+    var formWb=legacyCommonOrderFormToWb(formRows);
+    zip.file('full_форма_общего_заказа.xlsx',XLSX.write(formWb,{type:'array',bookType:'xlsx'}));
+
+    var checkResult=legacyCheckResultFromGeneratedWb(formWb);
+
     var content=await zip.generateAsync({type:'blob'});
-    var url=URL.createObjectURL(content);
-    var a=document.createElement('a'); a.href=url; a.download='общая_сборка.zip';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    S.obshFiles=[]; renderFilesList();
-    toast('✅ Общая сборка готова! Скачивается архив.','ok');
+    renderLegacyObshResult(content,'общая_сборка_по_площадкам.zip',checkResult);
+    toast('✅ Общая сборка по площадкам готова! Ссылка ниже. '+(checkResult.status==='ok'?'Проверка пройдена.':(checkResult.status==='err'?'Проверка не пройдена.':'')),'ok');
   }catch(e){
     toast('❌ '+e.message,'err');
     console.error(e);
   }finally{hideSpinner();}
+}
+
+// ════════════════════════════════════════════
+//  ОБЩАЯ СБОРКА — КОНСОЛИДАЦИЯ ПО ЮРЛИЦУ
+// ════════════════════════════════════════════
+var MP_KW={};
+var BADGE_LBL={'badge-ozon':'OZON','badge-wb':'WB','badge-ym':'YM','badge-sber':'SBER','badge-mvideo':'МВИДЕО','badge-unk':'?'};
+function detectMp(name){
+  var mp=legacyPlatformFromName(name);
+  return {'Ozon':'badge-ozon','WildBerries':'badge-wb','YM':'badge-ym','SBER':'badge-sber','M-video':'badge-mvideo'}[mp]||null;
+}
+function badgeToMp(b){return {'badge-ozon':'Ozon','badge-wb':'WB','badge-ym':'YM','badge-sber':'SBER','badge-mvideo':'М-видео'}[b]||'';}
+function legalFullName(v){return v==='ИП'?'ИП Тимашков':'ООО Кофепод';}
+function todayRu(){var d=new Date();return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();}
+function safeFilePart(s){return String(s||'').replace(/[\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim();}
+function updateObshFilePreview(){
+  var el=document.getElementById('obshFilePreview'); if(!el) return;
+  var legal=(document.getElementById('obshLegal')&&document.getElementById('obshLegal').value)||'ООО';
+  var order=safeFilePart((document.getElementById('obshOrderNo')&&document.getElementById('obshOrderNo').value)||'28-26ИП')||'28-26ИП';
+  el.textContent='Общая сборка '+order+' '+todayRu()+' '+legal+'.xlsx';
+}
+
+function mdOver(e,on){e.preventDefault();document.getElementById('multiDz').classList.toggle('dragover',on);}
+function mdDrop(e){e.preventDefault();document.getElementById('multiDz').classList.remove('dragover');mdAddFiles(e.dataTransfer.files);}
+function mdAdd(files){mdAddFiles(files); document.getElementById('multiInput').value='';}
+function mdAddFiles(files){
+  Array.from(files||[]).forEach(function(f){
+    if(!/\.xlsx?$/i.test(f.name)) return;
+    if(!S.obshFiles.find(function(x){return x.name===f.name&&x.size===f.size;})){
+      var reader=new FileReader();
+      reader.onload=function(e){ S.obshFiles.push({name:f.name,size:f.size,buf:e.target.result}); renderFilesList(); };
+      reader.readAsArrayBuffer(f);
+    }
+  });
+}
+function mdRemove(name){ S.obshFiles=S.obshFiles.filter(function(x){return x.name!==name;}); renderFilesList(); }
+function renderFilesList(){
+  var el=document.getElementById('filesList');
+  var btn=document.getElementById('obshBtn');
+  if(!S.obshFiles.length){el.innerHTML='';btn.classList.remove('show');return;}
+  btn.classList.add('show');
+  el.innerHTML=S.obshFiles.map(function(f){
+    var mp=detectMp(f.name)||'badge-unk';
+    var tag='<span class="fc-mp '+mp+'">'+BADGE_LBL[mp]+'</span>';
+    return '<div class="fc"><span class="fc-name">📎 '+projEscape(f.name)+'</span>'+tag
+      +'<button class="fc-rm" onclick="mdRemove(\''+f.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')" >×</button></div>';
+  }).join('');
+}
+
+function buildLegalIndexes(bdRows,legal){
+  var rowsByCode={}, anyByCode={}, rowsByBarcode={}, anyByBarcode={}, rowsByName={}, anyByName={};
+  function cabinetOf(r){return normCell(bdGet(r,['Кабинет','Юр лицо','Юрлицо'])).toUpperCase();}
+  function isLegalRow(r){
+    var cab=cabinetOf(r);
+    if(legal==='ИП') return cab==='ИП' || cab.includes('ТИМАШКОВ') || cab.includes('ИП ');
+    return cab==='ООО' || cab.includes('КОФЕПОД') || cab.includes('ООО');
+  }
+  function add(map,k,r){if(k&&!map[k]) map[k]=r;}
+  bdRows.forEach(function(r){
+    var code=normCell(bdGet(r,['Код 1С','Код 1С_bd']));
+    var barcode=normCell(bdGet(r,['Штрих код Single Cup','Штрих код Single Cup_bd','Штрихкод','Баркод']));
+    var name=normKey(bdGet(r,['Короткое наименование','Наименование товара']));
+    add(anyByCode,code,r); add(anyByBarcode,barcode,r); add(anyByName,name,r);
+    if(isLegalRow(r)){ add(rowsByCode,code,r); add(rowsByBarcode,barcode,r); add(rowsByName,name,r); }
+  });
+  return {byCode:rowsByCode, anyByCode:anyByCode, byBarcode:rowsByBarcode, anyByBarcode:anyByBarcode, byName:rowsByName, anyByName:anyByName, legal:legal};
+}
+function resolveBdForLegal(id,barcode,name,idx){
+  id=normCell(id); barcode=normCell(barcode); name=normKey(name);
+  // 1) Сначала строго выбранное юрлицо.
+  if(id&&idx.byCode[id]) return idx.byCode[id];
+  if(barcode&&idx.byBarcode[barcode]) return idx.byBarcode[barcode];
+  if(name&&idx.byName[name]) return idx.byName[name];
+
+  // 2) Если загрузили код другого юрлица — ищем его в общей БД и переводим
+  //    в выбранное юрлицо через штрихкод или точное короткое наименование.
+  var src=(id&&idx.anyByCode[id]) || (barcode&&idx.anyByBarcode[barcode]) || (name&&idx.anyByName[name]);
+  if(src){
+    var srcBarcode=normCell(bdGet(src,['Штрих код Single Cup','Штрих код Single Cup_bd','Штрихкод','Баркод']));
+    var srcName=normKey(bdGet(src,['Короткое наименование','Наименование товара']));
+    if(srcBarcode&&idx.byBarcode[srcBarcode]) return idx.byBarcode[srcBarcode];
+    if(srcName&&idx.byName[srcName]) return idx.byName[srcName];
+
+    // 3) Важно: не выбрасываем позицию, если аналога в выбранном юрлице нет.
+    //    Возвращаем исходную карточку из БД — так сборка не теряет строки.
+    src.__legalFallback = true;
+    return src;
+  }
+  return null;
+}
+function findGenericHeaderRow(raw){
+  for(var i=0;i<Math.min(raw.length,25);i++){
+    var keys=(raw[i]||[]).map(normKey);
+    var s='|'+keys.join('|')+'|';
+    var hasId=s.includes('|код 1с|')||s.includes('|артикул|')||s.includes('|артикул товара продавца|')||s.includes('|баркод|')||s.includes('|штрихкоды|')||s.includes('|ваш sku|')||s.includes('|шк товара|')||s.includes('|шк единицы товара|');
+    var hasQty=s.includes('|итого кол-во|')||s.includes('|количество|')||s.includes('|количество товаров в поставке|')||s.includes('|план поставки (шт.)|')||s.includes('|кол-во товаров|')||s.includes('|количество на озон|')||s.includes('|количество на вб|')||s.includes('|количество на ям|')||s.includes('|количество на сбер|')||s.includes('|озон|')||s.includes('|вб|')||s.includes('|ям|')||s.includes('|сбер|')||s.includes('|м-видео|')||s.includes('|мвидео|');
+    if(hasId&&hasQty) return i;
+  }
+  return -1;
+}
+function looksLikeKod1c(v){
+  var s=normCell(v);
+  return /^([А-ЯA-Z]{0,3}-)?\d{2}-\d{6,}$/i.test(s) || /^\d{8,}$/.test(s);
+}
+function hasNumberInCols(row,start,end){
+  for(var c=start;c<=end;c++){
+    var v=row&&row[c];
+    if(v!==undefined && v!=='' && !isNaN(numVal(v)) && numVal(v)>0) return true;
+  }
+  return false;
+}
+function headerlessRowsFromRaw(raw){
+  var start=-1;
+  for(var i=0;i<Math.min(raw.length,30);i++){
+    // Частый формат: A=Код 1С, B=Группа, C=Наименование, D=Количество, E:I=площадки.
+    if(looksLikeKod1c(raw[i]&&raw[i][0]) && hasNumberInCols(raw[i],3,8)){ start=i; break; }
+  }
+  if(start<0) return [];
+  var out=[];
+  for(var r=start;r<raw.length;r++){
+    var row=raw[r]||[];
+    if(!looksLikeKod1c(row[0])) continue;
+    var obj={
+      'Код 1С': row[0]||'',
+      'Группа товаров': row[1]||'',
+      'Короткое наименование': row[2]||'',
+      'Итого кол-во': row[3]||'',
+      'Количество на Озон': row[4]||0,
+      'Количество на ВБ': row[5]||0,
+      'Количество на ЯМ': row[6]||0,
+      'Количество на СБЕР': row[7]||0,
+      'Количество на М-видео': row[8]||0
+    };
+    // Если площадки пустые, но есть общий столбец "Количество" — сохраним как общий объём.
+    if(!hasNumberInCols(row,4,8) && numVal(row[3])>0) obj['Количество']=row[3];
+    out.push(obj);
+  }
+  return out;
+}
+function genericRowsFromSheet(ws){
+  var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+  var hr=findGenericHeaderRow(raw);
+  if(hr>=0){
+    var headerRaw=raw[hr].slice();
+    // Power Query часто добавляет Source.Name в A, а настоящая шапка начинается с B:
+    // [имя файла, Код 1С, Группа товаров, ...]
+    var codeAt=headerRaw.findIndex(function(h){return normKey(h)==='код 1с' || normKey(h)==='артикул' || normKey(h)==='артикул товара продавца';});
+    var headers=headerRaw.map(function(h,j){
+      var nh=normCell(h);
+      if(j===0 && codeAt>0 && !['Source.Name','Сборка','Файл'].includes(nh)) return 'Source.Name';
+      return nh;
+    });
+    var out=[];
+    for(var i=hr+1;i<raw.length;i++){
+      var obj={}, empty=true;
+      headers.forEach(function(h,j){
+        if(h){ obj[h]=raw[i][j]!==undefined?raw[i][j]:''; if(normCell(obj[h])!=='') empty=false; }
+      });
+      if(empty) return;
+      var parts=getRowIdParts(obj);
+      var q=qtyFromRow(obj);
+      var platformQs=platformQtysFromRow(obj,'');
+      var hasAnyQty=Object.keys(platformQs).some(function(k){return numVal(platformQs[k])>0;}) || q>0;
+      // Пропускаем повторяющиеся строки-заголовки и строки-названия сборок.
+      if(!looksLikeKod1c(parts.code) && !parts.barcode && !parts.name) return;
+      if(normKey(parts.code)==='код 1с' || normKey(parts.name)==='короткое наименование') return;
+      if(!hasAnyQty) return;
+      out.push(obj);
+    }
+    if(out.length) return out;
+  }
+  return headerlessRowsFromRaw(raw);
+}
+function getRowIdParts(row){
+  var code=normCell(getAny(row,['Код 1С','Артикул товара продавца','Артикул товара','Артикул','артикул']));
+  var barcode=normCell(getAny(row,['Баркод','Штрихкоды','Ваш SKU','ШК товара','ШК единицы товара','Штрихкод']));
+  var name=normCell(getAny(row,['Короткое наименование','Наименование','Название товара','Наименование товара','имя (необязательно)']));
+  return {code:code,barcode:barcode,name:name};
+}
+function inferMpFromRow(row,fileName){
+  var explicit=normCell(getAny(row,['Маркетплейс','Площадка']));
+  var text=(explicit+' '+fileName).toLowerCase();
+  if(text.includes('ozon')||text.includes('озон')) return 'Ozon';
+  if(text.includes('wildberries')||text.includes('wb')||text.includes('вб')) return 'WB';
+  if(text.includes('ym')||text.includes('яндекс')||text.includes('маркет')||text.includes('ям')) return 'YM';
+  if(text.includes('sber')||text.includes('сбер')) return 'SBER';
+  if(text.includes('м-видео')||text.includes('mvideo')||text.includes('мвидео')) return 'М-видео';
+  var t=detectOrderType(row);
+  if(t==='WildBerries') return 'WB'; if(t==='SBER') return 'SBER'; if(t==='YM') return 'YM'; if(t==='Ozon') return 'Ozon';
+  return '';
+}
+function qtyFromRow(row){
+  return cleanQty(getAny(row,['Итого кол-во','Количество','количество','Количество товаров в поставке','План поставки (шт.)','Кол-во товаров','Кол-во товара','План поставки']));
+}
+function platformQtysFromRow(row,fileName){
+  var qs={'Ozon':0,'WB':0,'YM':0,'SBER':0,'М-видео':0};
+
+  // Сначала ищем именно колонки с количеством. Важно: bare-колонки Ozon/WB/YM/SBER
+  // в красивой сводной — это уже капсулы, поэтому не берем их как штуки,
+  // если рядом есть капсульные колонки.
+  var primaryMap=[
+    ['Ozon',['Количество на Озон','Кол-во на Озон','Кол-во Озон','Количество Ozon','Кол-во Ozon','Ozon qty','Qty Ozon','озон количество']],
+    ['WB',['Количество на ВБ','Количество на WB','Кол-во на ВБ','Кол-во ВБ','Кол-во WB','Количество WB','WB qty','Qty WB','вб количество']],
+    ['YM',['Количество на ЯМ','Количество на YM','Кол-во на ЯМ','Кол-во ЯМ','Кол-во YM','Количество YM','YM qty','Qty YM','ям количество']],
+    ['SBER',['Количество на СБЕР','Количество на Сбер','Количество на SBER','Кол-во на СБЕР','Кол-во СБЕР','Кол-во SBER','SBER qty','Qty SBER','сбер количество']],
+    ['М-видео',['Количество на М-видео','Количество на МВидео','Количество на Mvideo','Кол-во на М-видео','Кол-во М-видео','Кол-во МВидео','Кол-во M-video','M-video qty','Qty M-video']]
+  ];
+  var anyExplicit=false;
+  primaryMap.forEach(function(pair){
+    var val=getAny(row,pair[1]);
+    if(val!==''&&val!==undefined){qs[pair[0]]+=cleanQty(val); anyExplicit=true;}
+  });
+  if(anyExplicit) return qs;
+
+  var hasCapsColumns = getAny(row,['Общее кол-во капсул','Итого капсул','Всего капсул','Капсул Ozon','Капсул WB','Капсул YM','Капсул SBER','Капсул М-видео','Ozon капсулы','WB капсулы','YM капсулы','SBER капсулы'])!=='';
+  if(!hasCapsColumns){
+    var bareMap=[
+      ['Ozon',['Ozon','Озон','озон']],
+      ['WB',['WB','ВБ','вб','Wildberries','Вайлдбериз']],
+      ['YM',['YM','ЯМ','ям','Yandex','Яндекс','Яндекс маркет']],
+      ['SBER',['SBER','Sber','СБЕР','Сбер','сбер']],
+      ['М-видео',['M-video','М-видео','Мвидео','мвидео']]
+    ];
+    bareMap.forEach(function(pair){
+      var val=getAny(row,pair[1]);
+      if(val!==''&&val!==undefined){qs[pair[0]]+=cleanQty(val); anyExplicit=true;}
+    });
+    if(anyExplicit) return qs;
+  }
+
+  var mp=inferMpFromRow(row,fileName);
+  var q=qtyFromRow(row);
+  if(mp&&q) qs[mp]+=q;
+  return qs;
+}
+function addConsolidated(map,order,bd,qtys){
+  var code=normCell(bdGet(bd,['Код 1С'])); if(!code) return;
+  if(!map[code]){
+    map[code]={bd:bd, qty:{'Ozon':0,'WB':0,'YM':0,'SBER':0,'М-видео':0}};
+    order.push(code);
+  }
+  ['Ozon','WB','YM','SBER','М-видео'].forEach(function(mp){map[code].qty[mp]+=numVal(qtys[mp]);});
+}
+async function processObsh(){
+  if(!S.obshFiles.length){toast('Добавьте файлы','err');return;}
+  if(!S.bdRows){toast('БД не загружена','err');return;}
+  var legal=(document.getElementById('obshLegal').value||'ООО');
+  var orderNo=safeFilePart(document.getElementById('obshOrderNo').value||'');
+  if(!orderNo){toast('Введите номер заказа','err');document.getElementById('obshOrderNo').focus();return;}
+  showSpinner('Делаем общую сборку…');
+  try{
+    var idx=buildLegalIndexes(S.bdRows,legal);
+    var map={}, order=[];
+    var missed=[];
+    for(var fi=0;fi<S.obshFiles.length;fi++){
+      var f=S.obshFiles[fi];
+      document.getElementById('spinTxt').textContent='Читаем '+(fi+1)+'/'+S.obshFiles.length+': '+f.name;
+      var wb=XLSX.read(f.buf,{type:'array'});
+      wb.SheetNames.forEach(function(sn){
+        genericRowsFromSheet(wb.Sheets[sn]).forEach(function(row){
+          var parts=getRowIdParts(row);
+          var qtys=platformQtysFromRow(row,f.name);
+          var hasQty=Object.keys(qtys).some(function(k){return numVal(qtys[k])>0;});
+          if(!hasQty) return;
+          var bd=resolveBdForLegal(parts.code,parts.barcode,parts.name,idx);
+          if(!bd){
+            missed.push(parts.code||parts.barcode||parts.name||f.name);
+            // Не теряем строку совсем: если в файле есть код/название и количество,
+            // добавляем минимальную карточку из самого файла.
+            bd={
+              'Код 1С': parts.code || parts.barcode || parts.name || ('UNKNOWN-'+(missed.length)),
+              'Группа товаров': getAny(row,['Группа товаров','Группа','Категория']),
+              'Короткое наименование': parts.name || getAny(row,['Короткое наименование','Наименование','Название товара','Наименование товара']),
+              'Количество капсул': getAny(row,['Количество капсул','Кол-во капсул','кол-во капсул','Капсул'])
+            };
+          }
+          addConsolidated(map,order,bd,qtys);
+        });
+      });
+    }
+    var rows=order.map(function(code){return map[code];}).filter(function(x){
+      return ['Ozon','WB','YM','SBER','М-видео'].some(function(mp){return numVal(x.qty[mp])>0;});
+    });
+    if(!rows.length) throw new Error('Не удалось собрать данные. Проверьте, что в файлах есть код 1С/штрихкод/артикул и количество.');
+    var wbOut=obshConsolidatedToWb(rows,legal,orderNo);
+    var fileName='Общая сборка '+orderNo+' '+todayRu()+' '+legal+'.xlsx';
+    renderObshResult(wbOut,fileName,rows.length,missed);
+    toast('✅ Общая сборка готова! Файл ниже.','ok');
+  }catch(e){
+    toast('❌ '+e.message,'err');
+    console.error(e);
+  }finally{hideSpinner();}
+}
+function obshConsolidatedToWb(items,legal,orderNo){
+  var platforms=['Ozon','WB','YM','SBER','М-видео'];
+  var title='Общая сборка '+orderNo+' · '+todayRu()+' · '+(legal==='ИП'?'ИП Тимашков':'ООО Кофепод');
+  var headers=['Код 1С','Группа товаров','Короткое наименование','Итого кол-во','кол-во капсул','Количество на Озон','Количество на ВБ','Количество на ЯМ','Количество на СБЕР','Количество на М-видео','Ozon','WB','YM','SBER','М-видео','Общее кол-во капсул'];
+  var wholeNumFmt='# ##0';
+
+  // Сортировка сводной: сначала позиции с самым большим количеством к заказу.
+  // Если количество одинаковое — сохраняем понятный порядок по группе и наименованию.
+  function itemOrderQty(item){
+    var q=item.qty||{};
+    return numVal(q['Ozon'])+numVal(q['WB'])+numVal(q['YM'])+numVal(q['SBER'])+numVal(q['М-видео']);
+  }
+  items.sort(function(a,b){
+    var qDiff=itemOrderQty(b)-itemOrderQty(a);
+    if(Math.abs(qDiff)>0.000001) return qDiff;
+    return String(bdGet(a.bd,['Группа товаров'])).localeCompare(String(bdGet(b.bd,['Группа товаров']))) ||
+           String(bdGet(a.bd,['Короткое наименование'])).localeCompare(String(bdGet(b.bd,['Короткое наименование'])));
+  });
+
+  var data=[];
+  var totals={qty:0,caps:0,Ozon:0,WB:0,YM:0,SBER:0,'М-видео':0,capOzon:0,capWB:0,capYM:0,capSBER:0,capMv:0};
+
+  items.forEach(function(item){
+    var bd=item.bd, q=item.qty;
+    var caps=numVal(bdGet(bd,['Количество капсул','Кол-во капсул','Капсул']));
+    var sumQty=numVal(q['Ozon'])+numVal(q['WB'])+numVal(q['YM'])+numVal(q['SBER'])+numVal(q['М-видео']);
+    var oz=numVal(q['Ozon'])*caps, wb=numVal(q['WB'])*caps, ym=numVal(q['YM'])*caps, sb=numVal(q['SBER'])*caps, mv=numVal(q['М-видео'])*caps;
+    var rowCaps=oz+wb+ym+sb+mv;
+    totals.qty+=sumQty; totals.caps+=rowCaps;
+    totals.Ozon+=numVal(q['Ozon']); totals.WB+=numVal(q['WB']); totals.YM+=numVal(q['YM']); totals.SBER+=numVal(q['SBER']); totals['М-видео']+=numVal(q['М-видео']);
+    totals.capOzon+=oz; totals.capWB+=wb; totals.capYM+=ym; totals.capSBER+=sb; totals.capMv+=mv;
+    data.push([
+      bdGet(bd,['Код 1С']),
+      bdGet(bd,['Группа товаров']),
+      bdGet(bd,['Короткое наименование']),
+      cleanQty(sumQty),
+      caps||'',
+      cleanQty(q['Ozon']), cleanQty(q['WB']), cleanQty(q['YM']), cleanQty(q['SBER']), cleanQty(q['М-видео']),
+      cleanQty(oz), cleanQty(wb), cleanQty(ym), cleanQty(sb), cleanQty(mv), cleanQty(rowCaps)
+    ]);
+  });
+
+  var legalName=(legal==='ИП'?'ИП Тимашков':'ООО Кофепод');
+  var summaryRow=['Позиций', data.length, 'Всего товаров', cleanQty(totals.qty), 'Всего капсул', cleanQty(totals.caps), 'Юрлицо', legalName, 'Номер', orderNo].concat(new Array(headers.length-10).fill(''));
+  var totalRowData=['ИТОГО','','',cleanQty(totals.qty),'',cleanQty(totals.Ozon),cleanQty(totals.WB),cleanQty(totals.YM),cleanQty(totals.SBER),cleanQty(totals['М-видео']),cleanQty(totals.capOzon),cleanQty(totals.capWB),cleanQty(totals.capYM),cleanQty(totals.capSBER),cleanQty(totals.capMv),cleanQty(totals.caps)];
+
+  var aoa=[];
+  aoa.push([title].concat(new Array(headers.length-1).fill('')));
+  aoa.push(summaryRow);
+  aoa.push(totalRowData);
+  aoa.push(headers);
+  aoa=aoa.concat(data);
+
+  var wb=XLSX.utils.book_new();
+  var ws=XLSX.utils.aoa_to_sheet(aoa);
+  var lastRow=aoa.length;
+  var headerRow=4;
+  var totalRow=3;
+
+  ws['!cols']=[
+    {wch:15},{wch:22},{wch:46},{wch:13},{wch:12},
+    {wch:13},{wch:12},{wch:12},{wch:13},{wch:15},
+    {wch:13},{wch:12},{wch:12},{wch:13},{wch:15},{wch:14}
+  ];
+  ws['!rows']=[{hpt:30},{hpt:24},{hpt:24},{hpt:34}];
+  ws['!merges']=[
+    {s:{r:0,c:0},e:{r:0,c:15}}
+  ];
+  ws['!autofilter']={ref:'A4:P'+Math.max(4,lastRow)};
+  ws['!freeze']={xSplit:0,ySplit:4};
+  ws['!views']=[{zoomScale:80,zoomScaleNormal:80}];
+
+  var borderThin={top:{style:'thin',color:{rgb:'FFE5E7EB'}},bottom:{style:'thin',color:{rgb:'FFE5E7EB'}},left:{style:'thin',color:{rgb:'FFE5E7EB'}},right:{style:'thin',color:{rgb:'FFE5E7EB'}}};
+  var borderDark={top:{style:'thin',color:{rgb:'FF1F2937'}},bottom:{style:'thin',color:{rgb:'FF1F2937'}},left:{style:'thin',color:{rgb:'FF1F2937'}},right:{style:'thin',color:{rgb:'FF1F2937'}}};
+  var titleStyle={font:{bold:true,sz:16,color:{rgb:'FFFFFFFF'}},fill:{patternType:'solid',fgColor:{rgb:'FF111827'}},alignment:{horizontal:'center',vertical:'center'}};
+  var metricLabel={font:{bold:true,color:{rgb:'FF374151'}},fill:{patternType:'solid',fgColor:{rgb:'FFF3F4F6'}},alignment:{horizontal:'center',vertical:'center'},border:borderThin};
+  var metricValue={font:{bold:true,color:{rgb:'FFB45309'}},fill:{patternType:'solid',fgColor:{rgb:'FFFFFBEB'}},alignment:{horizontal:'center',vertical:'center'},border:borderThin};
+  var headerBase={font:{bold:true,color:{rgb:'FFFFFFFF'}},fill:{patternType:'solid',fgColor:{rgb:'FF000000'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:borderDark};
+  var headerQty={font:{bold:true,color:{rgb:'FF111827'}},fill:{patternType:'solid',fgColor:{rgb:'FF92D050'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:borderDark};
+  var headerMarket={font:{bold:true,color:{rgb:'FFFFFFFF'}},fill:{patternType:'solid',fgColor:{rgb:'FF1D4ED8'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:borderDark};
+  var headerCaps={font:{bold:true,color:{rgb:'FFFFFFFF'}},fill:{patternType:'solid',fgColor:{rgb:'FF7C3AED'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border:borderDark};
+  var bodyText={border:borderThin,alignment:{vertical:'center',wrapText:true}};
+  var bodyNum={border:borderThin,alignment:{horizontal:'right',vertical:'center'},numFmt:wholeNumFmt};
+  var bodyQty={border:borderThin,fill:{patternType:'solid',fgColor:{rgb:'FFF0FDF4'}},alignment:{horizontal:'right',vertical:'center'},numFmt:wholeNumFmt};
+  var bodyCaps={border:borderThin,fill:{patternType:'solid',fgColor:{rgb:'FFF5F3FF'}},alignment:{horizontal:'right',vertical:'center'},numFmt:wholeNumFmt};
+  var totalStyle={font:{bold:true,color:{rgb:'FFFFFFFF'}},fill:{patternType:'solid',fgColor:{rgb:'FF111827'}},alignment:{horizontal:'right',vertical:'center'},border:borderDark,numFmt:wholeNumFmt};
+
+  // Title and metric strip
+  if(ws['A1']) ws['A1'].s=titleStyle;
+  for(var sc=0;sc<headers.length;sc++){
+    var saddr=XLSX.utils.encode_cell({r:1,c:sc});
+    if(ws[saddr]) ws[saddr].s=(sc%2===0?metricLabel:metricValue);
+  }
+
+  // Верхняя строка ИТОГО — перед шапкой, чтобы не искать ее внизу
+  for(var ic=0;ic<headers.length;ic++){
+    var ia=XLSX.utils.encode_cell({r:2,c:ic});
+    if(ws[ia]) ws[ia].s=totalStyle;
+  }
+
+  // Header row
+  for(var c=0;c<headers.length;c++){
+    var addr=XLSX.utils.encode_cell({r:headerRow-1,c:c});
+    if(ws[addr]){
+      if(c===3 || c===4) ws[addr].s=headerQty;
+      else if(c>=5 && c<=9) ws[addr].s=headerMarket;
+      else if(c>=10) ws[addr].s=headerCaps;
+      else ws[addr].s=headerBase;
+    }
+  }
+
+  // Body rows
+  for(var rr=4; rr<4+data.length; rr++){
+    var zebra = ((rr-4)%2===1);
+    for(var cc=0; cc<headers.length; cc++){
+      var a=XLSX.utils.encode_cell({r:rr,c:cc});
+      if(!ws[a]) continue;
+      if(cc<=2) ws[a].s=Object.assign({},bodyText,zebra?{fill:{patternType:'solid',fgColor:{rgb:'FFFAFAFA'}}}:{});
+      else if(cc>=5 && cc<=9) ws[a].s=Object.assign({},bodyQty,zebra?{fill:{patternType:'solid',fgColor:{rgb:'FFEFF6FF'}}}:{});
+      else if(cc>=10) ws[a].s=Object.assign({},bodyCaps,zebra?{fill:{patternType:'solid',fgColor:{rgb:'FFF3E8FF'}}}:{});
+      else ws[a].s=Object.assign({},bodyNum,zebra?{fill:{patternType:'solid',fgColor:{rgb:'FFFAFAFA'}}}:{});
+    }
+  }
+
+  wb.Workbook = wb.Workbook || {};
+  wb.Workbook.Views = [{zoomScale:80}];
+  XLSX.utils.book_append_sheet(wb,ws,'Общая сборка');
+  return wb;
+}
+function renderObshResult(wb,fileName,rowCount,missed){
+  var blob=wbToBlob(wb);
+  var url=URL.createObjectURL(blob);
+  var status='Общая сборка готова: '+rowCount+' поз. · '+(missed&&missed.length?('не найдено в БД: '+missed.length):'все позиции найдены в БД');
+
+  // Результат показываем прямо в разделе «Общие сборки», а не в скрытом экране «Создать заказ».
+  var box=document.getElementById('obshDownloadBox');
+  if(!box){
+    box=document.createElement('div');
+    box.id='obshDownloadBox';
+    box.className='result-card';
+    box.style.maxWidth='760px';
+    box.style.marginTop='16px';
+    var btn=document.getElementById('obshBtn');
+    btn.parentNode.insertBefore(box,btn.nextSibling);
+  }
+  box.innerHTML='<span class="rc-icon">✅</span>'
+    +'<div class="rc-title">ГОТОВО!</div>'
+    +'<div class="rc-sub">'+projEscape(status)+'</div>'
+    +'<a class="dl-btn" href="'+url+'" download="'+projEscape(fileName)+'">⬇ СКАЧАТЬ '+projEscape(fileName)+'</a>';
+
+  // На всякий случай дублируем в старый общий блок результата, если пользователь перейдёт туда.
+  var btns=document.getElementById('dlBtns');
+  var sub=document.getElementById('rcSub');
+  if(btns) btns.innerHTML='<a class="dl-btn" href="'+url+'" download="'+projEscape(fileName)+'">⬇ СКАЧАТЬ '+projEscape(fileName)+'</a>';
+  if(sub) sub.textContent=status;
 }
 
 // ════════════════════════════════════════════
