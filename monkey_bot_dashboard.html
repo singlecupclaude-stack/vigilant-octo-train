@@ -410,16 +410,16 @@ body::before{
       <div id="step-reverse-upload" style="display:none">
         <button class="back-btn" onclick="goStep('menu')">← Назад</button>
         <div class="step-title">ЗАКАЗНИК → СБОРКА</div>
-        <div class="step-sub">Загрузите любой сформированный заказник: WB, Ozon, Яндекс.Маркет или Сбер. Monkey сам определит колонки и соберёт файл формата 1С.</div>
+        <div class="step-sub">Загрузите один или несколько сформированных заказников: WB, Ozon, Яндекс.Маркет или Сбер. Monkey сам определит колонки и соберёт сборки формата 1С.</div>
         <div class="dz" id="reverseDropZone"
              ondragover="revDzOver(event,true)" ondragleave="revDzOver(event,false)" ondrop="revDzDrop(event)">
-          <input type="file" accept=".xlsx,.xls" id="reverseFileInput" onchange="reverseFileChosen(this)">
+          <input type="file" accept=".xlsx,.xls" multiple id="reverseFileInput" onchange="reverseFileChosen(this)">
           <span class="dz-icon">🔁</span>
           <div class="dz-title">ПЕРЕТАЩИТЕ ЗАКАЗНИК</div>
-          <div class="dz-sub">или нажмите для выбора · .xlsx / .xls</div>
+          <div class="dz-sub">или нажмите для выбора · можно несколько файлов · .xlsx / .xls</div>
           <div class="dz-chosen" id="reverseDzChosen"></div>
         </div>
-        <button class="proc-btn" id="reverseProcBtn" onclick="processReverseOrder()">СДЕЛАТЬ СБОРКУ →</button>
+        <button class="proc-btn" id="reverseProcBtn" onclick="processReverseOrder()">СДЕЛАТЬ СБОРКИ →</button>
       </div>
 
       <!-- step-result -->
@@ -622,6 +622,7 @@ var S = {
   orderFileName: '',
   reverseFile: null,
   reverseFileName: '',
+  reverseFiles: [],
   obshFiles: []       // [{name, data: ArrayBuffer}]
 };
 
@@ -1168,7 +1169,7 @@ async function processOrder(){
 // ════════════════════════════════════════════
 function prepReverseUpload(){ resetReverseDz(); goStep('reverse-upload'); }
 function resetReverseDz(){
-  S.reverseFile=null; S.reverseFileName='';
+  S.reverseFile=null; S.reverseFileName=''; S.reverseFiles=[];
   var ch=document.getElementById('reverseDzChosen'); if(ch){ch.style.display='none'; ch.textContent='';}
   var btn=document.getElementById('reverseProcBtn'); if(btn) btn.classList.remove('show');
   var inp=document.getElementById('reverseFileInput'); if(inp) inp.value='';
@@ -1176,26 +1177,53 @@ function resetReverseDz(){
 function revDzOver(e,on){e.preventDefault();document.getElementById('reverseDropZone').classList.toggle('dragover',on);}
 function revDzDrop(e){
   e.preventDefault();document.getElementById('reverseDropZone').classList.remove('dragover');
-  if(e.dataTransfer.files[0]) setReverseFile(e.dataTransfer.files[0]);
+  if(e.dataTransfer.files&&e.dataTransfer.files.length) setReverseFiles(e.dataTransfer.files);
 }
-function reverseFileChosen(inp){if(inp.files[0])setReverseFile(inp.files[0]);}
-function setReverseFile(f){
-  S.reverseFile=f; S.reverseFileName=f.name.replace(/\.[^.]+$/,'').replace(/^Заказ[_\s-]*/i,'').replace(/_коробы|_палеты/ig,'');
+function reverseFileChosen(inp){if(inp.files&&inp.files.length)setReverseFiles(inp.files);}
+function reverseBaseName(name){
+  return String(name||'заказник')
+    .replace(/\.[^.]+$/,'')
+    .replace(/^Заказ[_\s-]*/i,'')
+    .replace(/_коробы|_палеты/ig,'')
+    .trim()||'заказник';
+}
+function setReverseFiles(files){
+  S.reverseFiles=Array.from(files||[]).filter(function(f){return /\.xlsx?$/i.test(f.name);});
+  S.reverseFile=S.reverseFiles[0]||null;
+  S.reverseFileName=S.reverseFile?reverseBaseName(S.reverseFile.name):'';
   var ch=document.getElementById('reverseDzChosen');
-  ch.textContent='📎 '+f.name+' ('+(f.size/1024).toFixed(0)+' KB)';
+  if(!S.reverseFiles.length){
+    if(ch){ch.textContent='';ch.style.display='none';}
+    document.getElementById('reverseProcBtn').classList.remove('show');
+    toast('Выберите Excel-файлы .xlsx / .xls','err');
+    return;
+  }
+  var totalKb=S.reverseFiles.reduce(function(sum,f){return sum+f.size/1024;},0);
+  if(S.reverseFiles.length===1){
+    ch.textContent='📎 '+S.reverseFiles[0].name+' ('+(S.reverseFiles[0].size/1024).toFixed(0)+' KB)';
+  } else {
+    ch.textContent='📎 '+S.reverseFiles.length+' файлов · '+totalKb.toFixed(0)+' KB: '+S.reverseFiles.slice(0,4).map(function(f){return f.name;}).join(', ')+(S.reverseFiles.length>4?'…':'');
+  }
   ch.style.display='block';
   document.getElementById('reverseProcBtn').classList.add('show');
 }
 async function processReverseOrder(){
-  if(!S.reverseFile){toast('Выберите заказник','err');return;}
+  var files=S.reverseFiles&&S.reverseFiles.length?S.reverseFiles:(S.reverseFile?[S.reverseFile]:[]);
+  if(!files.length){toast('Выберите заказник','err');return;}
   if(!S.bdRows){toast('БД не загружена','err');return;}
-  showSpinner('Конвертируем заказник в сборку…');
+  showSpinner(files.length>1?'Пакетно конвертируем заказники…':'Конвертируем заказник в сборку…');
   try{
-    var buf=await S.reverseFile.arrayBuffer();
-    var rows=parseMarketplaceOrderToSborka(buf,S.bdRows);
-    renderReverseResult(rows,S.reverseFileName||'заказник');
+    var results=[];
+    for(var i=0;i<files.length;i++){
+      var f=files[i];
+      document.getElementById('spinTxt').textContent='Обрабатываем '+(i+1)+'/'+files.length+': '+f.name;
+      var buf=await f.arrayBuffer();
+      var rows=parseMarketplaceOrderToSborka(buf,S.bdRows);
+      results.push({name:reverseBaseName(f.name),rows:rows});
+    }
+    renderReverseBatchResult(results);
     goStep('result');
-    toast('✅ Сборка создана!','ok');
+    toast(files.length>1?'✅ Сборки созданы!':'✅ Сборка создана!','ok');
   }catch(e){
     toast('❌ '+e.message,'err');
     console.error(e);
@@ -1360,13 +1388,55 @@ function sborkaToWb(rows,baseName){
   XLSX.utils.book_append_sheet(wb,ws,safeSheetName('Сборочный лист'));
   return wb;
 }
+function reverseDownloadName(baseName){
+  return 'Сборка_заказа_'+String(baseName||'заказник').replace(/[\/:*?"<>|]/g,' ').trim()+'.xlsx';
+}
 function renderReverseResult(rows,baseName){
+  renderReverseBatchResult([{name:baseName,rows:rows}]);
+}
+function renderReverseBatchResult(results){
   var btns=document.getElementById('dlBtns');
   var sub=document.getElementById('rcSub');
-  var fn='Сборка_заказа_'+baseName+'.xlsx';
-  var url=URL.createObjectURL(wbToBlob(sborkaToWb(rows,baseName)));
-  btns.innerHTML='<a class="dl-btn" href="'+url+'" download="'+fn+'">⬇ СКАЧАТЬ '+fn+'</a>';
-  sub.textContent='Сборка создана в формате 1С: '+rows.length+' поз. · кратность и короба рассчитаны из БД';
+  if(!results.length){btns.innerHTML='';sub.textContent='Нет файлов для скачивания';return;}
+  if(results.length===1){
+    var one=results[0];
+    var fn=reverseDownloadName(one.name);
+    var url=URL.createObjectURL(wbToBlob(sborkaToWb(one.rows,one.name)));
+    btns.innerHTML='<a class="dl-btn" href="'+url+'" download="'+fn+'">⬇ СКАЧАТЬ '+fn+'</a>';
+    sub.textContent='Сборка создана в формате 1С: '+one.rows.length+' поз. · кратность и короба рассчитаны из БД';
+    return;
+  }
+  var zipId='reverseZipBtn_'+Date.now();
+  window['_reverseZipData_'+zipId]=results;
+  var totalRows=results.reduce(function(sum,r){return sum+(r.rows?r.rows.length:0);},0);
+  var links=results.map(function(item,idx){
+    var fn=reverseDownloadName(item.name);
+    var url=URL.createObjectURL(wbToBlob(sborkaToWb(item.rows,item.name)));
+    return '<a class="dl-btn" href="'+url+'" download="'+fn+'">⬇ '+(idx+1)+'. '+fn+'</a>';
+  }).join(' ');
+  links+=' <button class="dl-btn zip" id="'+zipId+'" onclick="downloadReverseZip(this)">📦 ZIP все сборки</button>';
+  btns.innerHTML=links;
+  sub.textContent='Создано сборок: '+results.length+' · всего позиций: '+totalRows+' · можно скачать ZIP или файлы по одному';
+}
+async function downloadReverseZip(btn){
+  var data=window['_reverseZipData_'+btn.id];
+  if(!data||!data.length) return;
+  btn.textContent='⏳ Архивирую…'; btn.disabled=true;
+  try{
+    var zip=new JSZip();
+    data.forEach(function(item){
+      var wb=sborkaToWb(item.rows,item.name);
+      var buf=XLSX.write(wb,{type:'array',bookType:'xlsx'});
+      zip.file(reverseDownloadName(item.name),buf);
+    });
+    var content=await zip.generateAsync({type:'blob'});
+    var url=URL.createObjectURL(content);
+    var a=document.createElement('a');
+    a.href=url; a.download='сборки_из_заказников.zip';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  } finally {
+    btn.textContent='📦 ZIP все сборки'; btn.disabled=false;
+  }
 }
 
 // ════════════════════════════════════════════
