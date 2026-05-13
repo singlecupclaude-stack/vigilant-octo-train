@@ -620,6 +620,10 @@ body::before {
 .supply-products-table.wb .supply-products-row {
   grid-template-columns: 108px 128px 116px 92px minmax(150px, 0.72fr) 104px 104px;
 }
+.supply-products-table.ym .supply-products-head,
+.supply-products-table.ym .supply-products-row {
+  grid-template-columns: 108px 128px 116px 92px minmax(150px, 0.72fr) 104px 104px;
+}
 .supply-summary-strip {
   margin: 0 14px 12px;
   display: flex;
@@ -671,8 +675,8 @@ body::before {
 .sku-type-dg { color: var(--accent-copper-bright); background: rgba(199,144,93,0.13); border: 1px solid rgba(199,144,93,0.28); }
 .sku-type-empty { color: var(--text-soft); background: rgba(138,142,131,0.08); border: 1px solid rgba(138,142,131,0.14); }
 /* Старая разметка для обратной совместимости (если class модификатор не выставлен) */
-.supply-products-table:not(.ozon):not(.wb) .supply-products-head,
-.supply-products-table:not(.ozon):not(.wb) .supply-products-row {
+.supply-products-table:not(.ozon):not(.wb):not(.ym) .supply-products-head,
+.supply-products-table:not(.ozon):not(.wb):not(.ym) .supply-products-row {
   grid-template-columns: 1fr 1fr 90px 110px;
 }
 .supply-products-head {
@@ -3063,6 +3067,102 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_QwaPrrKm7JF6lv8O86VDv-ycaze3S_2ZhSoymvlhUyI90b0YYE9PLLEKbe7MJ7fmxA/exec';
 
+
+// ============== APPS SCRIPT CONNECTOR ==============
+// Основной путь — обычный fetch. Если браузер/Apps Script режет ответ из-за
+// CORS/redirect/локального file://, GET-запросы автоматически повторяются как JSONP.
+const OM_NATIVE_FETCH = window.fetch.bind(window);
+function omIsAppsScriptUrl(url) {
+  return String(url || '').startsWith(APPS_SCRIPT_URL);
+}
+function omAddQueryParam(url, key, value) {
+  const sep = String(url).includes('?') ? '&' : '?';
+  return String(url) + sep + encodeURIComponent(key) + '=' + encodeURIComponent(value);
+}
+function omJsonpGet(url, timeoutMs = 45000) {
+  return new Promise((resolve, reject) => {
+    const cb = '__om_jsonp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2);
+    const script = document.createElement('script');
+    let done = false;
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      try { delete window[cb]; } catch (_) { window[cb] = undefined; }
+      if (script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timer);
+    };
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('Apps Script не ответил через JSONP'));
+    }, timeoutMs);
+    window[cb] = data => {
+      cleanup();
+      resolve(data || {});
+    };
+    script.onerror = () => {
+      cleanup();
+      reject(new Error('не удалось загрузить JSONP из Apps Script'));
+    };
+    script.src = omAddQueryParam(url, 'callback', cb);
+    document.head.appendChild(script);
+  });
+}
+async function omApiGetJson(url, options = {}, label = 'Apps Script') {
+  // Для Apps Script Web App из локального HTML самый стабильный канал — JSONP.
+  // Обычный fetch часто падает из-за CORS/redirect/login-страницы, поэтому для GET
+  // сначала пробуем JSONP, а fetch оставляем как запасной диагностический путь.
+  if (omIsAppsScriptUrl(url)) {
+    let jsonpError = null;
+    try {
+      return await omJsonpGet(url, 90000);
+    } catch (err) {
+      jsonpError = err;
+    }
+    try {
+      const res = await OM_NATIVE_FETCH(url, Object.assign({ method: 'GET', cache: 'no-store', redirect: 'follow' }, options));
+      const text = await res.text();
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText || ''}`.trim());
+      try {
+        return JSON.parse(text);
+      } catch (parseErr) {
+        const snippet = text.slice(0, 220).replace(/\s+/g, ' ').trim();
+        throw new Error(`${label}: Apps Script отдал не JSON. начало ответа: «${snippet}…»`);
+      }
+    } catch (fetchErr) {
+      throw new Error(`JSONP: ${jsonpError.message}; fetch: ${fetchErr.message || fetchErr}`);
+    }
+  }
+
+  const res = await OM_NATIVE_FETCH(url, Object.assign({ method: 'GET', cache: 'no-store', redirect: 'follow' }, options));
+  const text = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText || ''}`.trim());
+  try {
+    return JSON.parse(text);
+  } catch (parseErr) {
+    const snippet = text.slice(0, 220).replace(/\s+/g, ' ').trim();
+    throw new Error(`${label}: не JSON ответ. начало: «${snippet}…»`);
+  }
+}
+
+// Подстраховка для остальных GET-запросов к Apps Script, которые в коде ниже
+// вызываются через fetch(url). POST не трогаем: он уже идёт text/plain без preflight.
+window.fetch = async function(input, init = {}) {
+  const url = typeof input === 'string' ? input : (input && input.url) || '';
+  const method = String((init && init.method) || 'GET').toUpperCase();
+  if (omIsAppsScriptUrl(url) && method === 'GET') {
+    try {
+      return await OM_NATIVE_FETCH(input, init);
+    } catch (err) {
+      const data = await omJsonpGet(url);
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+  }
+  return OM_NATIVE_FETCH(input, init);
+};
+
 // Telegram-нотификации. Тот же бот и чат, что в старой таблице "Заказы ФИКС".
 // Токен лежит в браузере — это сознательно, дашборд локальный.
 // Если бот станет светиться где-то ещё — сгенери новый через @BotFather (/revoke).
@@ -3097,7 +3197,7 @@ let warehousesByMp = FALLBACK_WAREHOUSES;
 let dispatchByMp = FALLBACK_DISPATCH;
 
 // Кэш данных из внешних API (Ozon/WB), индекс по номеру/id
-let externalCache = { ozon: null, wb: null, byNumber: {}, lastFetched: null };
+let externalCache = { ozon: null, wb: null, ym: null, byNumber: {}, lastFetched: null };
 
 const $ = id => document.getElementById(id);
 function setStatus(text, type) {
@@ -3500,7 +3600,7 @@ function openDispatchModal() {
 }
 function closeDispatchModal() { $('dispatchModal').style.display = 'none'; }
 
-// ============== ВНЕШНИЕ ПОСТАВКИ (Ozon / WB API) ==============
+// ============== ВНЕШНИЕ ПОСТАВКИ (Ozon / WB / ЯМ API) ==============
 // Ручная синхронизация WB → лист в таблице. Триггеры по времени делают то же
 // самое автоматически (07:00 / 12:00 / 15:00), но пользователь может нажать
 // кнопку и обновить здесь и сейчас. После синка дашборд перечитывает данные.
@@ -3514,10 +3614,9 @@ async function syncWbFromApi() {
   btn.style.opacity = '0.6';
   try {
     const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'action=syncWb';
-    const res = await fetch(url, { method: 'GET', cache: 'no-store' });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok) {
-      const msg = data.error || `HTTP ${res.status}`;
+    const data = await omApiGetJson(url, {}, 'WB sync');
+    if (!data.ok) {
+      const msg = data.error || 'unknown';
       // Если это rate limit — старые данные в листе сохранены, дашборд их и покажет
       if (data.kept_existing) {
         toast(`синк не прошёл (${msg.slice(0, 60)}), показываем старые данные`, true);
@@ -3525,12 +3624,40 @@ async function syncWbFromApi() {
         toast('синк не прошёл: ' + msg, true);
       }
     } else {
-      toast(`синхронизировано · ${data.count} поставок WB`);
+      toast(`синхронизировано · ${data.count || data.supplies || 0} поставок WB`);
     }
     // В любом случае перерисовываем модалку — пользователь увидит новый таймстамп
     await loadExternalSupplies(false);
   } catch (e) {
     toast('синк не прошёл: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+    btn.style.opacity = '';
+  }
+}
+
+async function syncYmFromApi() {
+  const btn = document.getElementById('extSyncYmBtn');
+  if (!btn) return;
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = '… идём в ЯМ API';
+  btn.style.opacity = '0.6';
+  try {
+    const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'action=syncYm';
+    const data = await omApiGetJson(url, {}, 'WB sync');
+    if (!data.ok) {
+      const msg = data.error || 'unknown';
+      toast('ЯМ синк не прошёл: ' + msg, true);
+    } else {
+      toast(`синхронизировано · ${data.supplies || data.count || 0} поставок ЯМ`);
+    }
+    await loadExternalSupplies(false);
+  } catch (e) {
+    toast('ЯМ синк не прошёл: ' + e.message, true);
+  } finally {
     btn.disabled = false;
     btn.textContent = orig;
     btn.style.opacity = '';
@@ -3547,17 +3674,17 @@ async function loadExternalSupplies(forceRefresh) {
   btn.textContent = 'загрузка...';
   btn.disabled = true;
   $('externalModalTitle').textContent = 'поставки в МП · загрузка...';
-  $('externalModalBody').innerHTML = '<div class="week-empty">запрашиваем у Ozon и WB...</div>';
+  $('externalModalBody').innerHTML = '<div class="week-empty">запрашиваем у Ozon, WB и ЯМ...</div>';
   $('externalModal').style.display = 'flex';
   try {
     let url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'external=1';
     if (forceRefresh) url += '&refresh=1';
-    const res = await fetch(url);
-    const data = await res.json();
+    const data = await omApiGetJson(url, {}, 'external supplies');
 
     // Сохраняем в кэш и строим индекс по номерам/id
     externalCache.ozon = data.ozon;
     externalCache.wb = data.wb;
+    externalCache.ym = data.ym;
     externalCache.lastFetched = new Date();
     externalCache.byNumber = buildExternalIndex(data);
     renderExternalSupplies(data);
@@ -3574,15 +3701,33 @@ async function loadExternalSupplies(forceRefresh) {
 // Строим индекс { номер_или_id : запись_из_API } для быстрого поиска
 function buildExternalIndex(data) {
   const idx = {};
-  const add = (rec) => {
+  const add = (rec, source) => {
     if (!rec) return;
-    const keys = [rec.id, rec.number].filter(Boolean).map(s => String(s).trim()).filter(Boolean);
-    keys.forEach(k => { idx[k] = rec; });
+    const enriched = Object.assign({}, rec, { source: rec.source || source });
+    const keys = [
+      rec.id,
+      rec.number,
+      rec.apiId,
+      rec.requestId,
+      rec.supplyID,
+      rec.preorderID,
+      rec.marketplaceRequestId,
+      rec.warehouseRequestId,
+      rec.warehouseRequestNumber,
+      rec.marketplaceRequestNumber
+    ].filter(Boolean).map(s => String(s).trim()).filter(Boolean);
+    keys.forEach(k => { idx[k] = enriched; });
   };
-  if (data.ozon && data.ozon.ok && Array.isArray(data.ozon.orders)) data.ozon.orders.forEach(add);
+  if (data.ozon && data.ozon.ok && Array.isArray(data.ozon.orders)) {
+    data.ozon.orders.forEach(s => add(s, 'ozon'));
+  }
   if (data.wb && data.wb.ok) {
-    if (Array.isArray(data.wb.orders)) data.wb.orders.forEach(add);
-    if (Array.isArray(data.wb.closed_orders)) data.wb.closed_orders.forEach(s => add({ ...s, closed: true }));
+    if (Array.isArray(data.wb.orders)) data.wb.orders.forEach(s => add(s, 'wb'));
+    if (Array.isArray(data.wb.closed_orders)) data.wb.closed_orders.forEach(s => add({ ...s, closed: true }, 'wb'));
+  }
+  if (data.ym && data.ym.ok) {
+    if (Array.isArray(data.ym.orders)) data.ym.orders.forEach(s => add(s, 'ym'));
+    if (Array.isArray(data.ym.closed_orders)) data.ym.closed_orders.forEach(s => add({ ...s, closed: true }, 'ym'));
   }
   return idx;
 }
@@ -3599,6 +3744,30 @@ function findOrderBySupplyNumber(supplyNumber) {
   if (!supplyNumber) return null;
   const key = String(supplyNumber).trim();
   return allOrders.find(o => o.supplyNumber && String(o.supplyNumber).trim() === key) || null;
+}
+
+// Для ЯМ одна и та же поставка может проходить под несколькими номерами:
+// внутренний id, marketplaceRequestId, warehouseRequestId. Поэтому ищем связь
+// с OM не только по displayNumber, а по всем возможным идентификаторам записи.
+function findOrderBySupplyRecord(rec) {
+  if (!rec) return null;
+  const keys = [
+    rec.id,
+    rec.number,
+    rec.apiId,
+    rec.requestId,
+    rec.supplyID,
+    rec.preorderID,
+    rec.marketplaceRequestId,
+    rec.warehouseRequestId,
+    rec.warehouseRequestNumber,
+    rec.marketplaceRequestNumber
+  ].filter(Boolean).map(s => String(s).trim()).filter(Boolean);
+  for (const k of keys) {
+    const found = findOrderBySupplyNumber(k);
+    if (found) return found;
+  }
+  return null;
 }
 function closeExternalModal() {
   $('externalModal').style.display = 'none';
@@ -3773,8 +3942,13 @@ async function openSupplyDetails(source, id, number, isPreorderID, forceRefresh)
     if (source === 'wb' && typeof isPreorderID !== 'undefined') {
       url += '&isPreorderID=' + (isPreorderID ? 'true' : 'false');
     }
-    const res = await fetch(url);
-    const data = await res.json();
+    if (source === 'ym') {
+      const ext = findExternalBySupplyNumber(number || id) || findExternalBySupplyNumber(apiId);
+      if (ext && ext.campaignId) {
+        url += '&campaignId=' + encodeURIComponent(String(ext.campaignId));
+      }
+    }
+    const data = await omApiGetJson(url, {}, 'supply details');
     // В кеш кладём только WB и только полные ответы с составом
     if (false && source !== 'ozon' && data && data.ok && (data.goods_count > 0 || data.orders_count > 0)) {
       supplyCacheSet(source, apiId, isPreorderID, data);
@@ -3920,10 +4094,12 @@ function omSkuMeta(item, source) {
   item = item || {};
   const candidates = source === 'wb'
     ? [item.barcode, item.article, item.supplierArticle, item.vendorCode, item.nmId]
-    : [item.offer_id, item.offerId, item.sku, item.barcode, item.article, item.vendorCode];
+    : (source === 'ym'
+      ? [item.barcode, item.offerId, item.offer_id, item.article, item.sku, item.marketSku, item.vendorCode]
+      : [item.offer_id, item.offerId, item.sku, item.barcode, item.article, item.vendorCode]);
   const ref = omSkuRefByCandidates(candidates);
   const info = ref.info || {};
-  const barcode = ref.ean || omNormalizeSkuKey(item.barcode) || (source === 'ozon' ? omNormalizeSkuKey(item.sku) : omNormalizeSkuKey(item.article));
+  const barcode = ref.ean || omNormalizeSkuKey(item.barcode) || (source === 'ozon' ? omNormalizeSkuKey(item.sku) : (source === 'ym' ? omNormalizeSkuKey(item.offerId || item.article || item.sku) : omNormalizeSkuKey(item.article)));
   const code1c = info.code1c || (ref.matchedBy === 'code1c' ? candidates.map(omNormalizeSkuKey).find(k => k && /^([А-ЯA-Z]{2}-|\d{2}-)/i.test(k)) : '') || '';
   const type = omSkuTypeFromInfo(info);
   const shortName = info.shortName || item.shortName || item.name || item.subject || '';
@@ -3961,9 +4137,8 @@ async function sendOrderEmail(order) {
   const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + params.toString();
 
   try {
-    const res = await fetch(url, { method: 'GET', cache: 'no-store' });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok) return { ok: false, error: data.error || `HTTP ${res.status}` };
+    const data = await omApiGetJson(url, {}, 'email notification');
+    if (!data.ok) return { ok: false, error: data.error || 'unknown' };
     return { ok: true, sent_to: data.sent_to || 0 };
   } catch (e) {
     return { ok: false, error: e.message || 'network error' };
@@ -4315,6 +4490,51 @@ function renderSupplyDetails(source, id, number, data) {
     }
   }
 
+  else if (source === 'ym' && data.supply) {
+    const s = data.supply;
+    const cards = [];
+
+    const linkedRow = findOrderBySupplyRecord(s) || (allOrders || []).find(o =>
+      o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+    );
+
+    cards.push(`<div class="supply-card">
+      <div class="supply-card-title">статус и параметры</div>
+      ${s.number ? `<div class="supply-card-row"><span class="label">№ заявки</span><span>${escapeHtml(String(s.number))}</span></div>` : ''}
+      ${s.id ? `<div class="supply-card-row"><span class="label">ID ЯМ</span><span>${escapeHtml(String(s.id))}</span></div>` : ''}
+      ${s.campaignName ? `<div class="supply-card-row"><span class="label">кабинет</span><span>${escapeHtml(String(s.campaignName))}</span></div>` : ''}
+      ${s.state ? `<div class="supply-card-row"><span class="label">статус</span><span>${escapeHtml(String(s.state))}</span></div>` : ''}
+      <div class="supply-card-flags"><span class="supply-card-flag">FBY</span><span class="supply-card-flag">ЯМ</span></div>
+    </div>`);
+
+    cards.push(`<div class="supply-card">
+      <div class="supply-card-title">склад назначения</div>
+      ${s.targetWarehouseName ? `<div class="supply-card-main">${escapeHtml(String(s.targetWarehouseName))}</div>` : '<div class="supply-card-empty">склад не указан</div>'}
+      ${s.targetAddress ? `<div class="supply-card-sub">${escapeHtml(String(s.targetAddress))}</div>` : ''}
+    </div>`);
+
+    cards.push(`<div class="supply-card">
+      <div class="supply-card-title">склад отгрузки</div>
+      ${s.sourceWarehouseName ? `<div class="supply-card-main">${escapeHtml(String(s.sourceWarehouseName))}</div>` : '<div class="supply-card-empty">склад не указан</div>'}
+      ${s.sourceAddress ? `<div class="supply-card-sub">${escapeHtml(String(s.sourceAddress))}</div>` : ''}
+    </div>`);
+
+    cards.push(`<div class="supply-card">
+      <div class="supply-card-title">дата поставки</div>
+      ${s.requestedDateText || s.planned || s.requestedDate
+        ? `<div class="supply-card-main">${escapeHtml(String(s.requestedDateText || s.planned || String(s.requestedDate).slice(0, 10)))}</div>`
+        : '<div class="supply-card-empty">дата не указана</div>'}
+      ${s.updatedAt ? `<div class="supply-card-sub">обновлено: ${escapeHtml(String(s.updatedAt).slice(0, 10))}</div>` : ''}
+    </div>`);
+
+    html += `<div class="supply-cards">${cards.join('')}</div>`;
+
+    html += `<div class="cabinet-link-row" style="padding-top:4px;padding-bottom:10px;">
+      ${linkedRow ? `<button class="cabinet-link" data-row="${linkedRow.rowNum}" id="goToOrderBtn" style="font-size:11px;">✎ редактировать данные в ОМ</button>` : ''}
+      <a href="${escapeHtml(data.cabinet_url || s.cabinet_url || 'https://partner.market.yandex.ru/')}" target="_blank" class="cabinet-link" style="font-size:11px;">→ открыть кабинет ЯМ</a>
+    </div>`;
+  }
+
   if (!orders.length) {
     if (data.goods_rate_limited) {
       // Мета пришла, состав — нет: WB API ограничил отдельно вызов /goods.
@@ -4325,6 +4545,8 @@ function renderSupplyDetails(source, id, number, data) {
       </div>`;
     } else if (data.goods_http_code && data.goods_http_code !== 200) {
       html += `<div class="dispatch-empty">состав не получен · WB вернул HTTP ${data.goods_http_code}</div>`;
+    } else if (source === 'ym') {
+      html += '<div class="dispatch-empty">в поставке ЯМ нет товаров или состав ещё не синхронизирован</div>';
     } else {
       html += '<div class="dispatch-empty">в поставке нет товаров</div>';
     }
@@ -4394,6 +4616,52 @@ function renderSupplyDetails(source, id, number, data) {
         <span class="qty">${p.quantity || 0}</span>
       </div>`;
     });
+    html += '</div>';
+  } else if (source === 'ym') {
+    const totalQty = orders.reduce((sum, p) => sum + (Number(p.quantity || p.planCount) || 0), 0);
+    const totalAccepted = orders.reduce((sum, p) => sum + (Number(p.acceptedQuantity || p.factCount) || 0), 0);
+    const totalShortage = orders.reduce((sum, p) => sum + (Number(p.shortageCount) || 0), 0);
+    const totalSurplus = orders.reduce((sum, p) => sum + (Number(p.surplusCount) || 0), 0);
+    const totalDefect = orders.reduce((sum, p) => sum + (Number(p.defectCount) || 0), 0);
+
+    html += `<div class="supply-summary-strip">
+      <div class="supply-summary-chip"><div class="supply-summary-label">позиций</div><div class="supply-summary-value">${orders.length}</div></div>
+      <div class="supply-summary-chip"><div class="supply-summary-label">штук по плану</div><div class="supply-summary-value">${totalQty} <span>шт</span></div></div>
+      <div class="supply-summary-chip"><div class="supply-summary-label">принято</div><div class="supply-summary-value">${totalAccepted} <span>шт</span></div></div>
+      ${totalShortage ? `<div class="supply-summary-chip"><div class="supply-summary-label">недостача</div><div class="supply-summary-value">${totalShortage} <span>шт</span></div></div>` : ''}
+      ${totalSurplus ? `<div class="supply-summary-chip"><div class="supply-summary-label">излишки</div><div class="supply-summary-value">${totalSurplus} <span>шт</span></div></div>` : ''}
+      ${totalDefect ? `<div class="supply-summary-chip"><div class="supply-summary-label">брак</div><div class="supply-summary-value">${totalDefect} <span>шт</span></div></div>` : ''}
+    </div>`;
+
+    html += `<div class="supply-products-table ym">
+      <div class="supply-products-head">
+        <span>код 1С</span>
+        <span>ШК / offerId</span>
+        <span>SKU ЯМ</span>
+        <span>тип</span>
+        <span>короткое наименование</span>
+        <span class="qty-head">план</span>
+        <span class="qty-head">принято</span>
+      </div>`;
+
+    orders.forEach(p => {
+      const meta = omSkuMeta(p, 'ym');
+      const offer = p.offerId || p.offer_id || p.barcode || p.article || '';
+      const sku = p.sku || p.skuYm || p.marketSku || p.nmId || p.nmID || '';
+      const qty = Number(p.quantity || p.planCount || 0);
+      const accepted = Number(p.acceptedQuantity || p.factCount || 0);
+      const accClass = accepted >= qty && qty > 0 ? 'ok' : 'partial';
+      html += `<div class="supply-products-row">
+        <span class="art">${escapeHtml(meta.code1c)}</span>
+        <span class="nm">${escapeHtml(String(meta.barcode || offer || '—'))}</span>
+        <span class="art">${escapeHtml(String(sku || '—'))}</span>
+        <span>${omSkuTypeHtml(meta.type)}</span>
+        <span class="name" title="${escapeHtml(meta.shortName || p.name || '')}">${escapeHtml(meta.shortName || p.shortName || p.name || offer || '—')}</span>
+        <span class="qty">${qty || 0}</span>
+        <span class="qty-accepted ${accClass}">${accepted || 0}</span>
+      </div>`;
+    });
+
     html += '</div>';
   }
 
@@ -4667,14 +4935,17 @@ function showOzonRawDebug(jsonStr) {
 function renderExternalSupplies(data) {
   const ozon = data.ozon || {};
   const wb = data.wb || {};
+  const ym = data.ym || {};
   // Источник данных: 'wb_sheet' (новый, из листа) или старая логика
   const fromSheet = wb.source === 'wb_sheet';
   const wbList = (wb.ok && wb.orders) ? wb.orders : [];
   const ozonList = (ozon.ok && ozon.orders) ? ozon.orders : [];
+  const ymList = (ym.ok && ym.orders) ? ym.orders : [];
   const wbOpen = wbList.filter(s => !s.done).length;
-  const ozonOpen = ozonList.length;
+  const ozonOpen = ozonList.filter(s => !s.done).length;
+  const ymOpen = ymList.filter(s => !s.done).length;
 
-  let title = `активные поставки в МП · WB ${wbOpen} · Ozon ${ozonOpen}`;
+  let title = `активные поставки в МП · WB ${wbOpen} · Ozon ${ozonOpen} · ЯМ ${ymOpen}`;
   if (fromSheet && wb.synced_at) {
     const ageMin = Math.floor((Date.now() - wb.synced_at) / 60000);
     if (ageMin >= 60) title += ` · WB ${Math.floor(ageMin/60)}ч назад`;
@@ -4683,8 +4954,10 @@ function renderExternalSupplies(data) {
   $('externalModalTitle').textContent = title;
 
   let html = '';
+  let secondsLeft = 0;
+  let isRateLimited = false;
 
-  // Тулбар: статус последней синхронизации WB-листа + кнопка ручного синка
+  // Тулбар: статус последней синхронизации WB-листа + кнопки ручного синка
   let statusLine = '';
   if (fromSheet) {
     if (wb.synced_at) {
@@ -4693,16 +4966,23 @@ function renderExternalSupplies(data) {
       if (ageMin < 1) ageTxt = 'только что';
       else if (ageMin < 60) ageTxt = `${ageMin} мин назад`;
       else ageTxt = `${Math.floor(ageMin/60)} ч ${ageMin%60} мин назад`;
-      statusLine = `<span class="ext-cache-status">данные из листа · синхронизировано ${escapeHtml(ageTxt)} · авто 07:00 / 12:00 / 15:00</span>`;
+      statusLine = `<span class="ext-cache-status">данные WB из листа · синхронизировано ${escapeHtml(ageTxt)} · авто 07:00 / 12:00 / 15:00</span>`;
     } else if (!wb.ok) {
-      statusLine = `<span class="ext-cache-status ext-cache-rl">${escapeHtml(wb.error || 'лист пуст')}</span>`;
+      statusLine = `<span class="ext-cache-status ext-cache-rl">${escapeHtml(wb.error || 'лист WB пуст')}</span>`;
     } else {
-      statusLine = `<span class="ext-cache-status">данные из листа</span>`;
+      statusLine = `<span class="ext-cache-status">данные WB из листа</span>`;
     }
   }
+  if (wb.cached_at && wb.cache_ttl) {
+    secondsLeft = Math.max(0, Math.floor((Number(wb.cached_at) + Number(wb.cache_ttl) * 1000 - Date.now()) / 1000));
+    isRateLimited = !!wb.is_rate_limited;
+    statusLine += `<span id="extCountdownLabel" class="ext-cache-status ${isRateLimited ? 'ext-cache-rl' : ''}">${isRateLimited ? 'WB API заблокирован' : 'данные WB из кэша'} · ${formatSeconds(secondsLeft)}</span>`;
+  }
+
   html += `<div class="ext-toolbar">
     ${statusLine}
-    <button class="cabinet-link" id="extSyncBtn" onclick="syncWbFromApi()" style="font-size:11px;">↻ синхронизировать сейчас</button>
+    <button class="cabinet-link" id="extSyncBtn" onclick="syncWbFromApi()" style="font-size:11px;">↻ WB синк</button>
+    <button class="cabinet-link" id="extSyncYmBtn" onclick="syncYmFromApi()" style="font-size:11px;">↻ ЯМ синк</button>
   </div>`;
 
   // ============ WB ============
@@ -4718,15 +4998,13 @@ function renderExternalSupplies(data) {
     if (wb.tried && wb.tried.length) html += `<div class="api-debug">${wb.tried.map(escapeHtml).join('<br>')}</div>`;
   } else if (!wbList.length) {
     html += '<div class="dispatch-empty">нет активных поставок · последние принятые тоже отсутствуют (10 дней)</div>';
-    // Диагностика: показываем что вернул API даже если list пустой
     if (wb.tried && wb.tried.length) html += `<div class="api-debug">${wb.tried.map(escapeHtml).join('<br>')}</div>`;
   } else {
     wbList.forEach(s => {
-      const linked = findOrderBySupplyNumber(s.number || s.id);
+      const linked = findOrderBySupplyRecord(s) || findOrderBySupplyNumber(s.number || s.id);
       const linkBadge = linked
         ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
         : `<span class="ext-link-badge muted">не в OM</span>`;
-      // Дата для отображения: factDate если уже принята, иначе planned (supplyDate), иначе createDate
       const dateLabel = s.done && s.factDate
         ? String(s.factDate).slice(0,10)
         : (s.planned ? String(s.planned).slice(0,10) : String(s.created || '').slice(0,10));
@@ -4754,6 +5032,51 @@ function renderExternalSupplies(data) {
   }
   html += '</div>';
 
+  // ============ ЯМ ============
+  html += `<div class="dispatch-section">
+    <div class="dispatch-section-title">
+      <span>ЯМ — поставки FBY</span>
+      <span class="dispatch-section-count">${ymList.length}</span>
+    </div>`;
+  if (!ym.ok) {
+    html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(ym.error || 'неизвестная ошибка')}</div>`;
+    if (ym.hint) html += `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">${escapeHtml(ym.hint)}</div>`;
+    if (ym.body) html += `<div class="api-debug">${escapeHtml(ym.body)}</div>`;
+    if (ym.tried && ym.tried.length) html += `<div class="api-debug">${ym.tried.map(escapeHtml).join('<br>')}</div>`;
+  } else if (!ymList.length) {
+    html += '<div class="dispatch-empty">нет активных поставок ЯМ</div>';
+  } else {
+    ymList.forEach(s => {
+      const displayNumber = s.number || s.marketplaceRequestId || s.warehouseRequestId || s.id;
+      const linked = findOrderBySupplyRecord(s) || findOrderBySupplyNumber(displayNumber);
+      const linkBadge = linked
+        ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
+        : `<span class="ext-link-badge muted">не в OM</span>`;
+      const dateLabel = s.planned
+        ? String(s.planned).slice(0, 10)
+        : (s.requestedDate ? String(s.requestedDate).slice(0, 10) : String(s.updatedAt || '').slice(0, 10));
+      const dateHint = s.planned || s.requestedDate ? 'плановая' : 'обновлена';
+      const stateColor = s.done ? 'var(--text-muted)' : '#D4A472';
+      html += `
+        <div class="dispatch-row supply-clickable"
+             data-supply-id="${escapeHtml(s.id)}"
+             data-supply-number="${escapeHtml(displayNumber)}"
+             data-source="ym"
+             data-campaign-id="${escapeHtml(String(s.campaignId || ''))}"
+             title="нажми чтобы посмотреть состав ЯМ">
+          <div class="dispatch-cell-date">${escapeHtml(dateLabel || '—')}<div style="font-size:10px;color:var(--text-muted);">${dateHint}</div></div>
+          <div class="dispatch-cell-car">${escapeHtml(displayNumber || '—')}</div>
+          <div class="dispatch-cell-driver">${escapeHtml(s.targetWarehouseName || s.warehouseName || '')}</div>
+          <div class="dispatch-cell-driver" style="font-size:11px;color:${stateColor};">${escapeHtml(s.state || s.status || '')}</div>
+          <div>${linkBadge}</div>
+        </div>`;
+    });
+  }
+  html += `<div class="cabinet-link-row">
+    <a href="${escapeHtml(ym.cabinet_url || 'https://partner.market.yandex.ru/')}" target="_blank" class="cabinet-link">→ открыть кабинет ЯМ</a>
+  </div>`;
+  html += '</div>';
+
   // ============ Ozon ============
   html += `<div class="dispatch-section">
     <div class="dispatch-section-title">
@@ -4769,16 +5092,12 @@ function renderExternalSupplies(data) {
     html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(ozon.error || 'неизвестная ошибка')}</div>`;
     if (ozon.tried && ozon.tried.length) html += `<div class="api-debug">${ozon.tried.map(escapeHtml).join('<br>')}</div>`;
   } else if (!ozonList.length) {
-    if (ozon.note) {
-      html += `<div class="api-banner">${escapeHtml(ozon.note)}</div>`;
-    } else {
-      html += '<div class="dispatch-empty">нет активных заявок на поставку</div>';
-    }
-    // Помощник: как достать настоящий supply_order_id из кабинета
+    if (ozon.note) html += `<div class="api-banner">${escapeHtml(ozon.note)}</div>`;
+    else html += '<div class="dispatch-empty">нет активных заявок на поставку</div>';
     html += renderOzonHelper();
   } else {
     ozonList.forEach(s => {
-      const linked = findOrderBySupplyNumber(s.number || s.id);
+      const linked = findOrderBySupplyRecord(s) || findOrderBySupplyNumber(s.number || s.id);
       const linkBadge = linked
         ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
         : `<span class="ext-link-badge muted">не в OM</span>`;
@@ -4814,6 +5133,11 @@ function renderExternalSupplies(data) {
       const number = el.dataset.supplyNumber;
       const source = el.dataset.source;
       const isPreorder = el.dataset.isPreorder === '1';
+      if (source === 'ym') {
+        const campaignId = el.dataset.campaignId || '';
+        const ext = findExternalBySupplyNumber(number || id) || findExternalBySupplyNumber(id);
+        if (ext && campaignId) ext.campaignId = campaignId;
+      }
       openSupplyDetails(source, id, number, isPreorder);
     });
   });
@@ -4862,6 +5186,25 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+
+async function omConnectionDiagnostics() {
+  const base = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?');
+  const results = [];
+  try {
+    const ping = await omApiGetJson(base + 'ping=1', {}, 'ping');
+    results.push('ping: ' + (ping && ping.ok ? 'OK' : JSON.stringify(ping)));
+  } catch (e) {
+    results.push('ping: FAIL — ' + (e.message || e));
+  }
+  try {
+    const diag = await omApiGetJson(base + 'diagnostics=1', {}, 'diagnostics');
+    results.push('diagnostics: ' + JSON.stringify(diag));
+  } catch (e) {
+    results.push('diagnostics: FAIL — ' + (e.message || e));
+  }
+  alert(results.join('\n\n'));
+}
+
 async function loadData() {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR')) {
     $('setupBanner').style.display = 'block';
@@ -4877,29 +5220,17 @@ async function loadData() {
     // 200×53 + два справочника + чат). Даём ему до 30с, и на 15с показываем
     // промежуточное сообщение, чтобы было видно, что дашборд не висит.
     const HINT_AT_MS = 15000;
-    const ABORT_AT_MS = 30000;
-    const hintId = setTimeout(() => setStatus('ждём ещё · Apps Script просыпается', 'loading'), HINT_AT_MS);
+    const ABORT_AT_MS = 90000;
+    const hintId = setTimeout(() => setStatus('ждём Apps Script · первый запуск может быть долгим', 'loading'), HINT_AT_MS);
     const timeoutId = setTimeout(() => controller.abort(), ABORT_AT_MS);
-    const res = await fetch(APPS_SCRIPT_URL, {
+    const data = await omApiGetJson(APPS_SCRIPT_URL, {
       signal: controller.signal,
       redirect: 'follow',
       cache: 'no-store'
-    });
+    }, 'главная загрузка');
     clearTimeout(timeoutId);
     clearTimeout(hintId);
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} ${res.statusText || ''}`.trim());
-    }
     stage = 'parse';
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (parseErr) {
-      // Apps Script вернул HTML (логин-страницу или ошибку) вместо JSON
-      const snippet = text.slice(0, 120).replace(/\s+/g, ' ').trim();
-      throw new Error(`не JSON ответ. начало: «${snippet}…»`);
-    }
     if (!data.ok) throw new Error(data.error || 'unknown error');
     allOrders = data.orders || [];
     allMessages = data.messages || [];
@@ -4936,7 +5267,7 @@ async function loadData() {
   } catch (e) {
     const isTimeout = e.name === 'AbortError';
     let reason;
-    if (isTimeout) reason = 'таймаут (>30с)';
+    if (isTimeout) reason = 'таймаут (>90с)';
     else if (e.message && e.message.startsWith('HTTP')) reason = e.message;
     else if (e.message && e.message.includes('не JSON')) reason = e.message;
     else if (e.message && e.message.toLowerCase().includes('failed to fetch')) reason = 'CORS / сеть';
@@ -4954,12 +5285,14 @@ async function loadData() {
             <li><a href="${APPS_SCRIPT_URL}" target="_blank" style="color:var(--accent-copper); text-decoration: underline;">открыть URL Apps Script</a> — должен отдать JSON. Если просит логин или пишет «Sorry, unable to open the file» — значит развёртывание настроено не на «Anyone» либо устарело.</li>
             <li>в Apps Script → <strong>Развернуть → Управление развёртываниями → Edit (карандаш) → Версия: Новая версия → Развернуть</strong>. URL остаётся тот же.</li>
             <li>в Apps Script слева → <strong>Выполнения</strong> — посмотри, есть ли красные ошибки в последних запусках.</li>
-            <li>попробуй <button type="button" id="retryBtn" style="background:none; border:none; color:var(--accent-copper); cursor:pointer; text-decoration:underline; font:inherit; padding:0;">повторить попытку</button> — иногда первый запрос «прогревает» Apps Script.</li>
+            <li>попробуй <button type="button" id="diagBtn" style="background:none; border:none; color:var(--accent-copper); cursor:pointer; text-decoration:underline; font:inherit; padding:0;">тест подключения</button> или <button type="button" id="retryBtn" style="background:none; border:none; color:var(--accent-copper); cursor:pointer; text-decoration:underline; font:inherit; padding:0;">повторить попытку</button> — иногда первый запрос «прогревает» Apps Script.</li>
           </ol>
         </div>
       </td></tr>`;
     const retry = document.getElementById('retryBtn');
     if (retry) retry.addEventListener('click', () => loadData());
+    const diag = document.getElementById('diagBtn');
+    if (diag) diag.addEventListener('click', () => omConnectionDiagnostics());
   }
 }
 
@@ -5087,7 +5420,8 @@ function renderSupplyCell(o) {
   let source = '';
   if (mp === 'wb' || mp === 'вб' || mp.includes('wild')) source = 'wb';
   else if (mp === 'ozon' || mp === 'озон') source = 'ozon';
-  if (!source) return numHtml; // для других МП (Сбер, ЯМ и т.п.) — обычный текст
+  else if (mp === 'ям' || mp === 'я.м' || mp === 'яндекс' || mp === 'яндекс маркет' || mp.includes('yandex') || mp.includes('market.yandex')) source = 'ym';
+  if (!source) return numHtml;
 
   const ext = findExternalBySupplyNumber(num);
   const cls = ext ? 'supply-linked clickable' : 'supply-clickable-only';
@@ -5096,12 +5430,20 @@ function renderSupplyCell(o) {
     title = ext
       ? (source.toUpperCase() + ' · нажми чтобы открыть в кабинете Ozon')
       : 'Ozon · нажми чтобы открыть кабинет (API Ozon не позволяет искать заявку по номеру)';
+  } else if (source === 'ym') {
+    const status = ext ? (ext.state || ext.status || (ext.done ? 'завершена' : 'в работе')) : 'нажми, чтобы посмотреть состав';
+    title = 'ЯМ · ' + status;
   } else {
     const status = ext ? (ext.state || (ext.done ? 'принята' : 'в работе')) : 'нажми, чтобы посмотреть состав';
     title = source.toUpperCase() + ' · ' + status;
   }
-  return `<span class="${cls}" data-source="${source}" data-id="${escapeHtml(String(num))}" title="${escapeHtml(title)}">${numHtml} <span class="supply-link-mark">↗</span></span>`;
+  const campaignAttr = ext && ext.campaignId
+    ? ` data-campaign-id="${escapeHtml(String(ext.campaignId))}"`
+    : '';
+  const apiId = source === 'ym' && ext && ext.id ? String(ext.id) : String(num);
+  return `<span class="${cls}" data-source="${source}" data-id="${escapeHtml(apiId)}" data-number="${escapeHtml(String(num))}"${campaignAttr} title="${escapeHtml(title)}">${numHtml} <span class="supply-link-mark">↗</span></span>`;
 }
+
 
 // Заказ "без машины" = нет номера машины и нет факт. поставки на МП (т.е. ещё не отгружен)
 function isNoCar(o) {
@@ -5372,8 +5714,14 @@ function renderTable() {
         e.stopPropagation();
         const source = supplyEl.dataset.source;
         const id = supplyEl.dataset.id;
+        const number = supplyEl.dataset.number || id;
         if (!source || !id) return;
-        openSupplyDetails(source, id, id);
+        if (source === 'ym') {
+          const campaignId = supplyEl.dataset.campaignId || '';
+          const ext = findExternalBySupplyNumber(number) || findExternalBySupplyNumber(id);
+          if (ext && campaignId) ext.campaignId = campaignId;
+        }
+        openSupplyDetails(source, id, number);
         return;
       }
       const rowNum = parseInt(tr.dataset.row, 10);
@@ -5506,9 +5854,8 @@ async function deleteCurrentOrder() {
   try {
     const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') +
       'action=deleteOrder&row=' + encodeURIComponent(String(editingRowNum));
-    const res = await fetch(url, { method: 'GET', cache: 'no-store' });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    const data = await omApiGetJson(url, {}, 'delete order');
+    if (!data.ok) throw new Error(data.error || 'unknown');
     toast(`удалён · ${label}`);
     exitEditMode();
     setStatus('синхронизировано', '');
