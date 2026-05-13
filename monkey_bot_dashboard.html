@@ -145,6 +145,25 @@ body::before{
 .proc-btn.show{display:block;}
 .proc-btn:disabled{opacity:.4;cursor:not-allowed;}
 
+/* ── OZON MIX BOXES OPTION ── */
+.mix-opt{
+  max-width:500px;margin:14px 0 0;background:linear-gradient(135deg,rgba(0,91,255,.26),rgba(245,166,35,.12)),var(--s1);
+  border:2px solid rgba(0,91,255,.75);border-radius:16px;padding:16px 18px;display:none;align-items:center;gap:14px;
+  cursor:pointer;transition:all .2s;box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 0 28px rgba(0,91,255,.16);position:relative;overflow:hidden;
+}
+.mix-opt::before{content:'ВАЖНО';position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:1px;color:#080b10;background:var(--mk);border-radius:999px;padding:3px 8px;}
+.mix-opt.show{display:flex;}
+.mix-opt:hover{border-color:var(--mk);background:linear-gradient(135deg,rgba(0,91,255,.34),rgba(245,166,35,.20)),var(--s1);transform:translateY(-1px);box-shadow:0 0 0 1px rgba(245,166,35,.18) inset,0 10px 28px rgba(0,0,0,.25),0 0 32px rgba(245,166,35,.18);}
+.mix-opt input{appearance:none;-webkit-appearance:none;width:46px;height:26px;border-radius:999px;background:var(--s3);border:1px solid rgba(255,255,255,.18);position:relative;flex-shrink:0;transition:all .2s;box-shadow:inset 0 2px 6px rgba(0,0,0,.35);}
+.mix-opt input::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--dim);transition:all .2s;box-shadow:0 2px 5px rgba(0,0,0,.45);}
+.mix-opt input:checked{background:var(--mk);border-color:var(--mk);box-shadow:0 0 18px rgba(245,166,35,.42);}
+.mix-opt input:checked::after{left:23px;background:#080b10;}
+.mix-opt-icon{font-size:28px;line-height:1;filter:drop-shadow(0 0 10px rgba(245,166,35,.35));}
+.mix-opt-text{display:flex;flex-direction:column;padding-right:72px;}
+.mix-opt-title{font-size:15px;font-weight:900;color:#fff;line-height:1.25;text-transform:uppercase;letter-spacing:.5px;}
+.mix-opt-title b{color:var(--mk);}
+.mix-opt-sub{font-size:12px;color:#aeb8c8;line-height:1.45;margin-top:4px;}
+
 /* ── MULTI DROP ── */
 .multi-dz{border:2px dashed var(--border);border-radius:14px;padding:28px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--s1);position:relative;max-width:560px;}
 .multi-dz:hover,.multi-dz.dragover{border-color:var(--mk);background:var(--mk-d);}
@@ -425,6 +444,14 @@ body::before{
           <div class="dz-sub">или нажмите для выбора · .xlsx / .xls</div>
           <div class="dz-chosen" id="dzChosen"></div>
         </div>
+        <label class="mix-opt" id="ozonMixWrap">
+          <input type="checkbox" id="ozonMixBoxes">
+          <span class="mix-opt-icon">📦</span>
+          <span class="mix-opt-text">
+            <span class="mix-opt-title"><b>Микс короба</b> — переносить ШК как в файле</span>
+            <span class="mix-opt-sub">Включите, если в Ozon коробах разные количества: 16 / 5 / 2 / 1. Кратность из БД не применяется.</span>
+          </span>
+        </label>
         <button class="proc-btn" id="procBtn" onclick="processOrder()">ОБРАБОТАТЬ →</button>
       </div>
 
@@ -1204,13 +1231,23 @@ function prepUpload(){
   var l=PLAT_LABELS[S.platform]||{};
   document.getElementById('uploadTitle').textContent=l.title||'ЗАГРУЗКА';
   document.getElementById('uploadSub').textContent=l.sub||'';
-  resetDz(); goStep('upload');
+  resetDz();
+  updateOzonMixOption();
+  goStep('upload');
 }
 function resetDz(){
   S.orderFile=null;
   document.getElementById('dzChosen').style.display='none';
   document.getElementById('procBtn').classList.remove('show');
   document.getElementById('fileInput').value='';
+}
+function updateOzonMixOption(){
+  var wrap=document.getElementById('ozonMixWrap');
+  var chk=document.getElementById('ozonMixBoxes');
+  if(!wrap||!chk) return;
+  var show=S.platform==='OzonBox';
+  wrap.classList.toggle('show',show);
+  if(!show) chk.checked=false;
 }
 
 function dzOver(e,on){e.preventDefault();document.getElementById('dropZone').classList.toggle('dragover',on);}
@@ -1233,7 +1270,8 @@ async function processOrder(){
   showSpinner('Обрабатываем '+S.platform+'…');
   try{
     var buf=await S.orderFile.arrayBuffer();
-    var result=runPipeline(S.platform,buf,S.bdRows);
+    var opts={ozonMixBoxes:S.platform==='OzonBox' && !!(document.getElementById('ozonMixBoxes')&&document.getElementById('ozonMixBoxes').checked)};
+    var result=runPipeline(S.platform,buf,S.bdRows,opts);
     renderResult(result,S.orderFileName);
     goStep('result');
     toast('✅ Обработка завершена!','ok');
@@ -1567,7 +1605,8 @@ async function downloadReverseZip(btn){
  *  Строки 2+ = данные.
  *  sheet_to_json с header:1 даёт числовые ключи → берём строку [1] как заголовок.
  */
-function parseOrderFile(buf){
+function parseOrderFile(buf,opts){
+  opts=opts||{};
   var wb=XLSX.read(buf,{type:'array'});
   var ws=wb.Sheets[wb.SheetNames[0]];
   var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
@@ -1581,6 +1620,7 @@ function parseOrderFile(buf){
     if(row['Код 1С']&&row['Код 1С'].trim()!==''&&row['Код 1С']!=='nan') rows.push(row);
   }
   if(!rows.length) throw new Error('Нет данных после фильтрации (проверьте колонку «Код 1С»)');
+  if(opts.preserveRows) return rows;
 
   // ── КОНСОЛИДАЦИЯ: суммируем дубли по Код 1С ──
   var colsToSum=['Итого кол-во','Кол-во коробов'];
@@ -1660,12 +1700,16 @@ function wb_sborka(orderBuf,bdRows){
 }
 
 /* ── OZON КОРОБАМИ ── */
-function ozon_box_sborka(orderBuf,bdRows){
-  var res=parseOrderFile(orderBuf);
+function ozon_box_sborka(orderBuf,bdRows,opts){
+  opts=opts||{};
+  // Обычный режим: как раньше, сначала консолидируем одинаковые Код 1С и берём кратность из БД.
+  // Режим «Микс короба»: для файла ШК сохраняем строки входного файла 1-в-1 и берём размер короба из входной колонки «Кратность короба».
+  var res=parseOrderFile(orderBuf,{preserveRows:!!opts.ozonMixBoxes});
+  var resForOrder=opts.ozonMixBoxes?parseOrderFile(orderBuf):res;
   var merged=mergeOnKod1c(res,bdRows);
 
-  // SK_FILE: артикул, имя, количество
-  var skFile=res.map(function(r){return{
+  // SK_FILE: артикул, имя, количество — оставляем консолидированным по SKU, чтобы заказ Ozon не дублировал артикулы.
+  var skFile=resForOrder.map(function(r){return{
     'артикул': r['Код 1С'],
     'имя (необязательно)': r['Короткое наименование']||'',
     'количество': r['Итого кол-во']||''
@@ -1674,7 +1718,9 @@ function ozon_box_sborka(orderBuf,bdRows){
   var final2=[];
   merged.forEach(function(r){
     var numBoxes=toInt(r['Кол-во коробов']);
-    var boxItems=toFloat(r['Кратность короба_bd']||r['Кратность короба']);
+    var boxItems=opts.ozonMixBoxes
+      ? toFloat(r['Кратность короба']||r['Итого кол-во'])
+      : toFloat(r['Кратность короба_bd']||r['Кратность короба']);
     for(var i=0;i<numBoxes;i++){
       final2.push({
         'ШК товара': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
@@ -1688,6 +1734,16 @@ function ozon_box_sborka(orderBuf,bdRows){
       });
     }
   });
+  if(opts.ozonMixBoxes){
+    // В микс-коробах группируем ШК по артикулу, чтобы все короба одного SKU шли рядом.
+    // Внутри одного артикула порядок строк из загруженного файла сохраняется.
+    final2=final2.map(function(row,idx){return {row:row,idx:idx};}).sort(function(a,b){
+      var aa=String(a.row['Артикул товара']||'');
+      var bb=String(b.row['Артикул товара']||'');
+      var cmp=aa.localeCompare(bb,'ru',{numeric:true,sensitivity:'base'});
+      return cmp||a.idx-b.idx;
+    }).map(function(x){return x.row;});
+  }
   return {type:'ozon_box',files:[{name:'ШК',data:final2},{name:'Заказ',data:skFile}]};
 }
 
@@ -1751,10 +1807,11 @@ function sber_sborka(orderBuf,bdRows){
 }
 
 /* ── DISPATCHER ── */
-function runPipeline(platform,orderBuf,bdRows){
+function runPipeline(platform,orderBuf,bdRows,opts){
+  opts=opts||{};
   switch(platform){
     case 'WildBerries':  return wb_sborka(orderBuf,bdRows);
-    case 'OzonBox':      return ozon_box_sborka(orderBuf,bdRows);
+    case 'OzonBox':      return ozon_box_sborka(orderBuf,bdRows,opts);
     case 'OzonPalette':  return ozon_palette_sborka(orderBuf,bdRows);
     case 'YM':           return ym_sborka(orderBuf,bdRows);
     case 'SBER':         return sber_sborka(orderBuf,bdRows);
