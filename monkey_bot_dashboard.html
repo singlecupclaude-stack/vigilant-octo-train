@@ -1666,6 +1666,8 @@ function mergeOnKod1c(orderRows, bdRows){
 
 function toInt(v){ return parseInt(String(v).replace(',','.').trim())||0; }
 function toFloat(v){ return parseFloat(String(v).replace(',','.').trim())||0; }
+function isPlainNumber(v){ return /^\s*-?\d+(?:[\.,]\d+)?\s*$/.test(String(v==null?'':v)); }
+function hasMixMarker(v){ return String(v==null?'':v).toLowerCase().indexOf('микс')>=0; }
 
 /* ── WB ── */
 function wb_sborka(orderBuf,bdRows){
@@ -1703,7 +1705,8 @@ function wb_sborka(orderBuf,bdRows){
 function ozon_box_sborka(orderBuf,bdRows,opts){
   opts=opts||{};
   // Обычный режим: как раньше, сначала консолидируем одинаковые Код 1С и берём кратность из БД.
-  // Режим «Микс короба»: для файла ШК сохраняем строки входного файла 1-в-1 и берём размер короба из входной колонки «Кратность короба».
+  // Режим «Микс короба»: файл ШК строим строго по видимому порядку строк в загруженной сборке.
+  // В обычных строках дублируем по «Кол-во коробов», в микс-блоках каждая строка сборки становится строкой ШК с количеством из «Итого кол-во».
   var res=parseOrderFile(orderBuf,{preserveRows:!!opts.ozonMixBoxes});
   var resForOrder=opts.ozonMixBoxes?parseOrderFile(orderBuf):res;
   var merged=mergeOnKod1c(res,bdRows);
@@ -1716,12 +1719,29 @@ function ozon_box_sborka(orderBuf,bdRows,opts){
   };});
 
   var final2=[];
+  var mixSectionStarted=false;
   merged.forEach(function(r){
-    var numBoxes=toInt(r['Кол-во коробов']);
-    var boxItems=opts.ozonMixBoxes
-      ? toFloat(r['Кратность короба']||r['Итого кол-во'])
-      : toFloat(r['Кратность короба_bd']||r['Кратность короба']);
-    for(var i=0;i<numBoxes;i++){
+    var kratRaw=r['Кратность короба'];
+    var boxesRaw=r['Кол-во коробов'];
+    var isMixLine=opts.ozonMixBoxes && hasMixMarker(kratRaw);
+    if(isMixLine) mixSectionStarted=true;
+
+    var rowsToCreate=0;
+    var boxItems=0;
+
+    if(opts.ozonMixBoxes && (isMixLine || (mixSectionStarted && !isPlainNumber(boxesRaw)))){
+      // Внутри микс-короба строка из сборки переносится 1 раз, количество берётся из «Итого кол-во».
+      // Это сохраняет порядок: например SCANDINAVIA остаётся там же, где была в сборке, а не группируется по артикулу.
+      rowsToCreate=1;
+      boxItems=toFloat(r['Итого кол-во']);
+    } else {
+      rowsToCreate=toInt(boxesRaw);
+      boxItems=opts.ozonMixBoxes && isPlainNumber(kratRaw)
+        ? toFloat(kratRaw)
+        : toFloat(r['Кратность короба_bd']||kratRaw);
+    }
+
+    for(var i=0;i<rowsToCreate;i++){
       final2.push({
         'ШК товара': r['Штрих код Single Cup_bd']||r['Штрих код Single Cup']||'',
         'Артикул товара': r['Код 1С'],
@@ -1734,7 +1754,6 @@ function ozon_box_sborka(orderBuf,bdRows,opts){
       });
     }
   });
-  // В режиме «Микс короба» порядок строк в ШК оставляем строго как в загруженной сборке.
   return {type:'ozon_box',files:[{name:'ШК',data:final2},{name:'Заказ',data:skFile}]};
 }
 
