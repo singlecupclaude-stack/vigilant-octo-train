@@ -1734,16 +1734,7 @@ function ozon_box_sborka(orderBuf,bdRows,opts){
       });
     }
   });
-  if(opts.ozonMixBoxes){
-    // В микс-коробах группируем ШК по артикулу, чтобы все короба одного SKU шли рядом.
-    // Внутри одного артикула порядок строк из загруженного файла сохраняется.
-    final2=final2.map(function(row,idx){return {row:row,idx:idx};}).sort(function(a,b){
-      var aa=String(a.row['Артикул товара']||'');
-      var bb=String(b.row['Артикул товара']||'');
-      var cmp=aa.localeCompare(bb,'ru',{numeric:true,sensitivity:'base'});
-      return cmp||a.idx-b.idx;
-    }).map(function(x){return x.row;});
-  }
+  // В режиме «Микс короба» порядок строк в ШК оставляем строго как в загруженной сборке.
   return {type:'ozon_box',files:[{name:'ШК',data:final2},{name:'Заказ',data:skFile}]};
 }
 
