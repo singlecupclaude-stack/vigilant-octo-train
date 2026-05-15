@@ -36,7 +36,33 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body {
+html, 
+/* === v31 safe: светлая тема без изменения подключения к Google === */
+body.om-light-theme {
+  --bg-main:#f5f1e8; --bg-card:#fffaf1; --bg-card-soft:#f7efe2;
+  --text-main:#282824; --text-body:#3c3c34; --text-muted:#7b735f;
+  --border-soft:rgba(88,72,44,0.22); --border-strong:rgba(160,116,65,0.55);
+}
+body.om-light-theme::before { opacity: .08; filter: sepia(.25) brightness(1.1) saturate(.75); }
+body.om-light-theme .header,
+body.om-light-theme .chat-panel,
+body.om-light-theme .modal-box { background: rgba(248,244,236,.96); }
+body.om-light-theme .stat-card,
+body.om-light-theme .table-card,
+body.om-light-theme .form-card,
+body.om-light-theme .supply-card,
+body.om-light-theme .extra-block,
+body.om-light-theme .chat-note { background: rgba(255,252,244,.88); }
+body.om-light-theme input,
+body.om-light-theme select,
+body.om-light-theme textarea { background: rgba(255,255,255,.95); color: var(--text-body); }
+.theme-toggle-btn {
+  border:1px solid var(--border-soft); background:transparent; color:var(--text-muted);
+  border-radius:999px; padding:8px 14px; font-size:11px; letter-spacing:.08em; cursor:pointer;
+}
+.theme-toggle-btn:hover { color:var(--accent-copper); border-color:var(--accent-copper); }
+
+body {
   color: var(--text-body);
   font-family: 'DM Sans', -apple-system, sans-serif;
   font-weight: 300;
@@ -2524,9 +2550,241 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
 @media (min-width: 1400px) {
   .wrap { padding-left: 24px !important; padding-right: 24px !important; }
   .header { margin-left: -24px !important; margin-right: -24px !important; padding-left: 24px !important; padding-right: 24px !important; }
-  .orders-table-expanded { min-width: 1240px !important; }
+  .orders-table-expanded { min-width: 1320px !important; }
 }
 
+/* v32 people comments */
+.date-theme-row { display:flex; align-items:center; justify-content:flex-end; gap:10px; }
+.date-theme-row .date-now { margin:0; }
+.datetime-row.three { grid-template-columns: 1fr 88px; }
+.check-grid { display:grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap:12px; align-items:start; }
+.check-grid .field { grid-column: 1 / -1; }
+.notify-under-submit { margin:10px 0 0; justify-content:flex-end; }
+.order-row.no-invoice { background: rgba(224,74,44,.045); }
+.order-row.no-invoice td:first-child { box-shadow: inset 3px 0 0 rgba(224,74,44,.55); }
+.invoice-missing { color:#E08A72; font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+.order-progress-text { margin-top:4px; font-size:9px; line-height:1.35; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; }
+.order-flags-mini { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; }
+.order-flag-mini { border:1px solid rgba(199,144,93,.25); color:var(--text-muted); border-radius:999px; padding:1px 5px; font-size:9px; }
+.order-flag-mini.warn { color:#E08A72; border-color:rgba(224,74,44,.35); }
+.ext-search-row { display:flex; gap:8px; align-items:center; padding:0 0 12px; }
+.ext-search-row input { flex:1; min-width:220px; }
+.ext-mp-section { border:1px solid rgba(199,144,93,.16); border-radius:4px; margin:0 0 12px; overflow:hidden; background:rgba(0,0,0,.04); }
+.ext-mp-section > summary { list-style:none; cursor:pointer; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(199,144,93,.12); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent-copper); }
+.ext-mp-section > summary::-webkit-details-marker { display:none; }
+.ext-mp-section > summary::before { content:'▾'; margin-right:8px; color:var(--text-muted); }
+.ext-mp-section:not([open]) > summary::before { content:'▸'; }
+.ext-mp-section .dispatch-section { border:0; margin:0; background:transparent; }
+.ext-empty-filter { padding:14px 16px; color:var(--text-muted); font-size:12px; display:none; }
+
+
+/* v33 polish */
+#checkBlock { margin-top: 24px; }
+#checkBlock .check-grid { padding: 0 18px 20px; display:grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap:12px; align-items:start; }
+#checkBlock .field { grid-column:auto; }
+#checkBlock .field.wide { grid-column:1 / -1; }
+.acceptance-days-hint { font-size:11px; color:var(--accent-copper); margin-top:6px; letter-spacing:.04em; }
+.btn-row-with-notify { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.btn-row-with-notify .btn-row { margin-bottom:0; }
+.btn-row-with-notify .notify-under-submit { margin:0; padding:8px 12px; border:1px dashed rgba(199,144,93,.30); min-width:330px; justify-content:flex-start; }
+.orders-table-expanded thead th { background:rgba(199,144,93,.16) !important; color:var(--accent-gold) !important; font-size:12px !important; letter-spacing:.08em !important; border-bottom:1px solid rgba(199,144,93,.35) !important; }
+.orders-table-expanded td { vertical-align:top !important; line-height:1.45 !important; }
+.orders-table-expanded tr.order-row { min-height:74px; }
+.orders-table-expanded { min-width:1500px !important; }
+.orders-table-expanded th:nth-child(3), .orders-table-expanded td:nth-child(3) { width:68px !important; }
+.orders-table-expanded th:nth-child(4), .orders-table-expanded td:nth-child(4) { width:138px !important; }
+.orders-table-expanded th:nth-child(5), .orders-table-expanded td:nth-child(5) { width:155px !important; }
+.orders-table-expanded th:nth-child(8), .orders-table-expanded td:nth-child(8) { width:138px !important; }
+.orders-table-expanded th:nth-child(10), .orders-table-expanded td:nth-child(10) { width:96px !important; }
+.orders-table-expanded th:nth-child(12), .orders-table-expanded td:nth-child(12) { width:76px !important; }
+.orders-table-expanded th:nth-child(13), .orders-table-expanded td:nth-child(13) { width:122px !important; }
+.orders-table-expanded th:nth-child(15), .orders-table-expanded td:nth-child(15) { width:180px !important; }
+.shipment-kind.transit-cross .kind { background:rgba(123,157,112,.20); color:#AFC89D; border-color:rgba(143,163,131,.55); }
+.shipment-kind.transit-cross .wh { color:#D4C6A8; }
+.sos-label { display:inline-block; padding:2px 7px; border:1px solid rgba(199,144,93,.25); border-radius:999px; font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
+.sos-label.hot { color:#F0A080; border-color:rgba(224,74,44,.45); background:rgba(224,74,44,.10); }
+.sos-label.soon { color:#D4A472; border-color:rgba(199,144,93,.45); background:rgba(199,144,93,.09); }
+.order-progress-mini.only { display:inline-flex; align-items:center; justify-content:center; min-width:34px; }
+.ext-link-actions { display:flex; flex-direction:column; gap:5px; align-items:flex-start; }
+.ext-create-btn { border:1px solid rgba(143,163,131,.45); background:rgba(143,163,131,.08); color:#AFC89D; border-radius:3px; padding:3px 7px; font-size:10px; cursor:pointer; text-transform:uppercase; letter-spacing:.04em; }
+.ext-create-btn:hover { border-color:rgba(143,163,131,.75); background:rgba(143,163,131,.16); }
+.order-detail-progress { font-size:12px; color:var(--accent-copper); line-height:1.6; }
+.ext-toolbar .ozon-refresh { border-color:rgba(105,147,211,.35); color:#9fbde8; }
+
+
+
+/* v35 table polish + supply format filters */
+.table-wrap { max-height: 360px !important; border:1px solid rgba(199,144,93,.14); background:rgba(24,26,25,.88); }
+.table-wrap thead th,
+.orders-table-expanded thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  background:#232524 !important;
+  color:#E8DBC2 !important;
+  font-size:13px !important;
+  font-weight:600 !important;
+  letter-spacing:.075em !important;
+  box-shadow:0 1px 0 rgba(199,144,93,.35), 0 8px 16px rgba(0,0,0,.28) !important;
+}
+.orders-table-expanded { min-width:1780px !important; table-layout:fixed !important; }
+.orders-table-expanded tbody td { padding:12px 10px !important; line-height:1.35 !important; overflow:hidden; }
+.orders-table-expanded th:nth-child(1), .orders-table-expanded td:nth-child(1) { width:42px !important; }
+.orders-table-expanded th:nth-child(2), .orders-table-expanded td:nth-child(2) { width:72px !important; }
+.orders-table-expanded th:nth-child(3), .orders-table-expanded td:nth-child(3) { width:88px !important; }
+.orders-table-expanded th:nth-child(4), .orders-table-expanded td:nth-child(4) { width:145px !important; }
+.orders-table-expanded th:nth-child(5), .orders-table-expanded td:nth-child(5) { width:175px !important; }
+.orders-table-expanded th:nth-child(6), .orders-table-expanded td:nth-child(6) { width:105px !important; }
+.orders-table-expanded th:nth-child(7), .orders-table-expanded td:nth-child(7) { width:112px !important; }
+.orders-table-expanded th:nth-child(8), .orders-table-expanded td:nth-child(8) { width:160px !important; }
+.orders-table-expanded th:nth-child(9), .orders-table-expanded td:nth-child(9) { width:148px !important; }
+.orders-table-expanded th:nth-child(10), .orders-table-expanded td:nth-child(10) { width:92px !important; }
+.orders-table-expanded th:nth-child(11), .orders-table-expanded td:nth-child(11) { width:115px !important; }
+.orders-table-expanded th:nth-child(12), .orders-table-expanded td:nth-child(12) { width:82px !important; }
+.orders-table-expanded th:nth-child(13), .orders-table-expanded td:nth-child(13) { width:130px !important; }
+.orders-table-expanded th:nth-child(14), .orders-table-expanded td:nth-child(14) { width:170px !important; }
+.orders-table-expanded th:nth-child(15), .orders-table-expanded td:nth-child(15) { width:245px !important; }
+.orders-table-expanded .supply-linked,
+.orders-table-expanded .supply-clickable-only,
+.orders-table-expanded .cell-small,
+.orders-table-expanded .cell-warehouse,
+.orders-table-expanded .order-transport span,
+.orders-table-expanded .shipment-kind .wh,
+.orders-table-expanded .order-comment-compact .comment {
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:normal; overflow-wrap:anywhere;
+}
+.orders-table-expanded .supply-linked,
+.orders-table-expanded .supply-clickable-only { display:inline-block; line-height:1.25; }
+.orders-table-expanded .order-status-line { display:flex; justify-content:space-between; gap:6px; }
+.orders-table-expanded .order-comment-compact { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.shipment-kind.transit-cross .kind { background:rgba(110,135,178,.22) !important; color:#B9C8EE !important; border-color:rgba(110,135,178,.6) !important; }
+.shipment-kind.transit-cross { border-left:2px solid rgba(110,135,178,.55); padding-left:7px; }
+.week-list-head { display:grid; grid-template-columns:95px 70px 1.25fr 1fr 80px 110px; gap:10px; padding:8px 16px; color:var(--accent-copper); background:rgba(199,144,93,.08); border-bottom:1px solid rgba(199,144,93,.20); font-size:10px; text-transform:uppercase; letter-spacing:.08em; position:sticky; top:0; z-index:3; }
+.dispatch-list-head { display:grid; grid-template-columns:110px 70px 1.15fr 100px 1fr 110px 90px; gap:10px; padding:8px 16px; color:var(--accent-copper); background:rgba(199,144,93,.08); border-bottom:1px solid rgba(199,144,93,.20); font-size:10px; text-transform:uppercase; letter-spacing:.08em; position:sticky; top:0; z-index:3; }
+.supply-format-toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:12px 0 10px; border-top:1px solid rgba(199,144,93,.10); }
+.supply-format-chip { border:1px solid rgba(199,144,93,.25); background:rgba(199,144,93,.06); color:var(--text-body); padding:6px 10px; border-radius:999px; font-size:11px; cursor:pointer; }
+.supply-format-chip.active { background:rgba(199,144,93,.18); border-color:rgba(199,144,93,.55); color:var(--accent-gold); }
+.supply-format-summary { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 8px; }
+.supply-format-summary .supply-summary-chip { min-width:120px; }
+.supply-products-row.hidden-by-format { display:none !important; }
+
+
+
+/* ===== v36 polish: KPI tables, sorting, invoice/no invoice, readable tables ===== */
+.orders-table-expanded { min-width: 1560px; table-layout: fixed; }
+.orders-table-expanded thead th { 
+  position: sticky; top: 0; z-index: 8;
+  background: #1b201d !important;
+  color: var(--accent-gold) !important;
+  font-size: 12px !important;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 0 rgba(199,144,93,.28), 0 8px 18px rgba(0,0,0,.28);
+}
+.orders-table-expanded td { vertical-align: top; line-height: 1.45; overflow-wrap: anywhere; }
+.orders-table-expanded td:nth-child(8), .orders-table-expanded td:nth-child(9), .orders-table-expanded td:nth-child(10), .orders-table-expanded td:nth-child(11) { min-width: 110px; }
+.order-date-duo .acceptance-days-mini { display:block; margin-top:4px; color:var(--accent-copper); font-size:10px; letter-spacing:.05em; }
+.order-row.no-invoice { background: rgba(224,74,44,.075) !important; }
+.order-row.no-invoice td:first-child { box-shadow: inset 4px 0 0 rgba(224,74,44,.75); }
+.no-invoice-pill { display:inline-flex; border:1px solid rgba(224,74,44,.55); color:#ffb1a1; background:rgba(224,74,44,.13); padding:2px 7px; border-radius:999px; font-size:10px; letter-spacing:.04em; text-transform:uppercase; }
+.filter-sort-select { min-width: 185px; }
+.stat-card.hidden-stat { display:none !important; }
+.stat-card .stat-sub .inline-hot { display:block; margin-top:3px; color:#E8B66B; font-size:11px; }
+.week-modal-content { max-width: 1180px; }
+.week-list-head.v36, .week-item.v36 { display:grid; grid-template-columns: 95px 74px 1.3fr 1fr 1fr 105px 95px 115px; gap:12px; align-items:center; }
+.week-list-head.v36 { position:sticky; top:0; z-index:2; background:#232722; color:var(--accent-copper); padding:10px 14px; border-bottom:1px solid rgba(199,144,93,.25); font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+.week-item.v36 { padding:12px 14px; min-height:44px; border-bottom:1px solid rgba(199,144,93,.08); background:rgba(255,255,255,.015); cursor:default; }
+.week-item.v36:hover { background:rgba(199,144,93,.055); }
+.week-item .modal-actions { display:flex; gap:6px; justify-content:flex-end; }
+.om-mini-btn { border:1px solid rgba(199,144,93,.45); background:transparent; color:var(--accent-gold); padding:5px 8px; font-size:10px; letter-spacing:.06em; text-transform:uppercase; cursor:pointer; }
+.om-mini-btn:hover { background:rgba(199,144,93,.12); }
+.dispatch-list-head.v36, .dispatch-row.v36 { display:grid; grid-template-columns: 95px 74px 1fr 1fr 1fr 1fr 100px 95px 115px; gap:12px; align-items:center; }
+.dispatch-list-head.v36 { position:sticky; top:0; z-index:2; background:#232722; color:var(--accent-copper); padding:10px 14px; border-bottom:1px solid rgba(199,144,93,.25); font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+.dispatch-row.v36 { padding:12px 14px; border-bottom:1px solid rgba(199,144,93,.08); background:rgba(255,255,255,.015); }
+.dispatch-row.v36:hover { background:rgba(199,144,93,.055); }
+.supply-format-panel { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; flex-wrap:wrap; margin:10px 0 12px; }
+.supply-format-toolbar { order:1; border-top:0 !important; padding:0 !important; }
+.supply-format-summary { order:2; margin-left:auto !important; justify-content:flex-end; }
+.supply-format-summary .supply-summary-chip { min-width:140px; }
+.supply-details-modal .supply-summary-strip { flex-wrap:wrap; }
+.ozon-api-note-compact { font-size:12px; color:var(--text-muted); line-height:1.55; border-left:2px solid rgba(199,144,93,.45); padding-left:12px; margin:10px 0; }
+
+
+
+/* ===== v37: fixed KPI grids, no-invoice filter, better API dispatch fill ===== */
+.no-invoice-filter-control { display:flex; align-items:center; gap:8px; border:1px solid rgba(199,144,93,.18); background:rgba(199,144,93,.035); padding:0 12px; min-height:36px; color:var(--text-muted); font-size:11px; letter-spacing:.04em; white-space:nowrap; }
+.no-invoice-filter-control input { width:14px; height:14px; accent-color:var(--accent-copper); }
+.no-invoice-filter-control.active { border-color:rgba(224,74,44,.55); color:#ffb1a1; background:rgba(224,74,44,.08); }
+.week-modal-content { max-width:1260px !important; width:min(1260px, 92vw) !important; }
+.week-modal-body, #weekModalBody, #sosModalBody, #dispatchModalBody { overflow-x:auto; }
+.kpi-grid-v37 { min-width:1080px; }
+.kpi-head-v37,
+.kpi-row-v37 { display:grid; grid-template-columns: 110px 78px minmax(180px,1.25fr) minmax(170px,1fr) 135px 100px 100px 112px; gap:12px; align-items:center; }
+.kpi-head-v37 { position:sticky; top:0; z-index:4; background:#232722; color:var(--accent-copper); padding:10px 14px; border-bottom:1px solid rgba(199,144,93,.28); font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+.kpi-row-v37 { padding:11px 14px; min-height:48px; border-bottom:1px solid rgba(199,144,93,.08); background:rgba(255,255,255,.015); }
+.kpi-row-v37:hover { background:rgba(199,144,93,.06); }
+.kpi-day-v37 { min-width:1080px; padding:12px 14px 6px; color:var(--accent-gold); font-family:var(--font-accent); font-style:italic; border-bottom:1px dashed rgba(199,144,93,.24); }
+.kpi-cell-clip { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dispatch-head-v37,
+.dispatch-row-v37b { display:grid; grid-template-columns: 105px 78px minmax(150px,1fr) minmax(110px,.85fr) minmax(170px,1.1fr) 130px 120px 90px 112px; gap:12px; align-items:center; }
+.dispatch-head-v37 { min-width:1120px; position:sticky; top:0; z-index:4; background:#232722; color:var(--accent-copper); padding:10px 14px; border-bottom:1px solid rgba(199,144,93,.28); font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+.dispatch-row-v37b { min-width:1120px; padding:11px 14px; border-bottom:1px solid rgba(199,144,93,.08); background:rgba(255,255,255,.015); }
+.dispatch-row-v37b:hover { background:rgba(199,144,93,.06); }
+
+
+/* ===== v40: фильтры — общий поиск слева, МП справа, яркий фильтр без счёта ===== */
+.filters #searchInput {
+  order: 1;
+  flex: 1 1 420px;
+  min-width: 340px;
+}
+.filters #filterMp {
+  order: 2;
+  flex: 0 0 150px;
+  min-width: 150px;
+  border-color: rgba(199,144,93,0.38);
+}
+.filters #filterDateFrom { order: 3; }
+.filters #filterDateTo { order: 4; }
+.filters #filterNoCarWrap,
+.filters #filterNoCar { order: 5; }
+.filters .filter-toggle:has(#filterNoCar) { order: 5; }
+.filters #filterNoInvoiceWrap,
+.filters .no-invoice-filter-control {
+  order: 6;
+  border-color: rgba(224,74,44,0.85) !important;
+  background: linear-gradient(135deg, rgba(224,74,44,0.20), rgba(199,144,93,0.10)) !important;
+  color: #E8DBC2 !important;
+  box-shadow: 0 0 0 1px rgba(224,74,44,0.18), inset 0 0 18px rgba(224,74,44,0.06);
+}
+.filters #filterNoInvoiceWrap span,
+.filters .no-invoice-filter-control span {
+  color: #E8DBC2 !important;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.filters #filterNoInvoiceWrap:hover,
+.filters .no-invoice-filter-control:hover {
+  border-color: #E04A2C !important;
+  box-shadow: 0 0 0 1px rgba(224,74,44,0.45), 0 0 18px rgba(224,74,44,0.16);
+}
+.filters #filterNoInvoiceWrap input[type="checkbox"],
+.filters .no-invoice-filter-control input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border-color: #E04A2C !important;
+}
+.filters #filterNoInvoiceWrap input[type="checkbox"]:checked,
+.filters .no-invoice-filter-control input[type="checkbox"]:checked {
+  background: #E04A2C !important;
+  border-color: #E04A2C !important;
+}
+.filters #sortOrdersMode { order: 7; }
+.filters .btn-reset { order: 8; }
+@media (max-width: 900px) {
+  .filters #searchInput { min-width: 100%; flex-basis: 100%; }
+  .filters #filterMp { flex: 1 1 160px; }
+}
 </style>
 </head>
 <body class="app-locked">
@@ -2603,7 +2861,7 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
       <div class="omd-stat-box loading" id="omdStatBox">
         <span class="omd-stat-icon" id="omdStatIcon">●</span><button type="button" class="omd-stat-text" id="statusText" title="нажми, чтобы перезагрузить">подключение…</button>
       </div>
-      <div class="date-now" id="dateNow"></div>
+      <div class="date-theme-row"><button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="переключить тёмную/белую тему">☀</button><div class="date-now" id="dateNow"></div></div>
     </div>
   </div>
 
@@ -2627,6 +2885,11 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
       <div class="stat-label">без машины</div>
       <div class="stat-value copper" id="statNoCar">—</div>
       <div class="stat-sub">не отгружены</div>
+    </div>
+    <div class="stat-card stat-clickable" id="urgentDueCard" title="поставки через 3 дня или раньше, не отгружены">
+      <div class="stat-label">срочно внести</div>
+      <div class="stat-value copper" id="statUrgentDue">—</div>
+      <div class="stat-sub">≤ 3 дня до МП</div>
     </div>
     <div class="stat-card stat-clickable" id="dispatchCard" title="нажми чтобы посмотреть список">
       <div class="stat-label">вывозы</div>
@@ -2656,8 +2919,8 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
 
   <div class="table-card">
     <div class="filters">
-      <input type="text" id="searchInput" placeholder="поиск по номеру, складу, комментарию..." />
-      <select id="filterMp">
+      <input type="text" id="searchInput" placeholder="поиск по всему: № OM, поставка, заказ МП, склад, счёт, комментарий..." />
+      <select id="filterMp" title="фильтр по маркетплейсу">
         <option value="">все МП</option>
       </select>
       <input type="date" id="filterDateFrom" title="плановая дата от" />
@@ -2683,6 +2946,7 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
             <th>поставка</th>
             <th>заказ МП</th>
             <th>заказ произв.</th>
+            <th>счёт 1С</th>
             <th>палл./кор.</th>
             <th>статусы</th>
             <th>транспорт</th>
@@ -2690,7 +2954,7 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
           </tr>
         </thead>
         <tbody id="ordersBody">
-          <tr><td colspan="14"><div class="loading"><div class="spinner"></div><div>загружаем данные</div></div></td></tr>
+          <tr><td colspan="15"><div class="loading"><div class="spinner"></div><div>загружаем данные</div></div></td></tr>
         </tbody>
       </table>
     </div>
@@ -2736,17 +3000,16 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
 
         <div class="field">
           <label class="field-label">дата плановая <span class="req">*</span></label>
-          <input type="date" name="datePlan" required />
+          <div class="datetime-row three">
+            <input type="date" name="datePlan" required />
+            <input type="time" name="datePlanTime" title="время плановой отгрузки" />
+          </div>
         </div>
         <div class="field">
           <label class="field-label">дата отгрузки с Реутова</label>
-          <input type="date" name="dateShipReutov" />
-        </div>
-        <div class="field">
-          <label class="field-label">факт. поставка на МП</label>
-          <div class="datetime-row">
-            <input type="date" name="dateFact" class="dt-date" />
-            <input type="time" name="timeFact" class="dt-time" placeholder="--:--" />
+          <div class="datetime-row three">
+            <input type="date" name="dateShipReutov" />
+            <input type="time" name="dateShipReutovTime" title="время отгрузки с Реутова" />
           </div>
         </div>
         <div class="field">
@@ -2785,8 +3048,8 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
           </select>
         </div>
         <div class="field">
-          <label class="field-label">№ счёта в 1С</label>
-          <input type="text" name="invoice1c" />
+          <label class="field-label">№ счёта в 1С / без счёта</label>
+          <input type="text" name="invoice1c" placeholder="номер или: без счёта" />
         </div>
       </div>
 
@@ -2797,10 +3060,28 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
 
       <div class="checkboxes">
         <div class="checkbox-item"><input type="checkbox" name="shippedToMp" id="cb2"><label for="cb2">отгружено на МП</label></div>
-        <div class="checkbox-item"><input type="checkbox" name="correctionsMade" id="cb3"><label for="cb3">корректировки внесены</label></div>
+        <div class="checkbox-item"><input type="checkbox" name="virtualSupply" id="cb_virtual"><label for="cb_virtual">виртуальная поставка</label></div>
+        <div class="checkbox-item"><input type="checkbox" name="warehouseEmailSent" id="cb_wh_email"><label for="cb_wh_email">письмо отправлено на склад</label></div>
         <div class="checkbox-item"><input type="checkbox" name="loadedLk" id="cb4"><label for="cb4">загружен в ЛК</label></div>
-        <div class="checkbox-item checkbox-notify"><input type="checkbox" name="notifySend" id="cb_notify"><label for="cb_notify">отправить уведомление в Telegram и на email</label></div>
       </div>
+
+      <details class="extra-block" id="checkBlock">
+        <summary>проверка заказа</summary>
+        <div class="check-grid">
+          <div class="checkbox-item"><input type="checkbox" name="correctionsMade" id="cb3"><label for="cb3">поставка проверена</label></div>
+          <div class="checkbox-item"><input type="checkbox" name="hasDifferences" id="cb_diff"><label for="cb_diff">есть расхождения</label></div>
+          <div class="field">
+            <label class="field-label">факт. приемка на МП</label>
+            <input type="date" name="dateFact" class="dt-date" oninput="updateAcceptanceDaysHint()" />
+            <input type="hidden" name="timeFact" value="" />
+            <div class="acceptance-days-hint" id="acceptanceDaysHint">—</div>
+          </div>
+          <div class="field wide">
+            <label class="field-label">комментарий проверки</label>
+            <textarea name="checkComment" placeholder="что проверили, какие расхождения, что нужно поправить..."></textarea>
+          </div>
+        </div>
+      </details>
 
       <details class="extra-block" id="financeBlock">
         <summary>финансы</summary>
@@ -2849,16 +3130,25 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
             <input type="date" name="actualPickupDate" />
           </div>
           <div class="field">
-            <label class="field-label">номер машины (возврат)</label>
-            <input type="text" name="returnCarNumber" />
+            <label class="field-label">номер возврата</label>
+            <input type="text" name="returnCarNumber" placeholder="№ возврата / заявки" />
+          </div>
+          <div class="field">
+            <label class="field-label">номер машины вывоза</label>
+            <input type="text" name="pickupCarNumber" placeholder="а123бв77" />
           </div>
         </div>
       </details>
 
-      <div class="btn-row">
-        <button type="button" class="btn-ghost btn-danger" id="deleteOrderBtn" style="display:none;" onclick="deleteCurrentOrder()">удалить заказ</button>
-        <button type="reset" class="btn-ghost">очистить</button>
-        <button type="submit" class="btn" id="submitBtn">записать</button>
+      <div class="btn-row-with-notify">
+        <div class="btn-row">
+          <button type="button" class="btn-ghost btn-danger" id="deleteOrderBtn" style="display:none;" onclick="deleteCurrentOrder()">удалить заказ</button>
+          <button type="reset" class="btn-ghost">очистить</button>
+          <button type="submit" class="btn" id="submitBtn">записать</button>
+        </div>
+        <div class="checkboxes notify-under-submit">
+          <div class="checkbox-item checkbox-notify"><input type="checkbox" name="notifySend" id="cb_notify"><label for="cb_notify">отправить уведомление в Telegram и на email</label></div>
+        </div>
       </div>
     </form>
   </div>
@@ -3221,6 +3511,14 @@ function toast(msg, isError) {
   t.className = 'toast show' + (isError ? ' error' : '');
   setTimeout(() => t.className = 'toast', 4000);
 }
+
+function escapeJsAttr(s) {
+  return String(s == null ? '' : s)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r?\n/g, ' ');
+}
+
 function escapeHtml(s) {
   if (s == null) return '';
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -3232,6 +3530,166 @@ function formatSeconds(s) {
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return m ? `${m}:${String(sec).padStart(2, '0')}` : `${sec}с`;
+}
+
+function sosSeverity(o) {
+  const raw = String(o && o.sosLevel ? o.sosLevel : '').trim().toLowerCase();
+  if (!raw || raw === '0' || raw === 'обычно' || raw === 'нет') return 0;
+  if (raw.includes('сроч')) return 2;
+  if (raw.includes('заранее')) return 1;
+  const n = Number(raw);
+  return isNaN(n) ? 1 : n;
+}
+function sosLabel(o) {
+  const raw = String(o && o.sosLevel ? o.sosLevel : '').trim();
+  if (isUrgentDue(o)) return 'срочно';
+  const sev = sosSeverity(o);
+  if (!sev) return '—';
+  if (raw && isNaN(Number(raw))) return raw;
+  return sev >= 2 ? 'срочно' : 'заранее';
+}
+function orderFlagsFromComment(o) {
+  const c = String(o && o.comment ? o.comment : '');
+  return {
+    hasDifferences: /\[ЕСТЬ РАСХОЖДЕНИЯ\]/i.test(c),
+    virtualSupply: /\[ВИРТУАЛЬНАЯ ПОСТАВКА\]/i.test(c),
+    warehouseEmailSent: /\[ПИСЬМО НА СКЛАД ОТПРАВЛЕНО\]/i.test(c),
+    checkComment: ((c.match(/\[ПРОВЕРКА\]\s*([^\[]+)/i) || [,''])[1] || '').trim(),
+    datePlanTime: ((c.match(/\[ВРЕМЯ ПЛАН\]\s*([0-2]?\d:[0-5]\d)/i) || [,''])[1] || '').trim(),
+    dateShipReutovTime: ((c.match(/\[ВРЕМЯ РЕУТОВ\]\s*([0-2]?\d:[0-5]\d)/i) || [,''])[1] || '').trim(),
+    pickupCarNumber: ((c.match(/\[МАШИНА ВЫВОЗА\]\s*([^\[]+)/i) || [,''])[1] || '').trim()
+  };
+}
+function stripServiceFlags(comment) {
+  return String(comment || '')
+    .replace(/\n?\[ЕСТЬ РАСХОЖДЕНИЯ\]/gi, '')
+    .replace(/\n?\[ВИРТУАЛЬНАЯ ПОСТАВКА\]/gi, '')
+    .replace(/\n?\[ПИСЬМО НА СКЛАД ОТПРАВЛЕНО\]/gi, '')
+    .replace(/\n?\[ВРЕМЯ ПЛАН\]\s*[0-2]?\d:[0-5]\d/gi, '')
+    .replace(/\n?\[ВРЕМЯ РЕУТОВ\]\s*[0-2]?\d:[0-5]\d/gi, '')
+    .replace(/\n?\[МАШИНА ВЫВОЗА\]\s*[^\[]+/gi, '')
+    .replace(/\n?\[ПРОВЕРКА\]\s*[^\[]+/gi, '')
+    .trim();
+}
+function orderPlanTime(o) { return orderFlagsFromComment(o).datePlanTime || ''; }
+function orderShipTime(o) { return orderFlagsFromComment(o).dateShipReutovTime || ''; }
+function pickupCarNumberText(o) { return orderFlagsFromComment(o).pickupCarNumber || ''; }
+function fmtDateWithTime(date, time) {
+  if (!date && !time) return '—';
+  return [date || '—', time || ''].filter(Boolean).join(' · ');
+}
+
+function dateDiffDays_(from, to) {
+  if (!from || !to) return null;
+  const a = new Date(String(from) + 'T00:00:00');
+  const b = new Date(String(to) + 'T00:00:00');
+  if (isNaN(a.getTime()) || isNaN(b.getTime())) return null;
+  return Math.round((b - a) / 86400000);
+}
+function acceptanceDaysText(o) {
+  const d = dateDiffDays_(o.datePlan, o.dateFact);
+  if (d === null) return '—';
+  if (d === 0) return 'в день поставки';
+  if (d > 0) return `+${d} дн. до приёмки`;
+  return `${d} дн. до плановой`;
+}
+function updateAcceptanceDaysHint() {
+  const el = document.getElementById('acceptanceDaysHint');
+  const form = document.getElementById('orderForm');
+  if (!el || !form) return;
+  const d = dateDiffDays_(form.elements.datePlan && form.elements.datePlan.value, form.elements.dateFact && form.elements.dateFact.value);
+  if (d === null) el.textContent = 'укажи плановую дату и факт. приемку — посчитаю дни';
+  else if (d === 0) el.textContent = 'приёмка в день поставки';
+  else if (d > 0) el.textContent = `приёмка через ${d} дн. после поставки`;
+  else el.textContent = `приёмка на ${Math.abs(d)} дн. раньше плановой`;
+}
+function daysUntilPlan(o) {
+  if (!o || !o.datePlan) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(String(o.datePlan) + 'T00:00:00');
+  if (isNaN(d.getTime())) return null;
+  return Math.ceil((d - today) / 86400000);
+}
+function isUrgentDue(o) {
+  const d = daysUntilPlan(o);
+  return d !== null && d >= 0 && d <= 3 && !o.shippedToMp && !o.correctionsMade;
+}
+
+function buildProgressText(o) {
+  const parts = [
+    ['ЛК', !!o.loadedLk],
+    ['счёт 1С', !!(o.invoice1c && String(o.invoice1c).trim())],
+    ['машина', !!((o.driverName && String(o.driverName).trim()) || (o.carNumber && String(o.carNumber).trim()))],
+    ['проверена', !!o.correctionsMade]
+  ];
+  return parts.map(([t,on]) => (on ? '✓ ' : '· ') + t).join(' / ');
+}
+function orderInvoiceText(o) {
+  const inv = String(o.invoice1c || '').trim();
+  return inv || 'без счёта';
+}
+function isWithoutInvoice(o) {
+  const inv = String(o.invoice1c || '').trim().toLowerCase();
+  return !inv || inv === 'без счета' || inv === 'без счёта' || inv === 'без счетов' || inv === 'без счётов';
+}
+function normalizeShipmentTypeText(type) {
+  const t = String(type || '').toLowerCase();
+  if (t.includes('кросс') || t.includes('транзит')) return 'транзит/кроссдок';
+  return type;
+}
+function externalSupplySearchHay(rec, source) {
+  return [source, rec && rec.id, rec && rec.number, rec && rec.supplyID, rec && rec.preorderID,
+    rec && rec.marketplaceRequestId, rec && rec.warehouseRequestId, rec && rec.facilityId,
+    rec && rec.facilityName, rec && rec.warehouseName, rec && rec.targetWarehouseName,
+    rec && rec.state, rec && rec.status, rec && rec.campaignName].join(' ').toLowerCase();
+}
+
+function findExternalRecord(source, id, number) {
+  const bucket = (externalCache && externalCache[source] && externalCache[source].orders) || [];
+  const idStr = String(id || '');
+  const numStr = String(number || '');
+  return bucket.find(x => String(x.id || '') === idStr || String(x.number || '') === numStr || String(x.supplyID || '') === idStr || String(x.marketplaceRequestId || '') === numStr || String(x.warehouseRequestId || '') === numStr) || null;
+}
+function createOrderFromExternalSupply(source, id, number, campaignId) {
+  const rec = findExternalRecord(source, id, number) || { id, number, campaignId };
+  const form = document.getElementById('orderForm');
+  if (!form) return;
+  const mpMap = { wb: 'WB', ym: 'ЯМ', sber: 'Сбер', ozon: 'Ozon' };
+  const mp = mpMap[source] || source;
+  closeExternalModal();
+  exitEditMode && exitEditMode();
+  form.elements.mp.value = mp;
+  form.elements.mp.dispatchEvent(new Event('change'));
+  setTimeout(() => {
+    if (form.elements.supplyNumber) form.elements.supplyNumber.value = number || rec.number || rec.id || '';
+    if (form.elements.lkOrderId) form.elements.lkOrderId.value = rec.id || id || '';
+    if (form.elements.orderNumber) form.elements.orderNumber.value = rec.number || number || '';
+    if (form.elements.datePlan) form.elements.datePlan.value = String(rec.planned || rec.plannedDate || rec.requestedDate || rec.timeslot_from || '').slice(0,10);
+    if (form.elements.dateShipReutov && form.elements.datePlan && !form.elements.dateShipReutov.value) form.elements.dateShipReutov.value = form.elements.datePlan.value;
+    const wh = rec.warehouseName || rec.targetWarehouseName || rec.storage_warehouse_name || rec.facilityName || rec.warehouse || '';
+    if (wh && form.elements.warehouseFull) setSelectValue(form.elements.warehouseFull, wh);
+    if (source === 'sber' && form.elements.warehouseFrom) setSelectValue(form.elements.warehouseFrom, 'Шарапово');
+    if (form.elements.boxes && (rec.boxAmount || rec.quantity || rec.totalQuantityDeclared)) form.elements.boxes.value = rec.boxAmount || rec.quantity || rec.totalQuantityDeclared || '';
+    if (form.elements.comment) {
+      const srcLabel = String(source).toUpperCase();
+      form.elements.comment.value = (`создано из API ${srcLabel}: ${number || id}` + (form.elements.comment.value ? '\n' + form.elements.comment.value : '')).trim();
+    }
+    updateAcceptanceDaysHint();
+    document.getElementById('formCard')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    toast('заявка заполнена из API — проверь и нажми «записать»');
+  }, 50);
+}
+
+function filterExternalSuppliesUI() {
+  const q = String((document.getElementById('externalSearchInput') || {}).value || '').trim().toLowerCase();
+  document.querySelectorAll('#externalModalBody .ext-item').forEach(el => {
+    el.style.display = !q || String(el.dataset.extSearch || '').includes(q) ? '' : 'none';
+  });
+  document.querySelectorAll('#externalModalBody .ext-mp-section').forEach(sec => {
+    const visible = Array.from(sec.querySelectorAll('.ext-item')).some(el => el.style.display !== 'none');
+    const empty = sec.querySelector('.ext-empty-filter');
+    if (empty) empty.style.display = q && !visible ? 'block' : 'none';
+  });
 }
 function isoWeek(d) {
   const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -3246,6 +3704,23 @@ function formatToday() {
   return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 }
 $('dateNow').textContent = formatToday();
+
+(function initThemeToggleSafe(){
+  try {
+    const saved = localStorage.getItem('om-theme') || 'dark';
+    if (saved === 'light') document.body.classList.add('om-light-theme');
+    const btn = document.getElementById('themeToggleBtn');
+    if (!btn) return;
+    const sync = () => { btn.textContent = document.body.classList.contains('om-light-theme') ? '☾' : '☀'; btn.title = document.body.classList.contains('om-light-theme') ? 'переключить на тёмную тему' : 'переключить на белую тему'; };
+    sync();
+    btn.addEventListener('click', () => {
+      document.body.classList.toggle('om-light-theme');
+      localStorage.setItem('om-theme', document.body.classList.contains('om-light-theme') ? 'light' : 'dark');
+      sync();
+    });
+  } catch (e) { console.warn('[OM] theme toggle skipped', e); }
+})();
+
 
 // Клик по тексту статуса — повторная попытка загрузки
 $('statusText').addEventListener('click', () => {
@@ -3449,11 +3924,11 @@ function openWeekModal() {
     });
     const sortedDates = Object.keys(byDate).sort();
 
-    let html = '';
+    let html = '<div class="week-list-head"><span>дата</span><span>МП</span><span>склад МП</span><span>поставка</span><span>объём</span><span>SOS</span></div>';
     sortedDates.forEach(date => {
       html += `<div class="week-day-header">${escapeHtml(dayOfWeekRu(date))}</div>`;
       byDate[date].forEach(o => {
-        const sosVal = Number(o.sosLevel) || 0;
+        const sosVal = sosSeverity(o);
         const mpCls = mpClass(o.mp);
         html += `
           <div class="week-item" data-row="${o.rowNum}" title="нажми чтобы редактировать">
@@ -3462,7 +3937,7 @@ function openWeekModal() {
             <div class="week-item-wh">${escapeHtml(o.warehouseFull || '—')}</div>
             <div class="week-item-supply">${escapeHtml(o.supplyNumber || '—')}</div>
             <div class="week-item-qty">${escapeHtml(formatQty(o))}</div>
-            <div class="week-item-sos">${sosVal > 0 ? `<span style="color:#e87159;">${sosVal}</span>` : '—'}</div>
+            <div class="week-item-sos">${escapeHtml(sosLabel(o))}</div>
           </div>`;
       });
     });
@@ -3491,16 +3966,16 @@ function closeWeekModal() {
 // ============== МОДАЛ "SOS" ==============
 function openSosModal() {
   const items = allOrders
-    .filter(o => Number(o.sosLevel) > 0)
-    .sort((a,b) => (Number(b.sosLevel)||0) - (Number(a.sosLevel)||0) || (a.datePlan || '').localeCompare(b.datePlan || ''));
+    .filter(o => sosSeverity(o) > 0 || isUrgentDue(o))
+    .sort((a,b) => (sosSeverity(b)||0) - (sosSeverity(a)||0) || (a.datePlan || '').localeCompare(b.datePlan || ''));
 
   $('sosModalTitle').textContent = `SOS — требуют внимания · ${items.length} шт.`;
   const body = $('sosModalBody');
   if (!items.length) {
     body.innerHTML = '<div class="week-empty">сейчас нет заказов с SOS</div>';
   } else {
-    body.innerHTML = items.map(o => {
-      const sosVal = Number(o.sosLevel) || 0;
+    body.innerHTML = '<div class="week-list-head"><span>дата</span><span>МП</span><span>склад МП</span><span>поставка</span><span>объём</span><span>SOS</span></div>' + items.map(o => {
+      const sosVal = sosSeverity(o);
       const mpCls = mpClass(o.mp);
       return `
         <div class="week-item" data-row="${o.rowNum}" title="нажми чтобы редактировать">
@@ -3509,7 +3984,7 @@ function openSosModal() {
           <div class="week-item-wh">${escapeHtml(o.warehouseFull || '—')}</div>
           <div class="week-item-supply">${escapeHtml(o.supplyNumber || '—')}</div>
           <div class="week-item-qty">${escapeHtml(formatQty(o))}</div>
-          <div class="week-item-sos"><span style="color:#e87159;font-weight:600;">${sosVal}</span></div>
+          <div class="week-item-sos"><span style="color:#e87159;font-weight:600;">${escapeHtml(sosLabel(o))}</span></div>
         </div>`;
     }).join('');
     body.querySelectorAll('.week-item').forEach(el => {
@@ -3559,7 +4034,7 @@ function openDispatchModal() {
   };
   items.forEach(o => groups[dispatchStatus(o)].items.push(o));
 
-  let html = '';
+  let html = '<div class="dispatch-list-head"><span>дата</span><span>МП</span><span>водитель</span><span>машина</span><span>склад МП</span><span>документы</span><span>цена</span></div>';
   Object.entries(groups).forEach(([key, g]) => {
     if (!g.items.length) return;
     g.items.sort((a,b) => (a.datePlan || '').localeCompare(b.datePlan || ''));
@@ -3693,6 +4168,22 @@ async function syncSberFromApi() {
     btn.disabled = false;
     btn.textContent = orig;
     btn.style.opacity = '';
+  }
+}
+
+
+async function syncOzonFromApi() {
+  const btn = document.getElementById('extSyncOzonBtn');
+  if (btn && btn.disabled) return;
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '… обновляем Ozon'; btn.style.opacity = '0.6'; }
+  try {
+    toast('обновляем список Ozon из Apps Script');
+    await loadExternalSupplies(true);
+  } catch (e) {
+    toast('Ozon обновление не прошло: ' + e.message, true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig || '↻ Ozon обновить'; btn.style.opacity = ''; }
   }
 }
 
@@ -4189,6 +4680,67 @@ async function sendOrderEmail(order) {
   }
 }
 
+
+function ruOzonDateTimeText(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return '';
+  const months = {
+    january:'января', february:'февраля', march:'марта', april:'апреля', may:'мая', june:'июня',
+    july:'июля', august:'августа', september:'сентября', october:'октября', november:'ноября', december:'декабря',
+    jan:'января', feb:'февраля', mar:'марта', apr:'апреля', jun:'июня', jul:'июля', aug:'августа', sep:'сентября', sept:'сентября', oct:'октября', nov:'ноября', dec:'декабря'
+  };
+  return raw.replace(/(\d{1,2})\s+([A-Za-z]+)\,?\s*/g, (m, d, mon) => {
+    const mm = months[String(mon).toLowerCase()] || mon;
+    return `${Number(d)} ${mm}, `;
+  }).replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+}
+
+function enhanceSupplyProductFormatUI() {
+  const body = document.getElementById('supplyDetailsBody');
+  if (!body) return;
+  body.querySelectorAll('.supply-products-table').forEach((table, idx) => {
+    if (table.dataset.formatEnhanced === '1') return;
+    const rows = Array.from(table.querySelectorAll('.supply-products-row'));
+    if (!rows.length) return;
+    const sums = { all: {count:0, qty:0}, nes: {count:0, qty:0}, dg: {count:0, qty:0}, other: {count:0, qty:0} };
+    rows.forEach(row => {
+      const txt = row.textContent || '';
+      const type = /dolce\s*gusto/i.test(txt) ? 'dg' : (/nespresso/i.test(txt) ? 'nes' : 'other');
+      const qtyEl = row.querySelector('.qty');
+      const qty = qtyEl ? (Number(String(qtyEl.textContent || '').replace(/\D+/g,'')) || 0) : 0;
+      row.dataset.format = type;
+      sums.all.count++; sums.all.qty += qty;
+      sums[type].count++; sums[type].qty += qty;
+    });
+    const uid = 'fmt_' + Date.now() + '_' + idx;
+    const panel = document.createElement('div');
+    panel.className = 'supply-format-panel';
+    panel.innerHTML = `
+      <div class="supply-format-summary">
+        <div class="supply-summary-chip"><div class="supply-summary-label">Nespresso</div><div class="supply-summary-value">${sums.nes.qty} <span>шт · ${sums.nes.count} поз.</span></div></div>
+        <div class="supply-summary-chip"><div class="supply-summary-label">Dolce Gusto</div><div class="supply-summary-value">${sums.dg.qty} <span>шт · ${sums.dg.count} поз.</span></div></div>
+        ${sums.other.count ? `<div class="supply-summary-chip"><div class="supply-summary-label">без формата</div><div class="supply-summary-value">${sums.other.qty} <span>шт · ${sums.other.count} поз.</span></div></div>` : ''}
+      </div>
+      <div class="supply-format-toolbar" data-table-uid="${uid}">
+        <button type="button" class="supply-format-chip active" data-format="all">все форматы</button>
+        <button type="button" class="supply-format-chip" data-format="nes">Nespresso</button>
+        <button type="button" class="supply-format-chip" data-format="dg">Dolce Gusto</button>
+        ${sums.other.count ? '<button type="button" class="supply-format-chip" data-format="other">без формата</button>' : ''}
+      </div>`;
+    table.dataset.tableUid = uid;
+    table.dataset.formatEnhanced = '1';
+    table.parentNode.insertBefore(panel, table);
+    panel.querySelectorAll('.supply-format-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        panel.querySelectorAll('.supply-format-chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.dataset.format;
+        rows.forEach(r => r.classList.toggle('hidden-by-format', f !== 'all' && r.dataset.format !== f));
+      });
+    });
+  });
+}
+
 function renderSupplyDetails(source, id, number, data) {
   if (!data.ok) {
     let html = `<div class="api-banner" style="background:rgba(224, 74, 44, 0.10);border-left-color:#E04A2C;">
@@ -4461,7 +5013,7 @@ function renderSupplyDetails(source, id, number, data) {
     if (s.timeslot_text || s.data_filling_deadline) {
       let block = '';
       if (s.timeslot_text) {
-        block += `<div class="supply-card-main">${escapeHtml(s.timeslot_text)}</div>
+        block += `<div class="supply-card-main">${escapeHtml(ruOzonDateTimeText(s.timeslot_text))}</div>
                   <div class="supply-card-sub">по московскому времени</div>`;
       }
       if (s.data_filling_deadline) {
@@ -4829,6 +5381,7 @@ function renderSupplyDetails(source, id, number, data) {
   // не дублируем — иначе после длинной таблицы товаров неудобно.
 
   $('supplyDetailsBody').innerHTML = html;
+  enhanceSupplyProductFormatUI();
 
   const btn = document.getElementById('goToOrderBtn');
   if (btn) {
@@ -5146,14 +5699,12 @@ function renderExternalSupplies(data) {
     <button class="cabinet-link" id="extSyncBtn" onclick="syncWbFromApi()" style="font-size:11px;">↻ WB синк</button>
     <button class="cabinet-link" id="extSyncYmBtn" onclick="syncYmFromApi()" style="font-size:11px;">↻ ЯМ синк</button>
     <button class="cabinet-link" id="extSyncSberBtn" onclick="syncSberFromApi()" style="font-size:11px;">↻ Сбер синк</button>
-  </div>`;
+    <button class="cabinet-link ozon-refresh" id="extSyncOzonBtn" onclick="syncOzonFromApi()" style="font-size:11px;">↻ Ozon обновить</button>
+  </div>
+  <div class="ext-search-row"><input type="text" id="externalSearchInput" placeholder="поиск по поставкам: номер, склад, статус, кабинет..." oninput="filterExternalSuppliesUI()"></div>`;
 
   // ============ WB ============
-  html += `<div class="dispatch-section">
-    <div class="dispatch-section-title">
-      <span>WB — поставки FBW</span>
-      <span class="dispatch-section-count">${wbList.length}</span>
-    </div>`;
+  html += `<details class="ext-mp-section"><summary><span>WB — поставки FBW</span><span class="dispatch-section-count">${wbList.length}</span></summary><div class="dispatch-section">`;
   if (!wb.ok) {
     html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(wb.error || 'неизвестная ошибка')}</div>`;
     if (wb.hint) html += `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">${escapeHtml(wb.hint)}</div>`;
@@ -5167,14 +5718,15 @@ function renderExternalSupplies(data) {
       const linked = findOrderBySupplyRecord(s) || findOrderBySupplyNumber(s.number || s.id);
       const linkBadge = linked
         ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
-        : `<span class="ext-link-badge muted">не в OM</span>`;
+        : `<div class="ext-link-actions"><span class="ext-link-badge muted">не в OM</span><button type="button" class="ext-create-btn" onclick="event.stopPropagation(); createOrderFromExternalSupply('wb', '${escapeJsAttr(s.id)}', '${escapeJsAttr(s.number || s.id)}', '')">+ в OM</button></div>`;
       const dateLabel = s.done && s.factDate
         ? String(s.factDate).slice(0,10)
         : (s.planned ? String(s.planned).slice(0,10) : String(s.created || '').slice(0,10));
       const dateHint = s.done ? 'принято' : (s.planned ? 'плановая' : 'создана');
       const stateColor = s.done ? 'var(--text-muted)' : (s.statusID === 3 ? '#C7905D' : '#8FA383');
       html += `
-        <div class="dispatch-row supply-clickable"
+        <div class="dispatch-row supply-clickable ext-item"
+             data-ext-search="${escapeHtml(externalSupplySearchHay(s, 'wb'))}"
              data-supply-id="${escapeHtml(s.id)}"
              data-supply-number="${escapeHtml(s.number || s.id)}"
              data-source="wb"
@@ -5193,14 +5745,10 @@ function renderExternalSupplies(data) {
       <a href="${escapeHtml(wb.cabinet_url)}" target="_blank" class="cabinet-link">→ открыть в кабинете WB</a>
     </div>`;
   }
-  html += '</div>';
+  html += '<div class="ext-empty-filter">нет совпадений по поиску WB</div></div></details>';
 
   // ============ ЯМ ============
-  html += `<div class="dispatch-section">
-    <div class="dispatch-section-title">
-      <span>ЯМ — поставки FBY</span>
-      <span class="dispatch-section-count">${ymList.length}</span>
-    </div>`;
+  html += `<details class="ext-mp-section"><summary><span>ЯМ — поставки FBY</span><span class="dispatch-section-count">${ymList.length}</span></summary><div class="dispatch-section">`;
   if (!ym.ok) {
     html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(ym.error || 'неизвестная ошибка')}</div>`;
     if (ym.hint) html += `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">${escapeHtml(ym.hint)}</div>`;
@@ -5214,14 +5762,15 @@ function renderExternalSupplies(data) {
       const linked = findOrderBySupplyRecord(s) || findOrderBySupplyNumber(displayNumber);
       const linkBadge = linked
         ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
-        : `<span class="ext-link-badge muted">не в OM</span>`;
+        : `<div class="ext-link-actions"><span class="ext-link-badge muted">не в OM</span><button type="button" class="ext-create-btn" onclick="event.stopPropagation(); createOrderFromExternalSupply('ym', '${escapeJsAttr(s.id)}', '${escapeJsAttr(displayNumber)}', '${escapeJsAttr(String(s.campaignId || ''))}')">+ в OM</button></div>`;
       const dateLabel = s.planned
         ? String(s.planned).slice(0, 10)
         : (s.requestedDate ? String(s.requestedDate).slice(0, 10) : String(s.updatedAt || '').slice(0, 10));
       const dateHint = s.planned || s.requestedDate ? 'плановая' : 'обновлена';
       const stateColor = s.done ? 'var(--text-muted)' : '#D4A472';
       html += `
-        <div class="dispatch-row supply-clickable"
+        <div class="dispatch-row supply-clickable ext-item"
+             data-ext-search="${escapeHtml(externalSupplySearchHay(s, 'ym'))}"
              data-supply-id="${escapeHtml(s.id)}"
              data-supply-number="${escapeHtml(displayNumber)}"
              data-source="ym"
@@ -5238,15 +5787,11 @@ function renderExternalSupplies(data) {
   html += `<div class="cabinet-link-row">
     <a href="${escapeHtml(ym.cabinet_url || 'https://partner.market.yandex.ru/')}" target="_blank" class="cabinet-link">→ открыть кабинет ЯМ</a>
   </div>`;
-  html += '</div>';
+  html += '<div class="ext-empty-filter">нет совпадений по поиску ЯМ</div></div></details>';
 
 
   // ============ Сбер ============
-  html += `<div class="dispatch-section">
-    <div class="dispatch-section-title">
-      <span>Сбер — поставки FBO</span>
-      <span class="dispatch-section-count">${sberList.length}</span>
-    </div>`;
+  html += `<details class="ext-mp-section"><summary><span>Сбер — поставки FBO</span><span class="dispatch-section-count">${sberList.length}</span></summary><div class="dispatch-section">`;
   if (!sber.ok) {
     html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(sber.error || 'неизвестная ошибка')}</div>`;
     if (sber.hint) html += `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">${escapeHtml(sber.hint)}</div>`;
@@ -5261,7 +5806,7 @@ function renderExternalSupplies(data) {
       const linked = findOrderBySupplyRecord(s) || findOrderBySupplyNumber(displayNumber);
       const linkBadge = linked
         ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
-        : `<span class="ext-link-badge muted">не в OM</span>`;
+        : `<div class="ext-link-actions"><span class="ext-link-badge muted">не в OM</span><button type="button" class="ext-create-btn" onclick="event.stopPropagation(); createOrderFromExternalSupply('sber', '${escapeJsAttr(s.id)}', '${escapeJsAttr(displayNumber)}', '')">+ в OM</button></div>`;
       const dateLabel = s.plannedDate
         ? String(s.plannedDate).slice(0, 10)
         : (s.createdDate ? String(s.createdDate).slice(0, 10) : '');
@@ -5270,7 +5815,8 @@ function renderExternalSupplies(data) {
       const wh = s.facilityName || s.warehouse || s.facilityId || '';
       const stateColor = s.done ? 'var(--text-muted)' : '#8FA383';
       html += `
-        <div class="dispatch-row supply-clickable"
+        <div class="dispatch-row supply-clickable ext-item"
+             data-ext-search="${escapeHtml(externalSupplySearchHay(s, 'sber'))}"
              data-supply-id="${escapeHtml(String(s.id || ''))}"
              data-supply-number="${escapeHtml(String(displayNumber || ''))}"
              data-source="sber"
@@ -5287,14 +5833,10 @@ function renderExternalSupplies(data) {
   html += `<div class="cabinet-link-row">
     <a href="${escapeHtml(sber.cabinet_url || 'https://partner.megamarket.ru/')}" target="_blank" class="cabinet-link">→ открыть кабинет Сбер</a>
   </div>`;
-  html += '</div>';
+  html += '<div class="ext-empty-filter">нет совпадений по поиску Сбер</div></div></details>';
 
   // ============ Ozon ============
-  html += `<div class="dispatch-section">
-    <div class="dispatch-section-title">
-      <span>Ozon — заявки на поставку FBO</span>
-      <span class="dispatch-section-count">${ozonList.length}</span>
-    </div>
+  html += `<details class="ext-mp-section"><summary><span>Ozon — заявки на поставку FBO</span><span class="dispatch-section-count">${ozonList.length}</span></summary><div class="dispatch-section">
     <div class="cabinet-link-row" style="padding-bottom:8px;">
       <a href="https://seller.ozon.ru/app/supply/orders?filter=TransitAndAcceptance" target="_blank" class="cabinet-link" style="font-size:11px;">→ в пути</a>
       <a href="https://seller.ozon.ru/app/supply/orders?filter=SupplyPreparation" target="_blank" class="cabinet-link" style="font-size:11px;">→ в подготовке</a>
@@ -5304,7 +5846,7 @@ function renderExternalSupplies(data) {
     html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(ozon.error || 'неизвестная ошибка')}</div>`;
     if (ozon.tried && ozon.tried.length) html += `<div class="api-debug">${ozon.tried.map(escapeHtml).join('<br>')}</div>`;
   } else if (!ozonList.length) {
-    if (ozon.note) html += `<div class="api-banner">${escapeHtml(ozon.note)}</div>`;
+    if (ozon.note) html += `<div class="api-banner"><strong>Ozon API не отдаёт общий список существующих поставок.</strong><br>${escapeHtml(ozon.note)}<br><span style="font-size:12px;color:var(--text-muted);">Поэтому здесь список не загрузится как WB/ЯМ/Сбер. Используем кабинет Ozon и маппинг ID для открытия деталей конкретных заявок.</span></div>`;
     else html += '<div class="dispatch-empty">нет активных заявок на поставку</div>';
     html += renderOzonHelper();
   } else {
@@ -5312,11 +5854,12 @@ function renderExternalSupplies(data) {
       const linked = findOrderBySupplyRecord(s) || findOrderBySupplyNumber(s.number || s.id);
       const linkBadge = linked
         ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
-        : `<span class="ext-link-badge muted">не в OM</span>`;
+        : `<div class="ext-link-actions"><span class="ext-link-badge muted">не в OM</span><button type="button" class="ext-create-btn" onclick="event.stopPropagation(); createOrderFromExternalSupply('ozon', '${escapeJsAttr(s.id)}', '${escapeJsAttr(s.number || s.id)}', '')">+ в OM</button></div>`;
       const dateLabel = s.planned ? String(s.planned).slice(0,10) : String(s.created || '').slice(0,10);
       const dateHint = s.planned ? 'плановая' : 'создана';
       html += `
-        <div class="dispatch-row supply-clickable"
+        <div class="dispatch-row supply-clickable ext-item"
+             data-ext-search="${escapeHtml(externalSupplySearchHay(s, 'ozon'))}"
              data-supply-id="${escapeHtml(s.id)}"
              data-supply-number="${escapeHtml(s.number || s.id)}"
              data-source="ozon"
@@ -5334,9 +5877,10 @@ function renderExternalSupplies(data) {
       <a href="${escapeHtml(ozon.cabinet_url)}" target="_blank" class="cabinet-link">→ открыть «Заявки на поставку» в кабинете Ozon</a>
     </div>`;
   }
-  html += '</div>';
+  html += '<div class="ext-empty-filter">нет совпадений по поиску Ozon</div></div></details>';
 
   $('externalModalBody').innerHTML = html;
+  filterExternalSuppliesUI();
 
   // Клик по строке поставки — открыть детали
   $('externalModalBody').querySelectorAll('.supply-clickable').forEach(el => {
@@ -5422,7 +5966,7 @@ async function loadData() {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR')) {
     $('setupBanner').style.display = 'block';
     setStatus('не настроено', 'error');
-    $('ordersBody').innerHTML = '<tr><td colspan="14"><div class="empty">подключи Apps Script</div></td></tr>';
+    $('ordersBody').innerHTML = '<tr><td colspan="15"><div class="empty">подключи Apps Script</div></td></tr>';
     return;
   }
   setStatus('загружаем', 'loading');
@@ -5560,13 +6104,15 @@ function renderStats() {
   let sosCount = 0;
   let noCarCount = 0;
   let dispatchCount = 0;
+  let urgentDueCount = 0;
   const mpCount = {};
   allOrders.forEach(o => {
     if (o.datePlan) {
       const d = new Date(o.datePlan);
       if (!isNaN(d) && d.getFullYear() === thisYear && isoWeek(d) === thisWeek) weekCount++;
     }
-    if (o.sosLevel && Number(o.sosLevel) > 0) sosCount++;
+    if (sosSeverity(o) > 0 || isUrgentDue(o)) sosCount++;
+    if (isUrgentDue(o)) urgentDueCount++;
     if (isNoCar(o)) noCarCount++;
     if (isInDispatch(o)) dispatchCount++;
     if (o.mp) mpCount[o.mp] = (mpCount[o.mp] || 0) + 1;
@@ -5575,6 +6121,7 @@ function renderStats() {
   $('statSos').textContent = sosCount;
   $('statNoCar').textContent = noCarCount;
   $('statDispatch').textContent = dispatchCount;
+  if ($('statUrgentDue')) $('statUrgentDue').textContent = urgentDueCount;
   const mpLines = Object.entries(mpCount)
     .sort((a,b) => b[1] - a[1])
     .slice(0, 4)
@@ -5597,7 +6144,7 @@ function mpClass(mp) {
 //   1 точка: загружен в ЛК
 //   2 точки: + есть № счёта 1С
 //   3 точки: + внесены данные машины (ФИО водителя или № машины)
-//   4 точки: + корректировки внесены = поставка закрыта
+//   4 точки: + поставка проверена = поставка закрыта
 // Галочка "документы переданы" — это просто информация, в прогрессе не учитывается.
 function calcProgress(o) {
   const hasLk = !!o.loadedLk;
@@ -5671,7 +6218,7 @@ function renderSupplyCell(o) {
 function isNoCar(o) {
   const hasCar = (o.carNumber && String(o.carNumber).trim()) ||
                  (o.driverName && String(o.driverName).trim());
-  // Закрыто = факт. дата поставки или галка "корректировки внесены"
+  // Закрыто = факт. дата поставки или галка "поставка проверена"
   const isClosed = !!o.dateFact || !!o.correctionsMade;
   const isShipped = !!o.shippedToMp;
   return !hasCar && !isShipped && !isClosed;
@@ -5690,47 +6237,53 @@ function resetFilters() {
 function orderShipmentType(o) {
   const mp = String(o.mp || '').toLowerCase();
   const wh = String(o.warehouseFrom || '').toLowerCase();
-  if (wh.includes('транзит') || wh.includes('transit')) return 'транзит';
-  if (wh.includes('кросс') || wh.includes('cross')) return 'кроссдок';
-  if (mp.includes('ozon') || mp.includes('озон')) return 'кроссдок';
-  if (mp === 'wb' || mp.includes('wild')) return 'транзит';
+  if (wh.includes('транзит') || wh.includes('transit') || wh.includes('кросс') || wh.includes('cross')) return 'транзит/кроссдок';
+  if (mp.includes('ozon') || mp.includes('озон')) return 'транзит/кроссдок';
+  if (mp === 'wb' || mp.includes('wild')) return 'транзит/кроссдок';
   return o.warehouseFrom ? 'отгрузка' : '—';
 }
 
 function renderShipmentCell(o) {
   const type = orderShipmentType(o);
   const wh = o.warehouseFrom || '—';
-  return `<div class="shipment-kind"><span class="kind">${escapeHtml(type)}</span><span class="wh">${escapeHtml(wh)}</span></div>`;
+  const cls = type === 'транзит/кроссдок' ? ' transit-cross' : '';
+  return `<div class="shipment-kind${cls}"><span class="kind">${escapeHtml(type)}</span><span class="wh">${escapeHtml(wh)}</span></div>`;
 }
 
 function boolBadge(val, yesText='да', noText='нет') {
   return `<span class="om-badge ${val ? 'on' : 'off'}">${val ? yesText : noText}</span>`;
 }
 
-function renderProgressCell(progress) {
+function renderProgressCell(progress, o) {
   return `<div>
-    <span class="order-progress-mini">${progress}/4</span>
+    <span class="order-progress-mini only">${progress}/4</span>
     <div class="order-progress-dots">
       <span class="flag ${progress >= 1 ? 'on' : ''}" title="загружен в ЛК"></span>
       <span class="flag ${progress >= 2 ? 'on' : ''}" title="№ счёта 1С"></span>
       <span class="flag ${progress >= 3 ? 'on' : ''}" title="данные машины"></span>
-      <span class="flag ${progress >= 4 ? 'on done' : ''}" title="корректировки внесены"></span>
+      <span class="flag ${progress >= 4 ? 'on done' : ''}" title="поставка проверена"></span>
     </div>
   </div>`;
 }
 
 function renderDateDuo(o) {
   return `<div class="order-date-duo">
-    <span>${escapeHtml(o.datePlan || '—')}</span>
-    <span class="fact">${escapeHtml(o.dateFact || '—')}</span>
+    <span title="плановая дата">${escapeHtml(fmtDateWithTime(o.datePlan, orderPlanTime(o)))}</span>
+    <span class="fact" title="факт. приемка на МП">${escapeHtml(o.dateFact || '—')}</span>
   </div>`;
 }
 
 function renderOrderStatuses(o) {
+  const flags = orderFlagsFromComment(o);
+  const mini = [];
+  if (flags.hasDifferences) mini.push('<span class="order-flag-mini warn">расх.</span>');
+  if (flags.virtualSupply) mini.push('<span class="order-flag-mini">вирт.</span>');
+  if (flags.warehouseEmailSent) mini.push('<span class="order-flag-mini">письмо</span>');
   return `<div class="order-status-stack">
     <div class="order-status-line"><span>отгр.</span>${boolBadge(!!o.shippedToMp)}</div>
-    <div class="order-status-line"><span>правки</span>${boolBadge(!!o.correctionsMade)}</div>
+    <div class="order-status-line"><span>проверка</span>${boolBadge(!!o.correctionsMade)}</div>
     <div class="order-status-line"><span>ЛК</span>${boolBadge(!!o.loadedLk)}</div>
+    ${mini.length ? `<div class="order-flags-mini">${mini.join('')}</div>` : ''}
   </div>`;
 }
 
@@ -5780,10 +6333,10 @@ function openOrderDetails(o) {
       </div>
       <div class="order-detail-card">
         <h4>план / факт</h4>
-        ${detailLine('плановая дата', o.datePlan)}
-        ${detailLine('факт. дата', o.dateFact)}
-        ${detailLine('отгр. Реутов', o.dateShipReutov)}
-        ${detailLine('время факт.', o.timeFact)}
+        ${detailLine('плановая дата', fmtDateWithTime(o.datePlan, orderPlanTime(o)))}
+        ${detailLine('факт. приемка на МП', o.dateFact)}
+        ${detailLine('дней до приемки', acceptanceDaysText(o))}
+        ${detailLine('отгр. Реутов', fmtDateWithTime(o.dateShipReutov, orderShipTime(o)))}
         ${detailLine('неделя', o.week)}
       </div>
       <div class="order-detail-card">
@@ -5792,7 +6345,9 @@ function openOrderDetails(o) {
         ${detailLine('заказ на производство', o.productionOrderNum)}
         ${detailLine('счёт 1С', o.invoice1c)}
         ${detailLine('загружен в ЛК', o.loadedLk)}
-        ${detailLine('корректировки внесены', o.correctionsMade)}
+        ${detailLine('поставка проверена', o.correctionsMade)}
+        ${detailLine('есть расхождения', orderFlagsFromComment(o).hasDifferences)}
+        ${orderFlagsFromComment(o).checkComment ? detailLine('комментарий проверки', orderFlagsFromComment(o).checkComment) : ''}
         ${detailLine('отгружено на МП', o.shippedToMp)}
         ${detailLine('документы переданы', o.docsHandedOver)}
       </div>
@@ -5803,6 +6358,7 @@ function openOrderDetails(o) {
         ${detailLine('короба', o.boxes)}
         ${detailLine('SOS', o.sosLevel)}
         ${detailLine('прогресс', `${progress}/4`)}
+        <div class="order-detail-progress">${escapeHtml(buildProgressText(o))}</div>
       </div>
       <div class="order-detail-card">
         <h4>транспорт</h4>
@@ -5810,11 +6366,12 @@ function openOrderDetails(o) {
         ${detailLine('номер машины', o.carNumber)}
         ${detailLine('дата вывоза', o.actualPickupDate)}
         ${detailLine('№ возврата', o.returnCarNumber)}
+        ${detailLine('номер машины вывоза', pickupCarNumberText(o))}
         ${detailLine('цена машины', o.carPrice)}
       </div>
       <div class="order-detail-card">
         <h4>финансы</h4>
-        ${detailLine('транзит', o.transitPrice)}
+        ${detailLine('транзит/кроссдок', o.transitPrice)}
         ${detailLine('платная приёмка', o.paidReceptionPrice)}
       </div>
       <div class="order-detail-card wide">
@@ -5884,25 +6441,25 @@ function renderTable() {
     if (dateFrom && (!o.datePlan || o.datePlan < dateFrom)) return false;
     if (dateTo && (!o.datePlan || o.datePlan > dateTo)) return false;
     if (search) {
-      const hay = [o.num, o.warehouseFrom, o.warehouseFull, o.supplyNumber, o.orderNumber, o.comment, o.invoice1c].join(' ').toLowerCase();
+      const hay = [o.num, o.mp, o.warehouseFrom, o.warehouseFull, o.supplyNumber, o.orderNumber, o.productionOrderNum, o.comment, o.invoice1c, o.legalEntity, o.driverName, o.carNumber].join(' ').toLowerCase();
       if (!hay.includes(search)) return false;
     }
     return true;
   });
   if (!filtered.length) {
-    $('ordersBody').innerHTML = '<tr><td colspan="14"><div class="empty">пусто</div></td></tr>';
+    $('ordersBody').innerHTML = '<tr><td colspan="15"><div class="empty">пусто</div></td></tr>';
     return;
   }
   const html = filtered.slice(0, 100).map(o => {
-    const sosVal = Number(o.sosLevel) || 0;
+    const sosVal = sosSeverity(o);
     const mpCls = mpClass(o.mp);
     const progress = calcProgress(o);
     const palletsTxt = formatQty(o);
     return `
-      <tr class="order-row" data-row="${o.rowNum}" title="нажми чтобы открыть карточку поставки">
+      <tr class="order-row ${isWithoutInvoice(o) ? 'no-invoice' : ''}" data-row="${o.rowNum}" title="нажми чтобы открыть карточку поставки">
         <td class="cell-num">${escapeHtml(o.num || '—')}</td>
         <td>${o.mp ? `<span class="cell-mp ${mpCls}">${escapeHtml(o.mp)}</span>` : '—'}</td>
-        <td>${renderProgressCell(progress)}</td>
+        <td>${renderProgressCell(progress, o)}</td>
         <td>${renderShipmentCell(o)}</td>
         <td class="cell-warehouse">${escapeHtml(o.warehouseFull || '—')}</td>
         <td class="cell-small">${escapeHtml(o.legalEntity || '—')}</td>
@@ -5910,13 +6467,14 @@ function renderTable() {
         <td>${renderSupplyCell(o)}</td>
         <td>${escapeHtml(o.orderNumber || '—')}</td>
         <td>${escapeHtml(o.productionOrderNum || '—')}</td>
+        <td>${escapeHtml(orderInvoiceText(o))}</td>
         <td>${escapeHtml(palletsTxt)}</td>
         <td>${renderOrderStatuses(o)}</td>
         <td>${renderTransportCell(o)}</td>
         <td>
           <div class="order-comment-compact">
-            <span class="sos ${sosVal === 0 ? 'zero' : ''}">${sosVal}</span>
-            <span class="comment">${escapeHtml(o.comment || '')}</span>
+            <span class="sos-label ${sosLabel(o) === 'срочно' ? 'hot' : (sosLabel(o) === 'отгрузка заранее' || sosLabel(o) === 'заранее' ? 'soon' : '')}">${escapeHtml(sosLabel(o))}</span>
+            <span class="comment">${escapeHtml(stripServiceFlags(o.comment || ''))}</span>
           </div>
         </td>
       </tr>`;
@@ -5973,9 +6531,12 @@ function editOrder(o) {
   // 3. Остальные поля
   form.elements.legalEntity.value = o.legalEntity || '';
   form.elements.datePlan.value = o.datePlan || '';
+  if (form.elements.datePlanTime) form.elements.datePlanTime.value = orderPlanTime(o);
   form.elements.dateShipReutov.value = o.dateShipReutov || '';
+  if (form.elements.dateShipReutovTime) form.elements.dateShipReutovTime.value = orderShipTime(o);
   form.elements.dateFact.value = o.dateFact || '';
-  form.elements.timeFact.value = o.timeFact || '';
+  if (form.elements.timeFact) form.elements.timeFact.value = '';
+  setTimeout(updateAcceptanceDaysHint, 0);
   form.elements.supplyNumber.value = o.supplyNumber || '';
   if (form.elements.lkOrderId) form.elements.lkOrderId.value = o.lkOrderId || '';
   form.elements.orderNumber.value = o.orderNumber || '';
@@ -5984,11 +6545,16 @@ function editOrder(o) {
   form.elements.boxes.value = o.boxes || '';
   form.elements.sosLevel.value = (Number(o.sosLevel) > 0) ? String(o.sosLevel) : 'обычно';
   form.elements.invoice1c.value = o.invoice1c || '';
-  form.elements.comment.value = o.comment || '';
+  const __flags = orderFlagsFromComment(o);
+  form.elements.comment.value = stripServiceFlags(o.comment || '');
 
   // 4. Чекбоксы
   form.elements.carOrdered.checked = !!o.carOrdered;
   form.elements.correctionsMade.checked = !!o.correctionsMade;
+  if (form.elements.hasDifferences) form.elements.hasDifferences.checked = !!__flags.hasDifferences;
+  if (form.elements.virtualSupply) form.elements.virtualSupply.checked = !!__flags.virtualSupply;
+  if (form.elements.warehouseEmailSent) form.elements.warehouseEmailSent.checked = !!__flags.warehouseEmailSent;
+  if (form.elements.checkComment) form.elements.checkComment.value = __flags.checkComment || '';
   form.elements.loadedLk.checked = !!o.loadedLk;
   form.elements.shippedToMp.checked = !!o.shippedToMp;
   form.elements.isDispatch.checked = !!o.isDispatch;
@@ -6008,6 +6574,7 @@ function editOrder(o) {
   form.elements.carPrice.value = o.carPrice || '';
   form.elements.actualPickupDate.value = o.actualPickupDate || '';
   form.elements.returnCarNumber.value = o.returnCarNumber || '';
+  if (form.elements.pickupCarNumber) form.elements.pickupCarNumber.value = __flags.pickupCarNumber || '';
 
   // 4c. Финансы
   form.elements.transitPrice.value = o.transitPrice || '';
@@ -6021,6 +6588,7 @@ function editOrder(o) {
   $('transportBlock').open = hasTransport;
   if ($('dispatchBlock')) $('dispatchBlock').open = hasDispatch;
   $('financeBlock').open = hasFinance;
+  if ($('checkBlock')) $('checkBlock').open = !!(o.dateFact || o.timeFact || o.correctionsMade || __flags.hasDifferences || __flags.checkComment);
 
   // 5. Переключаем форму в режим правки
   editingRowNum = o.rowNum;
@@ -6117,6 +6685,14 @@ function showExtInfoBox(o) {
   box.style.display = 'block';
 }
 
+
+(function initV33FormHelpers(){
+  const form = document.getElementById('orderForm');
+  if (!form) return;
+  if (form.elements.datePlan) form.elements.datePlan.addEventListener('input', updateAcceptanceDaysHint);
+  if (form.elements.dateFact) form.elements.dateFact.addEventListener('input', updateAcceptanceDaysHint);
+})();
+
 $('searchInput').addEventListener('input', renderTable);
 $('filterMp').addEventListener('change', renderTable);
 $('filterDateFrom').addEventListener('change', renderTable);
@@ -6124,10 +6700,18 @@ $('filterDateTo').addEventListener('change', renderTable);
 $('filterNoCar').addEventListener('change', renderTable);
 
 // Клик по KPI "без машины" → проматываем к таблице и активируем фильтр
+if ($('urgentDueCard')) $('urgentDueCard').addEventListener('click', () => {
+  $('filterNoCar').checked = false;
+  $('searchInput').value = '';
+  $('filterMp').value = '';
+  renderTable();
+  toast('срочно внести: поставки на ближайшие 3 дня');
+});
 $('noCarCard').addEventListener('click', () => {
   $('filterNoCar').checked = true;
   // снимаем другие фильтры чтобы было видно всё
   $('searchInput').value = '';
+  $('filterMp').value = '';
   $('filterDateFrom').value = '';
   $('filterDateTo').value = '';
   renderTable();
@@ -6144,9 +6728,32 @@ $('orderForm').addEventListener('submit', async e => {
   const fd = new FormData(form);
   const payload = {};
   for (const [k,v] of fd.entries()) payload[k] = v;
-  ['carOrdered','correctionsMade','loadedLk','shippedToMp','isDispatch','docsHandedOver'].forEach(k => {
+  ['carOrdered','correctionsMade','loadedLk','shippedToMp','isDispatch','docsHandedOver','hasDifferences','virtualSupply','warehouseEmailSent'].forEach(k => {
     if (form.elements[k]) payload[k] = form.elements[k].checked;
   });
+
+
+
+  // Временное хранение новых полей проверки/времени без правки Apps Script-схемы:
+  // записываем служебные метки в комментарий, а при редактировании вытаскиваем обратно.
+  {
+    const baseComment = stripServiceFlags(payload.comment || '');
+    const marks = [];
+    if (payload.hasDifferences) marks.push('[ЕСТЬ РАСХОЖДЕНИЯ]');
+    if (payload.virtualSupply) marks.push('[ВИРТУАЛЬНАЯ ПОСТАВКА]');
+    if (payload.warehouseEmailSent) marks.push('[ПИСЬМО НА СКЛАД ОТПРАВЛЕНО]');
+    if (payload.datePlanTime) marks.push('[ВРЕМЯ ПЛАН] ' + payload.datePlanTime);
+    if (payload.dateShipReutovTime) marks.push('[ВРЕМЯ РЕУТОВ] ' + payload.dateShipReutovTime);
+    const pickupCar = form.elements.pickupCarNumber ? String(form.elements.pickupCarNumber.value || '').trim() : '';
+    if (pickupCar) marks.push('[МАШИНА ВЫВОЗА] ' + pickupCar);
+    const cc = form.elements.checkComment ? String(form.elements.checkComment.value || '').trim() : '';
+    if (cc) marks.push('[ПРОВЕРКА] ' + cc);
+    payload.comment = [baseComment].concat(marks).filter(Boolean).join('\n');
+    delete payload.checkComment;
+    delete payload.datePlanTime;
+    delete payload.dateShipReutovTime;
+    delete payload.pickupCarNumber;
+  }
 
   // Галочка "отправить уведомление" — НЕ улетает в payload (в таблице её нет),
   // а используется только как локальный триггер: после успешной записи
@@ -6214,22 +6821,24 @@ $('orderForm').addEventListener('submit', async e => {
 });
 
 // ============== АВТО-ЗАПОЛНЕНИЕ ДАТЫ ОТГРУЗКИ ==============
-// Дата отгрузки с Реутова = плановая + 2 дня
-// Только если пользователь сам её ещё не правил
+// Дата отгрузки с Реутова по умолчанию = плановая дата.
+// Если пользователь изменил её вручную — больше не перетираем.
 let userTouchedShipDate = false;
 const datePlanInput = document.querySelector('input[name="datePlan"]');
 const dateShipInput = document.querySelector('input[name="dateShipReutov"]');
+const datePlanTimeInput = document.querySelector('input[name="datePlanTime"]');
+const dateShipTimeInput = document.querySelector('input[name="dateShipReutovTime"]');
 
-dateShipInput.addEventListener('input', () => { userTouchedShipDate = true; });
+if (dateShipInput) dateShipInput.addEventListener('input', () => { userTouchedShipDate = true; });
+if (dateShipTimeInput) dateShipTimeInput.addEventListener('input', () => { userTouchedShipDate = true; });
 
-datePlanInput.addEventListener('change', () => {
+if (datePlanInput && dateShipInput) datePlanInput.addEventListener('change', () => {
   if (userTouchedShipDate || !datePlanInput.value) return;
-  const d = new Date(datePlanInput.value);
-  d.setDate(d.getDate() + 2);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  dateShipInput.value = `${yyyy}-${mm}-${dd}`;
+  dateShipInput.value = datePlanInput.value;
+});
+if (datePlanTimeInput && dateShipTimeInput) datePlanTimeInput.addEventListener('change', () => {
+  if (userTouchedShipDate || !datePlanTimeInput.value) return;
+  dateShipTimeInput.value = datePlanTimeInput.value;
 });
 
 // При сбросе формы — снова разрешить авто-заполнение и выйти из режима правки
@@ -6551,6 +7160,476 @@ function resCopy(text) {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => toast('скопировано'));
   else { const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('скопировано'); }
 }
+
+
+
+// ===== v36 overrides: модалки KPI, сортировка, счёт 1С, создание из API =====
+(function(){
+  function safe$(id){ return document.getElementById(id); }
+  function esc(v){ return (typeof escapeHtml === 'function') ? escapeHtml(v == null ? '' : String(v)) : String(v == null ? '' : v); }
+  function rowOrder(rowNum){ return (allOrders || []).find(o => Number(o.rowNum) === Number(rowNum)); }
+  function invoiceHtml(o){ return isWithoutInvoice(o) ? '<span class="no-invoice-pill">без счёта</span>' : esc(o.invoice1c || '—'); }
+  function openViewFromBtn(btn, closer){
+    const rn = btn && btn.getAttribute('data-row');
+    const o = rowOrder(rn);
+    if (o) { if (closer) closer(); openOrderDetails(o); }
+  }
+  window.__omOpenKpiView = function(rowNum, modalId){
+    const o = rowOrder(rowNum);
+    if (!o) return;
+    if (modalId && safe$(modalId)) safe$(modalId).style.display = 'none';
+    openOrderDetails(o);
+  };
+  function orderNumValue(o){
+    const v = String((o && (o.num || o.supplyNumber || o.orderNumber)) || '').replace(/\D/g,'');
+    return v ? Number(v) : 0;
+  }
+  function dateValue(o){
+    const d = o && o.datePlan ? new Date(String(o.datePlan)+'T00:00:00') : null;
+    return d && !isNaN(d.getTime()) ? d.getTime() : 8640000000000000;
+  }
+  function sortOrdersV36(list){
+    const sortMode = (safe$('sortOrdersMode') || {}).value || 'date';
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayTs = today.getTime();
+    return list.slice().sort((a,b)=>{
+      if (sortMode === 'num') return orderNumValue(b) - orderNumValue(a);
+      if (sortMode === 'num_asc') return orderNumValue(a) - orderNumValue(b);
+      const archA = !!a.correctionsMade || !!a.shippedToMp;
+      const archB = !!b.correctionsMade || !!b.shippedToMp;
+      if (archA !== archB) return archA ? 1 : -1;
+      const da = dateValue(a), db = dateValue(b);
+      const pastA = da < todayTs, pastB = db < todayTs;
+      if (pastA !== pastB && !archA && !archB) return pastA ? 1 : -1;
+      if (sortMode === 'date_desc') return db - da;
+      return da - db;
+    });
+  }
+  function ensureV36Controls(){
+    const filters = document.querySelector('.filters');
+    if (filters && !safe$('sortOrdersMode')) {
+      const sel = document.createElement('select');
+      sel.id = 'sortOrdersMode';
+      sel.className = 'filter-sort-select';
+      sel.title = 'сортировка таблицы';
+      sel.innerHTML = '<option value="date">по дате: текущие → ближайшие → архив</option><option value="date_desc">по дате: новые сверху</option><option value="num">по № заказа: больше → меньше</option><option value="num_asc">по № заказа: меньше → больше</option>';
+      sel.addEventListener('change', renderTable);
+      const reset = filters.querySelector('.btn-reset');
+      filters.insertBefore(sel, reset || null);
+    }
+    const stats = document.querySelector('.stats');
+    if (stats && !safe$('noInvoiceCard')) {
+      const card = document.createElement('div');
+      card.className = 'stat-card stat-clickable';
+      card.id = 'noInvoiceCard';
+      card.title = 'показать заказы без счёта 1С';
+      card.innerHTML = '<div class="stat-label">без счёта 1С</div><div class="stat-value copper" id="statNoInvoice">—</div><div class="stat-sub">подсвечены в таблице</div>';
+      const dispatch = safe$('dispatchCard');
+      stats.insertBefore(card, dispatch || null);
+      card.addEventListener('click', ()=>{ window.omNoInvoiceOnly = !window.omNoInvoiceOnly; card.classList.toggle('active', !!window.omNoInvoiceOnly); renderTable(); });
+    }
+    const urgentCard = safe$('urgentDueCard');
+    if (urgentCard) urgentCard.classList.add('hidden-stat');
+  }
+  const oldRenderStats = window.renderStats;
+  window.renderStats = function(){
+    if (typeof oldRenderStats === 'function') oldRenderStats();
+    ensureV36Controls();
+    const noInv = (allOrders || []).filter(isWithoutInvoice).length;
+    if (safe$('statNoInvoice')) safe$('statNoInvoice').textContent = noInv;
+    const urgent = (allOrders || []).filter(isUrgentDue).length;
+    const noCarSub = safe$('noCarCard') && safe$('noCarCard').querySelector('.stat-sub');
+    if (noCarSub) noCarSub.innerHTML = 'не отгружены<span class="inline-hot">срочно внести · '+urgent+'</span>';
+  };
+  const oldInit = window.omInitAuth;
+  // Не трогаем логин. Контролы добавятся после загрузки DOM/данных.
+  document.addEventListener('DOMContentLoaded', ensureV36Controls);
+
+  window.renderDateDuo = function(o){
+    const days = (o && o.dateFact) ? acceptanceDaysText(o) : '';
+    return `<div class="order-date-duo">
+      <span title="плановая дата">${esc(fmtDateWithTime(o.datePlan, orderPlanTime(o)))}</span>
+      <span class="fact" title="факт. приемка на МП">${esc(o.dateFact || '—')}</span>
+      ${days ? `<span class="acceptance-days-mini">${esc(days)}</span>` : ''}
+    </div>`;
+  };
+
+  window.renderTable = function(){
+    ensureV36Controls();
+    const search = safe$('searchInput').value.trim().toLowerCase();
+    const mpFilter = safe$('filterMp').value;
+    const dateFrom = safe$('filterDateFrom').value;
+    const dateTo = safe$('filterDateTo').value;
+    const noCarOnly = safe$('filterNoCar').checked;
+    const filtered = (allOrders || []).filter(o => {
+      if (mpFilter && o.mp !== mpFilter) return false;
+      if (noCarOnly && !isNoCar(o)) return false;
+      if (window.omNoInvoiceOnly && !isWithoutInvoice(o)) return false;
+      if (dateFrom && (!o.datePlan || o.datePlan < dateFrom)) return false;
+      if (dateTo && (!o.datePlan || o.datePlan > dateTo)) return false;
+      if (search) {
+        const hay = [o.num,o.mp,o.warehouseFrom,o.warehouseFull,o.supplyNumber,o.orderNumber,o.productionOrderNum,o.comment,o.invoice1c,o.legalEntity,o.driverName,o.carNumber,o.returnCarNumber,pickupCarNumberText(o),o.datePlan,o.dateFact].join(' ').toLowerCase();
+        if (!hay.includes(search)) return false;
+      }
+      return true;
+    });
+    const sorted = sortOrdersV36(filtered);
+    if (!sorted.length) { safe$('ordersBody').innerHTML = '<tr><td colspan="15"><div class="empty">пусто</div></td></tr>'; return; }
+    const html = sorted.slice(0, 140).map(o => {
+      const mpCls = mpClass(o.mp); const progress = calcProgress(o); const palletsTxt = formatQty(o); const sos = sosLabel(o);
+      return `<tr class="order-row ${isWithoutInvoice(o) ? 'no-invoice' : ''}" data-row="${o.rowNum}" title="нажми чтобы открыть карточку поставки">
+        <td class="cell-num">${esc(o.num || '—')}</td>
+        <td>${o.mp ? `<span class="cell-mp ${mpCls}">${esc(o.mp)}</span>` : '—'}</td>
+        <td>${renderProgressCell(progress, o)}</td>
+        <td>${renderShipmentCell(o)}</td>
+        <td class="cell-warehouse">${esc(o.warehouseFull || '—')}</td>
+        <td class="cell-small">${esc(o.legalEntity || '—')}</td>
+        <td>${renderDateDuo(o)}</td>
+        <td>${renderSupplyCell(o)}</td>
+        <td>${esc(o.orderNumber || '—')}</td>
+        <td>${esc(o.productionOrderNum || '—')}</td>
+        <td>${invoiceHtml(o)}</td>
+        <td>${esc(palletsTxt)}</td>
+        <td>${renderOrderStatuses(o)}</td>
+        <td>${renderTransportCell(o)}</td>
+        <td><div class="order-comment-compact"><span class="sos-label ${sos === 'срочно' ? 'hot' : (sos === 'отгрузка заранее' || sos === 'заранее' ? 'soon' : '')}">${esc(sos)}</span><span class="comment">${esc(stripServiceFlags(o.comment || ''))}</span></div></td>
+      </tr>`;
+    }).join('');
+    safe$('ordersBody').innerHTML = html;
+    safe$('ordersBody').querySelectorAll('tr.order-row').forEach(tr => {
+      tr.addEventListener('click', (e) => {
+        const supplyEl = e.target.closest('.supply-linked, .supply-clickable-only');
+        if (supplyEl) {
+          e.stopPropagation();
+          const source = supplyEl.dataset.source, id = supplyEl.dataset.id, number = supplyEl.dataset.number || id;
+          if (!source || !id) return;
+          const facilityId = supplyEl.dataset.facilityId || '';
+          openSupplyDetails(source, id, number, undefined, false, facilityId);
+          return;
+        }
+        const order = rowOrder(tr.dataset.row); if (order) openOrderDetails(order);
+      });
+    });
+  };
+
+  function kpiHeader(){ return '<div class="week-list-head v36"><span>дата</span><span>МП</span><span>склад МП</span><span>поставка</span><span>счёт 1С</span><span>объём</span><span>SOS</span><span></span></div>'; }
+  function kpiRow(o, modalId){
+    const mpCls = mpClass(o.mp), sos = sosLabel(o);
+    return `<div class="week-item v36" data-row="${o.rowNum}">
+      <div class="week-item-date">${esc(o.datePlan || '—')}</div>
+      <div>${o.mp ? `<span class="cell-mp ${mpCls}">${esc(o.mp)}</span>` : '—'}</div>
+      <div>${esc(o.warehouseFull || '—')}</div>
+      <div>${esc(o.supplyNumber || '—')}</div>
+      <div>${invoiceHtml(o)}</div>
+      <div>${esc(formatQty(o))}</div>
+      <div><span class="sos-label ${sos === 'срочно' ? 'hot' : ''}">${esc(sos)}</span></div>
+      <div class="modal-actions"><button type="button" class="om-mini-btn" onclick="__omOpenKpiView(${Number(o.rowNum)}, '${modalId}')">открыть OM</button></div>
+    </div>`;
+  }
+  window.openWeekModal = function(){
+    const today = new Date(); const week = isoWeek(today), year = today.getFullYear();
+    const items = (allOrders||[]).filter(o => { if (!o.datePlan) return false; const d = new Date(o.datePlan); return !isNaN(d) && d.getFullYear() === year && isoWeek(d) === week; }).sort((a,b)=>dateValue(a)-dateValue(b));
+    safe$('weekModalTitle').textContent = `поставки этой недели · ${week} нед · ${items.length} шт.`;
+    const body=safe$('weekModalBody');
+    if (!items.length) body.innerHTML='<div class="week-empty">на этой неделе поставок нет</div>';
+    else {
+      const byDate={}; items.forEach(o => { (byDate[o.datePlan] ||= []).push(o); });
+      let html=kpiHeader(); Object.keys(byDate).sort().forEach(date=>{ html+=`<div class="week-day-header">${esc(dayOfWeekRu(date))}</div>`; byDate[date].forEach(o=>html+=kpiRow(o,'weekModal')); });
+      body.innerHTML=html;
+    }
+    safe$('weekModal').style.display='flex';
+  };
+  window.openSosModal = function(){
+    const items=(allOrders||[]).filter(o=>sosSeverity(o)>0 || isUrgentDue(o)).sort((a,b)=>(sosSeverity(b)||0)-(sosSeverity(a)||0)||dateValue(a)-dateValue(b));
+    safe$('sosModalTitle').textContent=`SOS — требуют внимания · ${items.length} шт.`;
+    safe$('sosModalBody').innerHTML = items.length ? kpiHeader()+items.map(o=>kpiRow(o,'sosModal')).join('') : '<div class="week-empty">сейчас нет заказов с SOS</div>';
+    safe$('sosModal').style.display='flex';
+  };
+  window.openDispatchModal = function(){
+    const items=(allOrders||[]).filter(isInDispatch).sort((a,b)=>dateValue(a)-dateValue(b));
+    safe$('dispatchModalTitle').textContent=`вывозы · ${items.length} шт.`;
+    const body=safe$('dispatchModalBody');
+    if (!items.length) { body.innerHTML='<div class="week-empty">нет активных вывозов</div>'; safe$('dispatchModal').style.display='flex'; return; }
+    let html='<div class="dispatch-list-head v36"><span>дата</span><span>МП</span><span>водитель</span><span>машина</span><span>склад МП</span><span>счёт 1С</span><span>№ возврата</span><span>цена</span><span></span></div>';
+    items.forEach(o=>{ const key=dispatchStatus(o); const dateLabel= key==='arrived' ? (o.actualPickupDate||o.datePlan||'—') : (o.dateShipReutov||o.datePlan||'—'); const mp=o.mp?`<span class="cell-mp ${mpClass(o.mp)}">${esc(o.mp)}</span>`:'—'; html+=`<div class="dispatch-row v36 status-${key}" data-row="${o.rowNum}"><div>${esc(dateLabel)}</div><div>${mp}</div><div>${esc(o.driverName||'—')}</div><div>${esc(pickupCarNumberText(o)||o.carNumber||'—')}</div><div>${esc(o.warehouseFull||'—')}</div><div>${invoiceHtml(o)}</div><div>${esc(o.returnCarNumber||'—')}</div><div>${o.carPrice?Number(o.carPrice).toLocaleString('ru-RU')+' ₽':'—'}</div><div class="modal-actions"><button type="button" class="om-mini-btn" onclick="__omOpenKpiView(${Number(o.rowNum)}, 'dispatchModal')">открыть OM</button></div></div>`; });
+    body.innerHTML=html; safe$('dispatchModal').style.display='flex';
+  };
+
+  function inferDispatchWarehouse(mp, dest){
+    const d=String(dest||'').toLowerCase(); const opts=(dispatchByMp && dispatchByMp[mp]) || [];
+    const exact=opts.find(w=>String(w).toLowerCase()===d); if (exact) return exact;
+    const contains=opts.find(w=>d.includes(String(w).toLowerCase()) || String(w).toLowerCase().includes(d)); if (contains) return contains;
+    if (String(mp).toLowerCase()==='wb') {
+      if (d.includes('электросталь')) return 'Электросталь';
+      if (d.includes('волгоград')) return opts.includes('Обухово') ? 'Обухово' : (opts.includes('Чехов') ? 'Чехов' : 'Обухово');
+      if (d.includes('краснодар')) return 'Краснодар';
+      if (d.includes('казань')) return 'Казань';
+      if (d.includes('домодедово')) return 'Домодедово';
+      if (d.includes('коледино')) return 'Коледино';
+      if (d.includes('подольск')) return 'Подольск 4';
+    }
+    if (String(mp).toLowerCase()==='сбер') return d.includes('шарапов') ? 'Шарапово' : '';
+    return '';
+  }
+  function recPlanDate(rec){ return String(rec.planned || rec.planDate || rec.supplyDate || rec.requestedDate || rec.datePlan || rec.timeslot_from || rec.createDate || '').slice(0,10); }
+  function recPlanTime(rec){ const raw=String(rec.timeslot_from || rec.planned || rec.planDate || rec.supplyDate || rec.requestedDate || ''); const m=raw.match(/(?:T|\s)(\d{2}:\d{2})/); return m ? m[1] : ''; }
+  window.createOrderFromExternalSupply = function(source, id, number, campaignId){
+    const rec = findExternalRecord(source, id, number) || { id, number, campaignId };
+    const form = safe$('orderForm'); if (!form) return;
+    const mpMap={ wb:'WB', ym:'ЯМ', sber:'Сбер', ozon:'Ozon' }; const mp=mpMap[source] || source;
+    closeExternalModal(); if (typeof exitEditMode==='function') exitEditMode();
+    form.elements.mp.value=mp; form.elements.mp.dispatchEvent(new Event('change'));
+    setTimeout(()=>{
+      const plan=recPlanDate(rec), time=recPlanTime(rec);
+      const fullWh=rec.warehouseName || rec.targetWarehouseName || rec.storage_warehouse_name || rec.facilityName || rec.warehouse || rec.actualWarehouseName || '';
+      if (form.elements.supplyNumber) form.elements.supplyNumber.value = number || rec.number || rec.id || '';
+      if (form.elements.lkOrderId) form.elements.lkOrderId.value = rec.id || id || '';
+      if (form.elements.orderNumber) form.elements.orderNumber.value = rec.number || number || rec.preorderID || rec.marketplaceRequestId || rec.warehouseRequestId || '';
+      if (form.elements.datePlan) form.elements.datePlan.value = plan;
+      if (form.elements.datePlanTime) form.elements.datePlanTime.value = time;
+      if (form.elements.dateShipReutov && !form.elements.dateShipReutov.value) form.elements.dateShipReutov.value = plan;
+      if (form.elements.dateShipReutovTime && !form.elements.dateShipReutovTime.value) form.elements.dateShipReutovTime.value = time;
+      if (fullWh && form.elements.warehouseFull) setSelectValue(form.elements.warehouseFull, fullWh);
+      const disp = inferDispatchWarehouse(mp, fullWh || rec.transitWarehouseName || rec.sourceWarehouseName || '');
+      if (disp && form.elements.warehouseFrom) setSelectValue(form.elements.warehouseFrom, disp);
+      if (form.elements.legalEntity && !form.elements.legalEntity.value) form.elements.legalEntity.value = 'ООО Кофепод';
+      if (form.elements.boxes && (rec.boxAmount || rec.quantity || rec.totalQuantityDeclared || rec.totalQuantity)) form.elements.boxes.value = rec.boxAmount || rec.quantity || rec.totalQuantityDeclared || rec.totalQuantity || '';
+      if (form.elements.comment) form.elements.comment.value = (`создано из API ${String(source).toUpperCase()}: ${number || id}` + (fullWh ? `\nсклад из API: ${fullWh}` : '') + (form.elements.comment.value ? '\n' + form.elements.comment.value : '')).trim();
+      updateAcceptanceDaysHint(); safe$('formCard')?.scrollIntoView({behavior:'smooth',block:'start'}); toast('заявка заполнена из API — проверь и нажми «записать»');
+    },80);
+  };
+})();
+
+
+
+// ===== v37 patch: KPI rebind, no-invoice visible filter, improved API dispatch inference =====
+(function(){
+  function safe$(id){ return document.getElementById(id); }
+  function esc(v){ return (typeof escapeHtml === 'function') ? escapeHtml(v == null ? '' : String(v)) : String(v == null ? '' : v); }
+  function getOrderByRow(rowNum){ return (window.allOrders || allOrders || []).find(o => Number(o.rowNum) === Number(rowNum)); }
+  function invoiceV37(o){ return (typeof isWithoutInvoice === 'function' && isWithoutInvoice(o)) ? '<span class="no-invoice-pill">без счёта</span>' : esc((o && o.invoice1c) || '—'); }
+  function openOmV37(rowNum, modalId){
+    const o = getOrderByRow(rowNum);
+    if (!o) return;
+    const m = modalId && safe$(modalId); if (m) m.style.display='none';
+    if (typeof openOrderDetails === 'function') openOrderDetails(o);
+  }
+  window.__omOpenKpiView = openOmV37;
+  function dateTs(o){ const d=o&&o.datePlan?new Date(String(o.datePlan)+'T00:00:00'):null; return d&&!isNaN(d.getTime())?d.getTime():8640000000000000; }
+  function kpiHeadV37(){ return '<div class="kpi-head-v37"><span>дата</span><span>МП</span><span>склад МП</span><span>поставка</span><span>счёт 1С</span><span>объём</span><span>SOS</span><span></span></div>'; }
+  function kpiRowV37(o, modalId){
+    const mp=o.mp?`<span class="cell-mp ${mpClass(o.mp)}">${esc(o.mp)}</span>`:'—';
+    const sos=(typeof sosLabel==='function')?sosLabel(o):'';
+    const sosCls=sos==='срочно'?'hot':((sos==='отгрузка заранее'||sos==='заранее')?'soon':'');
+    return `<div class="kpi-row-v37" data-row="${Number(o.rowNum)}">
+      <div class="kpi-cell-clip">${esc(o.datePlan||'—')}</div>
+      <div>${mp}</div>
+      <div class="kpi-cell-clip" title="${esc(o.warehouseFull||'')}">${esc(o.warehouseFull||'—')}</div>
+      <div class="kpi-cell-clip" title="${esc(o.supplyNumber||'')}">${esc(o.supplyNumber||'—')}</div>
+      <div>${invoiceV37(o)}</div>
+      <div>${esc(typeof formatQty==='function'?formatQty(o):'—')}</div>
+      <div><span class="sos-label ${sosCls}">${esc(sos||'—')}</span></div>
+      <div class="modal-actions"><button type="button" class="om-mini-btn" onclick="__omOpenKpiView(${Number(o.rowNum)}, '${modalId}')">открыть OM</button></div>
+    </div>`;
+  }
+  window.openWeekModal = function(){
+    const today = new Date();
+    const week = (typeof isoWeek==='function') ? isoWeek(today) : 0;
+    const year = today.getFullYear();
+    const items = (allOrders||[]).filter(o=>{ if(!o.datePlan) return false; const d=new Date(o.datePlan); return !isNaN(d) && d.getFullYear()===year && ((typeof isoWeek==='function')?isoWeek(d):0)===week; }).sort((a,b)=>dateTs(a)-dateTs(b));
+    safe$('weekModalTitle').textContent = `поставки этой недели · ${week} нед · ${items.length} шт.`;
+    const body=safe$('weekModalBody');
+    if(!items.length) body.innerHTML='<div class="week-empty">на этой неделе поставок нет</div>';
+    else{
+      const byDate={}; items.forEach(o=>{ (byDate[o.datePlan] ||= []).push(o); });
+      let html='<div class="kpi-grid-v37">'+kpiHeadV37();
+      Object.keys(byDate).sort().forEach(date=>{ html+=`<div class="kpi-day-v37">${esc(typeof dayOfWeekRu==='function'?dayOfWeekRu(date):date)}</div>`; byDate[date].forEach(o=>html+=kpiRowV37(o,'weekModal')); });
+      body.innerHTML=html+'</div>';
+    }
+    safe$('weekModal').style.display='flex';
+  };
+  window.openSosModal = function(){
+    const items=(allOrders||[]).filter(o=>((typeof sosSeverity==='function'?sosSeverity(o):0)>0) || ((typeof isUrgentDue==='function')&&isUrgentDue(o))).sort((a,b)=>((typeof sosSeverity==='function'?sosSeverity(b):0)-((typeof sosSeverity==='function'?sosSeverity(a):0)))||dateTs(a)-dateTs(b));
+    safe$('sosModalTitle').textContent=`SOS — требуют внимания · ${items.length} шт.`;
+    safe$('sosModalBody').innerHTML = items.length ? '<div class="kpi-grid-v37">'+kpiHeadV37()+items.map(o=>kpiRowV37(o,'sosModal')).join('')+'</div>' : '<div class="week-empty">сейчас нет заказов с SOS</div>';
+    safe$('sosModal').style.display='flex';
+  };
+  window.openDispatchModal = function(){
+    const items=(allOrders||[]).filter(o=>typeof isInDispatch==='function' && isInDispatch(o)).sort((a,b)=>dateTs(a)-dateTs(b));
+    safe$('dispatchModalTitle').textContent=`вывозы · ${items.length} шт.`;
+    const body=safe$('dispatchModalBody');
+    if(!items.length){ body.innerHTML='<div class="week-empty">нет активных вывозов</div>'; safe$('dispatchModal').style.display='flex'; return; }
+    let html='<div class="dispatch-head-v37"><span>дата</span><span>МП</span><span>водитель</span><span>машина</span><span>склад МП</span><span>счёт 1С</span><span>№ возврата</span><span>цена</span><span></span></div>';
+    items.forEach(o=>{ const key=(typeof dispatchStatus==='function')?dispatchStatus(o):''; const dateLabel= key==='arrived' ? (o.actualPickupDate||o.datePlan||'—') : (o.dateShipReutov||o.datePlan||'—'); const mp=o.mp?`<span class="cell-mp ${mpClass(o.mp)}">${esc(o.mp)}</span>`:'—'; html+=`<div class="dispatch-row-v37b status-${key}" data-row="${Number(o.rowNum)}"><div>${esc(dateLabel)}</div><div>${mp}</div><div class="kpi-cell-clip" title="${esc(o.driverName||'')}">${esc(o.driverName||'—')}</div><div class="kpi-cell-clip" title="${esc(pickupCarNumberText(o)||o.carNumber||'')}">${esc(pickupCarNumberText(o)||o.carNumber||'—')}</div><div class="kpi-cell-clip" title="${esc(o.warehouseFull||'')}">${esc(o.warehouseFull||'—')}</div><div>${invoiceV37(o)}</div><div>${esc(o.returnCarNumber||'—')}</div><div>${o.carPrice?Number(o.carPrice).toLocaleString('ru-RU')+' ₽':'—'}</div><div class="modal-actions"><button type="button" class="om-mini-btn" onclick="__omOpenKpiView(${Number(o.rowNum)}, 'dispatchModal')">открыть OM</button></div></div>`; });
+    body.innerHTML=html; safe$('dispatchModal').style.display='flex';
+  };
+  function bindKpiCapture(){
+    const pairs=[['weekCard', window.openWeekModal], ['sosCard', window.openSosModal], ['dispatchCard', window.openDispatchModal]];
+    pairs.forEach(([id,fn])=>{ const el=safe$(id); if(!el || el.dataset.v37Bound) return; el.dataset.v37Bound='1'; el.addEventListener('click', function(e){ e.preventDefault(); e.stopImmediatePropagation(); fn(); }, true); });
+  }
+  function syncNoInvoiceUi(){
+    const cb=safe$('filterNoInvoice'); const wrap=safe$('filterNoInvoiceWrap'); const card=safe$('noInvoiceCard');
+    if(cb) cb.checked=!!window.omNoInvoiceOnly;
+    if(wrap) wrap.classList.toggle('active', !!window.omNoInvoiceOnly);
+    if(card) card.classList.toggle('active', !!window.omNoInvoiceOnly);
+  }
+  function ensureNoInvoiceFilter(){
+    const filters=document.querySelector('.filters');
+    if(filters && !safe$('filterNoInvoice')){
+      const label=document.createElement('label'); label.className='filter-toggle no-invoice-filter-control'; label.id='filterNoInvoiceWrap';
+      label.innerHTML='<input type="checkbox" id="filterNoInvoice"><span>только без счёта 1С</span>';
+      const noCar=safe$('filterNoCar');
+      if(noCar && noCar.closest('label')) filters.insertBefore(label, noCar.closest('label').nextSibling);
+      else filters.appendChild(label);
+      safe$('filterNoInvoice').addEventListener('change',()=>{ window.omNoInvoiceOnly=safe$('filterNoInvoice').checked; syncNoInvoiceUi(); if(typeof renderTable==='function') renderTable(); });
+    }
+    syncNoInvoiceUi();
+  }
+  const prevRenderStats=window.renderStats;
+  window.renderStats=function(){ if(typeof prevRenderStats==='function') prevRenderStats(); ensureNoInvoiceFilter(); bindKpiCapture(); };
+  document.addEventListener('DOMContentLoaded', ()=>{ ensureNoInvoiceFilter(); bindKpiCapture(); });
+  const noInvCardClickSync=()=>setTimeout(syncNoInvoiceUi,0);
+  document.addEventListener('click', (e)=>{ if(e.target.closest('#noInvoiceCard')) noInvCardClickSync(); }, true);
+
+  function dispatchOptions(mp){ return (window.dispatchByMp || dispatchByMp || {})[mp] || []; }
+  function matchDispatchOption(mp, value){
+    const opts=dispatchOptions(mp); const v=String(value||'').trim().toLowerCase(); if(!v) return '';
+    return opts.find(w=>String(w).trim().toLowerCase()===v) || opts.find(w=>v.includes(String(w).toLowerCase()) || String(w).toLowerCase().includes(v)) || '';
+  }
+  function inferDispatchWarehouseV37(mp, dest, rec){
+    const sourceCandidates=[rec&&rec.sourceWarehouseName, rec&&rec.transitWarehouseName, rec&&rec.dispatchWarehouseName, rec&&rec.shipmentWarehouseName, rec&&rec.warehouseFrom].filter(Boolean);
+    for(const c of sourceCandidates){ const m=matchDispatchOption(mp,c); if(m) return m; }
+    const d=String(dest||'').toLowerCase(); const opts=dispatchOptions(mp);
+    if(String(mp).toLowerCase()==='wb'){
+      if(d.includes('электросталь')) return matchDispatchOption(mp,'Электросталь') || 'Электросталь';
+      if(d.includes('волгоград')) return matchDispatchOption(mp,'Обухово') || matchDispatchOption(mp,'Чехов') || '';
+      if(d.includes('краснодар')) return matchDispatchOption(mp,'Обухово') || matchDispatchOption(mp,'Чехов') || '';
+      if(d.includes('казань')) return matchDispatchOption(mp,'Казань') || '';
+      if(d.includes('домодедово')) return matchDispatchOption(mp,'Домодедово') || '';
+      if(d.includes('коледино')) return matchDispatchOption(mp,'Коледино') || '';
+      if(d.includes('подольск')) return matchDispatchOption(mp,'Подольск 4') || '';
+    }
+    if(String(mp).toLowerCase()==='сбер') return d.includes('шарапов') ? (matchDispatchOption(mp,'Шарапово') || 'Шарапово') : '';
+    return matchDispatchOption(mp,dest) || '';
+  }
+  function firstVal(){ for(const v of arguments){ if(v!==undefined && v!==null && String(v).trim()!=='') return v; } return ''; }
+  function recPlanDateV37(rec){ return String(firstVal(rec.planned, rec.planDate, rec.supplyDate, rec.requestedDate, rec.datePlan, rec.timeslot_from, rec.createDate)).slice(0,10); }
+  function recPlanTimeV37(rec){ const raw=String(firstVal(rec.timeslot_from, rec.planned, rec.planDate, rec.supplyDate, rec.requestedDate)); const m=raw.match(/(?:T|\s)(\d{2}:\d{2})/); return m?m[1]:''; }
+  window.createOrderFromExternalSupply = function(source, id, number, campaignId){
+    const rec = (typeof findExternalRecord==='function' && findExternalRecord(source,id,number)) || {id,number,campaignId};
+    const form=safe$('orderForm'); if(!form) return;
+    const mpMap={wb:'WB',ym:'ЯМ',sber:'Сбер',ozon:'Ozon'}; const mp=mpMap[source]||source;
+    if(typeof closeExternalModal==='function') closeExternalModal(); if(typeof exitEditMode==='function') exitEditMode();
+    form.elements.mp.value=mp; form.elements.mp.dispatchEvent(new Event('change'));
+    setTimeout(()=>{
+      const plan=recPlanDateV37(rec), time=recPlanTimeV37(rec);
+      const fullWh=firstVal(rec.warehouseName, rec.targetWarehouseName, rec.storage_warehouse_name, rec.facilityName, rec.warehouse, rec.actualWarehouseName);
+      if(form.elements.supplyNumber) form.elements.supplyNumber.value=number||rec.number||rec.id||'';
+      if(form.elements.lkOrderId) form.elements.lkOrderId.value=rec.id||id||'';
+      if(form.elements.orderNumber) form.elements.orderNumber.value=firstVal(rec.number, number, rec.preorderID, rec.marketplaceRequestId, rec.warehouseRequestId, rec.id);
+      if(form.elements.datePlan) form.elements.datePlan.value=plan;
+      if(form.elements.datePlanTime) form.elements.datePlanTime.value=time;
+      if(form.elements.dateShipReutov && !form.elements.dateShipReutov.value) form.elements.dateShipReutov.value=plan;
+      if(form.elements.dateShipReutovTime && !form.elements.dateShipReutovTime.value) form.elements.dateShipReutovTime.value=time;
+      if(fullWh && form.elements.warehouseFull && typeof setSelectValue==='function') setSelectValue(form.elements.warehouseFull, fullWh);
+      const disp=inferDispatchWarehouseV37(mp, fullWh, rec);
+      if(disp && form.elements.warehouseFrom && typeof setSelectValue==='function') setSelectValue(form.elements.warehouseFrom, disp);
+      if(form.elements.legalEntity && !form.elements.legalEntity.value) form.elements.legalEntity.value='ООО Кофепод';
+      if(form.elements.boxes && firstVal(rec.boxAmount, rec.quantity, rec.totalQuantityDeclared, rec.totalQuantity)) form.elements.boxes.value=firstVal(rec.boxAmount, rec.quantity, rec.totalQuantityDeclared, rec.totalQuantity);
+      const srcLines=[`создано из API ${String(source).toUpperCase()}: ${number||id}`];
+      if(fullWh) srcLines.push(`склад МП из API: ${fullWh}`);
+      if(disp) srcLines.push(`склад отгрузки определён: ${disp}`);
+      if(rec.sourceWarehouseName) srcLines.push(`склад отгрузки API: ${rec.sourceWarehouseName}`);
+      if(rec.transitWarehouseName) srcLines.push(`транзитный склад API: ${rec.transitWarehouseName}`);
+      if(form.elements.comment) form.elements.comment.value=(srcLines.join('\n')+(form.elements.comment.value?'\n'+form.elements.comment.value:'')).trim();
+      if(typeof updateAcceptanceDaysHint==='function') updateAcceptanceDaysHint();
+      safe$('formCard')?.scrollIntoView({behavior:'smooth',block:'start'});
+      if(typeof toast==='function') toast('заявка заполнена из API — проверь склад отгрузки и нажми «записать»');
+    },100);
+  };
+})();
+
+
+
+// ===== v38 patch: prettier no-invoice toggle + restore boxes/pallets from API =====
+(function(){
+  function safe$(id){ return document.getElementById(id); }
+  function firstText(){ for(const v of arguments){ if(v!==undefined && v!==null && String(v).trim()!=='') return String(v).trim(); } return ''; }
+  function firstPositive(){
+    for(const v of arguments){
+      if(v===undefined || v===null || String(v).trim()==='') continue;
+      const n=Number(String(v).replace(',', '.'));
+      if(!isNaN(n) && n>0) return n;
+    }
+    return '';
+  }
+  function pickBoxesFromApi(rec){
+    // Сначала берём именно коробочный объём, если API его отдал.
+    // Если его нет/он 0, fallback на плановое количество — так поле не остаётся пустым/нулевым при создании из API.
+    return firstPositive(
+      rec && rec.boxAmount,
+      rec && rec.boxCount,
+      rec && rec.boxes,
+      rec && rec.supplierBoxAmount,
+      rec && rec.cargoNumber,
+      rec && rec.placesCount,
+      rec && rec.quantity,
+      rec && rec.totalQuantityDeclared,
+      rec && rec.totalQuantity,
+      rec && rec.planCount
+    );
+  }
+  function pickPalletsFromApi(rec){
+    const direct = firstPositive(
+      rec && rec.pallets,
+      rec && rec.palletAmount,
+      rec && rec.palletCount,
+      rec && rec.palletsCount,
+      rec && rec.monopalletCount,
+      rec && rec.palletQuantity
+    );
+    if(direct) return direct;
+    const boxType = firstText(rec && rec.boxType, rec && rec.boxTypeName, rec && rec.packageType).toLowerCase();
+    // В WB типы вроде «монопаллеты», «короба на паллете», «QR-палет» означают, что boxAmount — это количество паллет/палетомест.
+    if(/палет|паллет|pallet/.test(boxType)) return firstPositive(rec && rec.boxAmount, rec && rec.boxCount, rec && rec.placesCount);
+    return '';
+  }
+  function applyApiQtyToFormV38(form, rec){
+    if(!form || !rec) return;
+    const boxes = pickBoxesFromApi(rec);
+    const pallets = pickPalletsFromApi(rec);
+    if(form.elements.boxes && boxes) form.elements.boxes.value = boxes;
+    if(form.elements.pallets && pallets) form.elements.pallets.value = pallets;
+  }
+  function normalizeNoInvoiceFilterV38(){
+    const wrap=safe$('filterNoInvoiceWrap');
+    if(wrap){
+      wrap.classList.add('filter-toggle');
+      // Чтобы выглядело точь-в-точь как «только без машины»
+      const input=wrap.querySelector('input');
+      const rawTextNodes=[...wrap.childNodes].filter(n=>n.nodeType===3 && n.textContent.trim());
+      if(input && !wrap.querySelector('span')){
+        rawTextNodes.forEach(n=>n.remove());
+        const span=document.createElement('span'); span.textContent='только без счёта 1С'; wrap.appendChild(span);
+      }
+    }
+  }
+  document.addEventListener('DOMContentLoaded', normalizeNoInvoiceFilterV38);
+  const prevStatsV38 = window.renderStats;
+  window.renderStats = function(){ if(typeof prevStatsV38==='function') prevStatsV38(); setTimeout(normalizeNoInvoiceFilterV38,0); };
+
+  // Финально переопределяем создание заказа из API, чтобы не терять паллеты/короба.
+  const prevCreateV38 = window.createOrderFromExternalSupply;
+  window.createOrderFromExternalSupply = function(source, id, number, campaignId){
+    const rec = (typeof findExternalRecord==='function' && findExternalRecord(source,id,number)) || {id, number, campaignId};
+    if(typeof prevCreateV38 === 'function'){
+      prevCreateV38(source, id, number, campaignId);
+      setTimeout(()=>applyApiQtyToFormV38(safe$('orderForm'), rec), 180);
+      setTimeout(()=>applyApiQtyToFormV38(safe$('orderForm'), rec), 450);
+      return;
+    }
+  };
+})();
 
 // ============== ИНИЦИАЛИЗАЦИЯ ==============
 // Данные OM грузим только после логина, чтобы поведение было как в SOWY.
