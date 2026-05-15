@@ -624,6 +624,10 @@ body::before {
 .supply-products-table.ym .supply-products-row {
   grid-template-columns: 108px 128px 116px 92px minmax(150px, 0.72fr) 104px 104px;
 }
+.supply-products-table.sber .supply-products-head,
+.supply-products-table.sber .supply-products-row {
+  grid-template-columns: 108px 128px 132px 92px minmax(170px, 0.78fr) 104px 104px;
+}
 .supply-summary-strip {
   margin: 0 14px 12px;
   display: flex;
@@ -675,8 +679,8 @@ body::before {
 .sku-type-dg { color: var(--accent-copper-bright); background: rgba(199,144,93,0.13); border: 1px solid rgba(199,144,93,0.28); }
 .sku-type-empty { color: var(--text-soft); background: rgba(138,142,131,0.08); border: 1px solid rgba(138,142,131,0.14); }
 /* Старая разметка для обратной совместимости (если class модификатор не выставлен) */
-.supply-products-table:not(.ozon):not(.wb):not(.ym) .supply-products-head,
-.supply-products-table:not(.ozon):not(.wb):not(.ym) .supply-products-row {
+.supply-products-table:not(.ozon):not(.wb):not(.ym):not(.sber) .supply-products-head,
+.supply-products-table:not(.ozon):not(.wb):not(.ym):not(.sber) .supply-products-row {
   grid-template-columns: 1fr 1fr 90px 110px;
 }
 .supply-products-head {
@@ -3197,7 +3201,7 @@ let warehousesByMp = FALLBACK_WAREHOUSES;
 let dispatchByMp = FALLBACK_DISPATCH;
 
 // Кэш данных из внешних API (Ozon/WB), индекс по номеру/id
-let externalCache = { ozon: null, wb: null, ym: null, byNumber: {}, lastFetched: null };
+let externalCache = { ozon: null, wb: null, ym: null, sber: null, byNumber: {}, lastFetched: null };
 
 const $ = id => document.getElementById(id);
 function setStatus(text, type) {
@@ -3600,7 +3604,7 @@ function openDispatchModal() {
 }
 function closeDispatchModal() { $('dispatchModal').style.display = 'none'; }
 
-// ============== ВНЕШНИЕ ПОСТАВКИ (Ozon / WB / ЯМ API) ==============
+// ============== ВНЕШНИЕ ПОСТАВКИ (Ozon / WB / ЯМ / Сбер API) ==============
 // Ручная синхронизация WB → лист в таблице. Триггеры по времени делают то же
 // самое автоматически (07:00 / 12:00 / 15:00), но пользователь может нажать
 // кнопку и обновить здесь и сейчас. После синка дашборд перечитывает данные.
@@ -3664,6 +3668,34 @@ async function syncYmFromApi() {
   }
 }
 
+
+async function syncSberFromApi() {
+  const btn = document.getElementById('extSyncSberBtn');
+  if (!btn) return;
+  if (btn.disabled) return;
+  btn.disabled = true;
+  const orig = btn.textContent;
+  btn.textContent = '… идём в Сбер API';
+  btn.style.opacity = '0.6';
+  try {
+    const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'action=syncSber';
+    const data = await omApiGetJson(url, {}, 'Sber sync');
+    if (!data.ok) {
+      const msg = data.error || 'unknown';
+      toast('Сбер синк не прошёл: ' + msg, true);
+    } else {
+      toast(`синхронизировано · ${data.supplies || data.count || 0} поставок Сбер`);
+    }
+    await loadExternalSupplies(false);
+  } catch (e) {
+    toast('Сбер синк не прошёл: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = orig;
+    btn.style.opacity = '';
+  }
+}
+
 async function loadExternalSupplies(forceRefresh) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR')) {
     toast('сначала настрой Apps Script', true);
@@ -3674,7 +3706,7 @@ async function loadExternalSupplies(forceRefresh) {
   btn.textContent = 'загрузка...';
   btn.disabled = true;
   $('externalModalTitle').textContent = 'поставки в МП · загрузка...';
-  $('externalModalBody').innerHTML = '<div class="week-empty">запрашиваем у Ozon, WB и ЯМ...</div>';
+  $('externalModalBody').innerHTML = '<div class="week-empty">запрашиваем у Ozon, WB, ЯМ и Сбер...</div>';
   $('externalModal').style.display = 'flex';
   try {
     let url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'external=1';
@@ -3685,6 +3717,7 @@ async function loadExternalSupplies(forceRefresh) {
     externalCache.ozon = data.ozon;
     externalCache.wb = data.wb;
     externalCache.ym = data.ym;
+    externalCache.sber = data.sber;
     externalCache.lastFetched = new Date();
     externalCache.byNumber = buildExternalIndex(data);
     renderExternalSupplies(data);
@@ -3714,7 +3747,9 @@ function buildExternalIndex(data) {
       rec.marketplaceRequestId,
       rec.warehouseRequestId,
       rec.warehouseRequestNumber,
-      rec.marketplaceRequestNumber
+      rec.marketplaceRequestNumber,
+      rec.consignmentId,
+      rec.facilityId
     ].filter(Boolean).map(s => String(s).trim()).filter(Boolean);
     keys.forEach(k => { idx[k] = enriched; });
   };
@@ -3728,6 +3763,10 @@ function buildExternalIndex(data) {
   if (data.ym && data.ym.ok) {
     if (Array.isArray(data.ym.orders)) data.ym.orders.forEach(s => add(s, 'ym'));
     if (Array.isArray(data.ym.closed_orders)) data.ym.closed_orders.forEach(s => add({ ...s, closed: true }, 'ym'));
+  }
+  if (data.sber && data.sber.ok) {
+    if (Array.isArray(data.sber.orders)) data.sber.orders.forEach(s => add(s, 'sber'));
+    if (Array.isArray(data.sber.closed_orders)) data.sber.closed_orders.forEach(s => add({ ...s, closed: true }, 'sber'));
   }
   return idx;
 }
@@ -3870,7 +3909,7 @@ function supplyCacheGc() {
 }
 supplyCacheGc();
 
-async function openSupplyDetails(source, id, number, isPreorderID, forceRefresh) {
+async function openSupplyDetails(source, id, number, isPreorderID, forceRefresh, facilityId) {
   if (!source || !id) return;
 
   // Ozon: ищем внутренний ID для этой поставки. Источники в порядке приоритета:
@@ -3947,6 +3986,11 @@ async function openSupplyDetails(source, id, number, isPreorderID, forceRefresh)
       if (ext && ext.campaignId) {
         url += '&campaignId=' + encodeURIComponent(String(ext.campaignId));
       }
+    }
+    if (source === 'sber') {
+      const ext = findExternalBySupplyNumber(number || id) || findExternalBySupplyNumber(apiId);
+      const fac = facilityId || (ext && ext.facilityId) || '';
+      if (fac) url += '&facilityId=' + encodeURIComponent(String(fac));
     }
     const data = await omApiGetJson(url, {}, 'supply details');
     // В кеш кладём только WB и только полные ответы с составом
@@ -4535,21 +4579,136 @@ function renderSupplyDetails(source, id, number, data) {
     </div>`;
   }
 
+
+  else if (source === 'sber' && data.supply) {
+    const st = data.supply;
+    const cards = [];
+
+    const linkedRow = findOrderBySupplyRecord(st) || (allOrders || []).find(o =>
+      o.supplyNumber && String(o.supplyNumber).trim() === String(number || id).trim()
+    );
+
+    const cleanSberDate = (v) => {
+      if (!v) return '';
+      const raw = String(v);
+      const m = raw.match(/^(\d{4})[-–—](\d{2})[-–—](\d{2})/);
+      if (m) return `${m[3]}.${m[2]}.${m[1]}`;
+      return raw.replace(/-/g, '.');
+    };
+    const cleanSberTime = (v) => {
+      if (!v) return '';
+      if (String(v).match(/GMT|Sat Dec|1899/i)) {
+        const d = new Date(v);
+        if (!isNaN(d.getTime())) return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+      }
+      const m = String(v).match(/(\d{1,2}:\d{2})/);
+      return m ? m[1] : String(v);
+    };
+    const timeText = [cleanSberTime(st.planTimeFrom), cleanSberTime(st.planTimeTo)].filter(Boolean).join('–');
+    const plannedText = [cleanSberDate(st.plannedDate), timeText].filter(Boolean).join(' · ');
+
+    cards.push(`<div class="supply-card">
+      <div class="supply-card-title">статус и параметры</div>
+      ${st.number ? `<div class="supply-card-row"><span class="label">№ поставки</span><span>${escapeHtml(String(st.number))}</span></div>` : ''}
+      ${st.facilityId ? `<div class="supply-card-row"><span class="label">facilityId</span><span>${escapeHtml(String(st.facilityId))}</span></div>` : ''}
+      ${st.state ? `<div class="supply-card-row"><span class="label">статус</span><span>${escapeHtml(String(st.state))}</span></div>` : ''}
+      <div class="supply-card-flags"><span class="supply-card-flag">FBO</span><span class="supply-card-flag">Сбер</span>${st.isTransfer ? '<span class="supply-card-flag">трансфер</span>' : ''}</div>
+    </div>`);
+
+    cards.push(`<div class="supply-card">
+      <div class="supply-card-title">склад назначения</div>
+      ${st.facilityName || st.warehouse
+        ? `<div class="supply-card-main">${escapeHtml(String(st.facilityName || st.warehouse))}</div>`
+        : '<div class="supply-card-empty">склад не указан</div>'}
+      ${st.facilityId ? `<div class="supply-card-sub">${escapeHtml(String(st.facilityId))}</div>` : ''}
+    </div>`);
+
+    cards.push(`<div class="supply-card">
+      <div class="supply-card-title">дата и время отгрузки</div>
+      ${plannedText
+        ? `<div class="supply-card-main">${escapeHtml(String(plannedText))}</div><div class="supply-card-sub">локальное время склада</div>`
+        : '<div class="supply-card-empty">дата не указана</div>'}
+      ${st.createdDate ? `<div class="supply-card-row"><span class="label">создана</span><span>${escapeHtml(String(st.createdDate))}</span></div>` : ''}
+    </div>`);
+
+    cards.push(`<div class="supply-card">
+      <div class="supply-card-title">машина и документы</div>
+      ${st.driverName ? `<div class="supply-card-row"><span class="label">водитель</span><span>${escapeHtml(String(st.driverName))}</span></div>` : ''}
+      ${st.vehicleId || st.vehicleBrand ? `<div class="supply-card-row"><span class="label">машина</span><span>${escapeHtml([st.vehicleBrand, st.vehicleId].filter(Boolean).join(' · '))}</span></div>` : ''}
+      <div class="supply-card-row"><span class="label">пропуск</span><span>${st.isPermitCreated ? 'создан' : 'нет'}</span></div>
+    </div>`);
+
+    html += `<div class="supply-cards">${cards.join('')}</div>`;
+
+    html += `<div class="cabinet-link-row" style="padding-top:4px;padding-bottom:10px;">
+      ${linkedRow ? `<button class="cabinet-link" data-row="${linkedRow.rowNum}" id="goToOrderBtn" style="font-size:11px;">✎ редактировать данные в ОМ</button>` : ''}
+      <a href="${escapeHtml(data.cabinet_url || st.cabinet_url || 'https://partner.megamarket.ru/')}" target="_blank" class="cabinet-link" style="font-size:11px;">→ открыть кабинет Сбер</a>
+    </div>`;
+  }
+
   if (!orders.length) {
     if (data.goods_rate_limited) {
       // Мета пришла, состав — нет: WB API ограничил отдельно вызов /goods.
-      // Это типичная ситуация когда подряд открываешь несколько поставок.
       html += `<div class="api-banner" style="margin:14px;">
         <strong>состав не загрузился — WB API: лимит запросов</strong><br>
-        <span style="font-size:12px;color:var(--text-muted);">мета поставки получена, а на запрос состава товаров (отдельный вызов /goods) пришёл HTTP 429. Попробуй открыть эту поставку ещё раз через 1–2 минуты — повторный запрос пойдёт из кэша Apps Script и не потратит лимит.</span>
+        <span style="font-size:12px;color:var(--text-muted);">мета поставки получена, а на запрос состава товаров (отдельный вызов /goods) пришёл HTTP 429. Попробуй открыть эту поставку ещё раз через 1–2 минуты.</span>
       </div>`;
     } else if (data.goods_http_code && data.goods_http_code !== 200) {
       html += `<div class="dispatch-empty">состав не получен · WB вернул HTTP ${data.goods_http_code}</div>`;
+    } else if (source === 'sber') {
+      html += `<div class="dispatch-empty">в поставке Сбер нет товаров или лист «Сбер товары» ещё не заполнен</div>`;
+      html += `<div class="api-banner" style="margin:0 14px 14px;">
+        <strong>что проверить</strong><br>
+        <span style="font-size:12px;color:var(--text-muted);">Запусти <code>runSberSyncOnce()</code>. Если в результате <code>goods: 0</code>, значит API не вернул состав по этой поставке или не совпал <code>consignmentId</code>. Проверь лист «Сбер товары»: в колонке A должен быть этот номер поставки.</span>
+      </div>`;
     } else if (source === 'ym') {
       html += '<div class="dispatch-empty">в поставке ЯМ нет товаров или состав ещё не синхронизирован</div>';
     } else {
       html += '<div class="dispatch-empty">в поставке нет товаров</div>';
     }
+  } else if (source === 'sber') {
+    const totalQty = orders.reduce((sum, p) => sum + (Number(p.quantityDeclared || p.quantity || 0) || 0), 0);
+    const totalFact = orders.reduce((sum, p) => sum + (Number(p.quantityFact || p.acceptedQuantity || 0) || 0), 0);
+    const totalBatches = orders.reduce((sum, p) => sum + ((Array.isArray(p.batches) && p.batches.length) ? p.batches.length : 0), 0);
+
+    html += `<div class="supply-summary-strip">
+      <div class="supply-summary-chip"><div class="supply-summary-label">позиций</div><div class="supply-summary-value">${orders.length}</div></div>
+      <div class="supply-summary-chip"><div class="supply-summary-label">штук по плану</div><div class="supply-summary-value">${totalQty} <span>шт</span></div></div>
+      <div class="supply-summary-chip"><div class="supply-summary-label">принято</div><div class="supply-summary-value">${totalFact} <span>шт</span></div></div>
+      ${totalBatches ? `<div class="supply-summary-chip"><div class="supply-summary-label">партий</div><div class="supply-summary-value">${totalBatches}</div></div>` : ''}
+    </div>`;
+
+    html += `<div class="supply-products-table sber">
+      <div class="supply-products-head">
+        <span>код 1С</span>
+        <span>ШК</span>
+        <span>артикул Сбер</span>
+        <span>тип</span>
+        <span>короткое наименование</span>
+        <span class="qty-head">план</span>
+        <span class="qty-head">факт</span>
+      </div>`;
+
+    orders.forEach(p => {
+      const meta = omSkuMeta(p, 'sber');
+      const qty = Number(p.quantityDeclared || p.quantity || 0);
+      const fact = Number(p.quantityFact || p.acceptedQuantity || 0);
+      const accClass = fact >= qty && qty > 0 ? 'ok' : 'partial';
+      const batches = Array.isArray(p.batches) && p.batches.length
+        ? ` · партий: ${p.batches.length}`
+        : '';
+      html += `<div class="supply-products-row">
+        <span class="art">${escapeHtml(meta.code1c)}</span>
+        <span class="nm">${escapeHtml(String(meta.barcode || p.barcode || '—'))}</span>
+        <span class="art">${escapeHtml(String(p.merchantGoodsId || p.article || '—'))}</span>
+        <span>${omSkuTypeHtml(meta.type)}</span>
+        <span class="name" title="${escapeHtml(meta.shortName || p.name || '')}">${escapeHtml(meta.shortName || p.name || '—')}${escapeHtml(batches)}</span>
+        <span class="qty">${qty || 0}</span>
+        <span class="qty-accepted ${accClass}">${fact || 0}</span>
+      </div>`;
+    });
+
+    html += '</div>';
   } else if (source === 'wb') {
     // FBW: товары уже сгруппированы по баркоду в API. Просто показываем.
     const totalPlanQty = orders.reduce((sum, g) => sum + (Number(g.quantity) || 0), 0);
@@ -4936,16 +5095,19 @@ function renderExternalSupplies(data) {
   const ozon = data.ozon || {};
   const wb = data.wb || {};
   const ym = data.ym || {};
+  const sber = data.sber || {};
   // Источник данных: 'wb_sheet' (новый, из листа) или старая логика
   const fromSheet = wb.source === 'wb_sheet';
   const wbList = (wb.ok && wb.orders) ? wb.orders : [];
   const ozonList = (ozon.ok && ozon.orders) ? ozon.orders : [];
   const ymList = (ym.ok && ym.orders) ? ym.orders : [];
+  const sberList = (sber.ok && sber.orders) ? sber.orders : [];
   const wbOpen = wbList.filter(s => !s.done).length;
   const ozonOpen = ozonList.filter(s => !s.done).length;
   const ymOpen = ymList.filter(s => !s.done).length;
+  const sberOpen = sberList.filter(s => !s.done).length;
 
-  let title = `активные поставки в МП · WB ${wbOpen} · Ozon ${ozonOpen} · ЯМ ${ymOpen}`;
+  let title = `активные поставки в МП · WB ${wbOpen} · Ozon ${ozonOpen} · ЯМ ${ymOpen} · Сбер ${sberOpen}`;
   if (fromSheet && wb.synced_at) {
     const ageMin = Math.floor((Date.now() - wb.synced_at) / 60000);
     if (ageMin >= 60) title += ` · WB ${Math.floor(ageMin/60)}ч назад`;
@@ -4983,6 +5145,7 @@ function renderExternalSupplies(data) {
     ${statusLine}
     <button class="cabinet-link" id="extSyncBtn" onclick="syncWbFromApi()" style="font-size:11px;">↻ WB синк</button>
     <button class="cabinet-link" id="extSyncYmBtn" onclick="syncYmFromApi()" style="font-size:11px;">↻ ЯМ синк</button>
+    <button class="cabinet-link" id="extSyncSberBtn" onclick="syncSberFromApi()" style="font-size:11px;">↻ Сбер синк</button>
   </div>`;
 
   // ============ WB ============
@@ -5077,6 +5240,55 @@ function renderExternalSupplies(data) {
   </div>`;
   html += '</div>';
 
+
+  // ============ Сбер ============
+  html += `<div class="dispatch-section">
+    <div class="dispatch-section-title">
+      <span>Сбер — поставки FBO</span>
+      <span class="dispatch-section-count">${sberList.length}</span>
+    </div>`;
+  if (!sber.ok) {
+    html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(sber.error || 'неизвестная ошибка')}</div>`;
+    if (sber.hint) html += `<div style="padding:8px 16px;font-size:12px;color:var(--text-muted);">${escapeHtml(sber.hint)}</div>`;
+    if (sber.body) html += `<div class="api-debug">${escapeHtml(sber.body)}</div>`;
+    if (sber.tried && sber.tried.length) html += `<div class="api-debug">${sber.tried.map(escapeHtml).join('<br>')}</div>`;
+  } else if (!sberList.length) {
+    html += '<div class="dispatch-empty">нет активных поставок Сбер</div>';
+    if (sber.note) html += `<div class="api-banner">${escapeHtml(sber.note)}</div>`;
+  } else {
+    sberList.forEach(s => {
+      const displayNumber = s.number || s.id;
+      const linked = findOrderBySupplyRecord(s) || findOrderBySupplyNumber(displayNumber);
+      const linkBadge = linked
+        ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
+        : `<span class="ext-link-badge muted">не в OM</span>`;
+      const dateLabel = s.plannedDate
+        ? String(s.plannedDate).slice(0, 10)
+        : (s.createdDate ? String(s.createdDate).slice(0, 10) : '');
+      const dateHint = s.plannedDate ? 'плановая' : 'создана';
+      const qty = Number(s.totalQuantityDeclared || 0);
+      const wh = s.facilityName || s.warehouse || s.facilityId || '';
+      const stateColor = s.done ? 'var(--text-muted)' : '#8FA383';
+      html += `
+        <div class="dispatch-row supply-clickable"
+             data-supply-id="${escapeHtml(String(s.id || ''))}"
+             data-supply-number="${escapeHtml(String(displayNumber || ''))}"
+             data-source="sber"
+             data-facility-id="${escapeHtml(String(s.facilityId || ''))}"
+             title="нажми чтобы посмотреть состав Сбер">
+          <div class="dispatch-cell-date">${escapeHtml(dateLabel || '—')}<div style="font-size:10px;color:var(--text-muted);">${dateHint}</div></div>
+          <div class="dispatch-cell-car">${escapeHtml(String(displayNumber || '—'))}</div>
+          <div class="dispatch-cell-driver">${escapeHtml(String(wh || ''))}${qty ? `<div style="font-size:10px;color:var(--text-muted);">${qty} шт</div>` : ''}</div>
+          <div class="dispatch-cell-driver" style="font-size:11px;color:${stateColor};">${escapeHtml(String(s.state || ''))}</div>
+          <div>${linkBadge}</div>
+        </div>`;
+    });
+  }
+  html += `<div class="cabinet-link-row">
+    <a href="${escapeHtml(sber.cabinet_url || 'https://partner.megamarket.ru/')}" target="_blank" class="cabinet-link">→ открыть кабинет Сбер</a>
+  </div>`;
+  html += '</div>';
+
   // ============ Ozon ============
   html += `<div class="dispatch-section">
     <div class="dispatch-section-title">
@@ -5138,7 +5350,8 @@ function renderExternalSupplies(data) {
         const ext = findExternalBySupplyNumber(number || id) || findExternalBySupplyNumber(id);
         if (ext && campaignId) ext.campaignId = campaignId;
       }
-      openSupplyDetails(source, id, number, isPreorder);
+      const facilityId = el.dataset.facilityId || '';
+      openSupplyDetails(source, id, number, isPreorder, false, facilityId);
     });
   });
 
@@ -5415,12 +5628,14 @@ function renderSupplyCell(o) {
   const num = o.supplyNumber;
   if (!num) return '—';
   const numHtml = escapeHtml(String(num));
+
   // Источник — определяем по МП заказа
   const mp = String(o.mp || '').toLowerCase();
   let source = '';
   if (mp === 'wb' || mp === 'вб' || mp.includes('wild')) source = 'wb';
   else if (mp === 'ozon' || mp === 'озон') source = 'ozon';
   else if (mp === 'ям' || mp === 'я.м' || mp === 'яндекс' || mp === 'яндекс маркет' || mp.includes('yandex') || mp.includes('market.yandex')) source = 'ym';
+  else if (mp === 'сбер' || mp.includes('сбер') || mp.includes('мегамаркет')) source = 'sber';
   if (!source) return numHtml;
 
   const ext = findExternalBySupplyNumber(num);
@@ -5433,17 +5648,24 @@ function renderSupplyCell(o) {
   } else if (source === 'ym') {
     const status = ext ? (ext.state || ext.status || (ext.done ? 'завершена' : 'в работе')) : 'нажми, чтобы посмотреть состав';
     title = 'ЯМ · ' + status;
+  } else if (source === 'sber') {
+    const status = ext ? (ext.state || (ext.done ? 'принято' : 'в работе')) : 'нажми, чтобы посмотреть состав Сбер';
+    title = 'Сбер · ' + status;
   } else {
     const status = ext ? (ext.state || (ext.done ? 'принята' : 'в работе')) : 'нажми, чтобы посмотреть состав';
     title = source.toUpperCase() + ' · ' + status;
   }
+
   const campaignAttr = ext && ext.campaignId
     ? ` data-campaign-id="${escapeHtml(String(ext.campaignId))}"`
     : '';
-  const apiId = source === 'ym' && ext && ext.id ? String(ext.id) : String(num);
-  return `<span class="${cls}" data-source="${source}" data-id="${escapeHtml(apiId)}" data-number="${escapeHtml(String(num))}"${campaignAttr} title="${escapeHtml(title)}">${numHtml} <span class="supply-link-mark">↗</span></span>`;
-}
+  const facilityAttr = source === 'sber' && ext && ext.facilityId
+    ? ` data-facility-id="${escapeHtml(String(ext.facilityId))}"`
+    : '';
 
+  const apiId = (source === 'ym' || source === 'sber') && ext && ext.id ? String(ext.id) : String(num);
+  return `<span class="${cls}" data-source="${source}" data-id="${escapeHtml(apiId)}" data-number="${escapeHtml(String(num))}"${campaignAttr}${facilityAttr} title="${escapeHtml(title)}">${numHtml} <span class="supply-link-mark">↗</span></span>`;
+}
 
 // Заказ "без машины" = нет номера машины и нет факт. поставки на МП (т.е. ещё не отгружен)
 function isNoCar(o) {
@@ -5721,7 +5943,8 @@ function renderTable() {
           const ext = findExternalBySupplyNumber(number) || findExternalBySupplyNumber(id);
           if (ext && campaignId) ext.campaignId = campaignId;
         }
-        openSupplyDetails(source, id, number);
+        const facilityId = supplyEl.dataset.facilityId || '';
+        openSupplyDetails(source, id, number, undefined, false, facilityId);
         return;
       }
       const rowNum = parseInt(tr.dataset.row, 10);
