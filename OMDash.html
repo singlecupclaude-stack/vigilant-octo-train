@@ -3086,13 +3086,23 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
           <div class="checkbox-item"><input type="checkbox" name="hasDifferences" id="cb_diff"><label for="cb_diff">есть расхождения</label></div>
           <div class="field">
             <label class="field-label">факт. приемка на МП</label>
-            <input type="date" name="dateFact" class="dt-date" oninput="updateAcceptanceDaysHint()" />
-            <input type="hidden" name="timeFact" value="" />
+            <div class="datetime-row three">
+              <input type="date" name="dateFact" class="dt-date" oninput="updateAcceptanceDaysHint()" />
+              <input type="time" name="timeFact" title="время факт. приёмки" />
+            </div>
             <div class="acceptance-days-hint" id="acceptanceDaysHint">—</div>
           </div>
           <div class="field wide">
             <label class="field-label">комментарий проверки</label>
             <textarea name="checkComment" placeholder="что проверили, какие расхождения, что нужно поправить..."></textarea>
+          </div>
+          <div class="field">
+            <label class="field-label">даты производства</label>
+            <input type="text" name="datesProduction" placeholder="напр. 12.03.2026 — 18.03.2026" />
+          </div>
+          <div class="field wide">
+            <label class="field-label">претензии</label>
+            <textarea name="claims" placeholder="претензии от МП, недостачи, повреждения..."></textarea>
           </div>
         </div>
       </details>
@@ -6441,6 +6451,7 @@ function openOrderDetails(o) {
       <div class="order-detail-card wide">
         <h4>комментарии</h4>
         ${detailLine('комментарий', o.comment)}
+        ${detailLine('даты пр-ва', o.datesProduction)}
         ${detailLine('претензии', o.claims)}
       </div>
     </div>
@@ -6599,7 +6610,7 @@ function editOrder(o) {
   form.elements.dateShipReutov.value = o.dateShipReutov || '';
   if (form.elements.dateShipReutovTime) form.elements.dateShipReutovTime.value = orderShipTime(o);
   form.elements.dateFact.value = o.dateFact || '';
-  if (form.elements.timeFact) form.elements.timeFact.value = '';
+  if (form.elements.timeFact) form.elements.timeFact.value = o.timeFact || '';
   setTimeout(updateAcceptanceDaysHint, 0);
   form.elements.supplyNumber.value = o.supplyNumber || '';
   if (form.elements.lkOrderId) form.elements.lkOrderId.value = o.lkOrderId || '';
@@ -6619,6 +6630,8 @@ function editOrder(o) {
   if (form.elements.virtualSupply) form.elements.virtualSupply.checked = !!__flags.virtualSupply;
   if (form.elements.warehouseEmailSent) form.elements.warehouseEmailSent.checked = !!__flags.warehouseEmailSent;
   if (form.elements.checkComment) form.elements.checkComment.value = __flags.checkComment || '';
+  if (form.elements.datesProduction) form.elements.datesProduction.value = o.datesProduction || '';
+  if (form.elements.claims) form.elements.claims.value = o.claims || '';
   form.elements.loadedLk.checked = !!o.loadedLk;
   form.elements.shippedToMp.checked = !!o.shippedToMp;
   form.elements.isDispatch.checked = !!o.isDispatch;
