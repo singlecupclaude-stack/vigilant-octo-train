@@ -3644,6 +3644,41 @@ function externalSupplySearchHay(rec, source) {
     rec && rec.state, rec && rec.status, rec && rec.campaignName].join(' ').toLowerCase();
 }
 
+
+// Ozon в разделе «поставки в МП» без правки Code.gs:
+// если API-список Ozon пустой, показываем Ozon-заказы из уже загруженной общей таблицы OM.
+function buildOzonListFromOmOrders() {
+  const list = (typeof allOrders !== 'undefined' && Array.isArray(allOrders)) ? allOrders : [];
+  return list
+    .filter(o => {
+      const mp = String((o && o.mp) || '').toLowerCase();
+      const num = String((o && (o.supplyNumber || o.orderNumber || o.lkOrderId)) || '').trim();
+      return num && (mp.includes('ozon') || mp.includes('озон'));
+    })
+    .map(o => {
+      const publicNum = String(o.supplyNumber || o.orderNumber || o.lkOrderId || '').trim();
+      const apiId = String(o.lkOrderId || publicNum).trim();
+      const done = !!(o.shippedToMp || o.dateFact);
+      return {
+        source: 'ozon',
+        channel: 'FBO',
+        id: apiId,
+        number: publicNum,
+        planned: o.datePlan || '',
+        created: o.datePlan || '',
+        warehouse: o.warehouseFull || '',
+        warehouseName: o.warehouseFull || '',
+        state: done ? 'в OM · отгружена/закрыта' : 'в OM · в работе',
+        state_label: done ? 'в OM · отгружена/закрыта' : 'в OM · в работе',
+        done: done,
+        from_om: true,
+        omRowNum: o.rowNum,
+        omNum: o.num,
+        cabinet_url: apiId ? 'https://seller.ozon.ru/app/supply/orders/' + encodeURIComponent(apiId) : 'https://seller.ozon.ru/app/supply/orders'
+      };
+    });
+}
+
 function findExternalRecord(source, id, number) {
   const bucket = (externalCache && externalCache[source] && externalCache[source].orders) || [];
   const idStr = String(id || '');
@@ -5652,7 +5687,10 @@ function renderExternalSupplies(data) {
   // Источник данных: 'wb_sheet' (новый, из листа) или старая логика
   const fromSheet = wb.source === 'wb_sheet';
   const wbList = (wb.ok && wb.orders) ? wb.orders : [];
-  const ozonList = (ozon.ok && ozon.orders) ? ozon.orders : [];
+  const ozonApiList = (ozon.ok && Array.isArray(ozon.orders)) ? ozon.orders : [];
+  const ozonOmList = buildOzonListFromOmOrders();
+  const ozonFromOm = !ozonApiList.length && ozonOmList.length;
+  const ozonList = ozonApiList.length ? ozonApiList : ozonOmList;
   const ymList = (ym.ok && ym.orders) ? ym.orders : [];
   const sberList = (sber.ok && sber.orders) ? sber.orders : [];
   const wbOpen = wbList.filter(s => !s.done).length;
@@ -5842,7 +5880,10 @@ function renderExternalSupplies(data) {
       <a href="https://seller.ozon.ru/app/supply/orders?filter=SupplyPreparation" target="_blank" class="cabinet-link" style="font-size:11px;">→ в подготовке</a>
       <a href="https://seller.ozon.ru/app/supply/orders" target="_blank" class="cabinet-link" style="font-size:11px;">→ все заявки</a>
     </div>`;
-  if (!ozon.ok) {
+  if (ozonFromOm) {
+    html += `<div class="api-banner" style="margin-bottom:10px;"><strong>Ozon показан из заказов OM.</strong><br><span style="font-size:12px;color:var(--text-muted);">API-список Ozon пустой/не отдан скриптом, поэтому HTML показывает Ozon-поставки из основной таблицы. Остальные МП работают как раньше.</span></div>`;
+  }
+  if (!ozon.ok && !ozonFromOm) {
     html += `<div class="week-empty" style="color:#e87159;">${escapeHtml(ozon.error || 'неизвестная ошибка')}</div>`;
     if (ozon.tried && ozon.tried.length) html += `<div class="api-debug">${ozon.tried.map(escapeHtml).join('<br>')}</div>`;
   } else if (!ozonList.length) {
@@ -5856,7 +5897,7 @@ function renderExternalSupplies(data) {
         ? `<span class="ext-link-badge linked" data-row="${linked.rowNum}" title="нажми чтобы открыть #${linked.num}" onclick="event.stopPropagation();">✓ в OM #${escapeHtml(String(linked.num || ''))}</span>`
         : `<div class="ext-link-actions"><span class="ext-link-badge muted">не в OM</span><button type="button" class="ext-create-btn" onclick="event.stopPropagation(); createOrderFromExternalSupply('ozon', '${escapeJsAttr(s.id)}', '${escapeJsAttr(s.number || s.id)}', '')">+ в OM</button></div>`;
       const dateLabel = s.planned ? String(s.planned).slice(0,10) : String(s.created || '').slice(0,10);
-      const dateHint = s.planned ? 'плановая' : 'создана';
+      const dateHint = s.from_om ? 'плановая OM' : (s.planned ? 'плановая' : 'создана');
       html += `
         <div class="dispatch-row supply-clickable ext-item"
              data-ext-search="${escapeHtml(externalSupplySearchHay(s, 'ozon'))}"
