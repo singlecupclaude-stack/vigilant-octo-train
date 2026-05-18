@@ -2799,6 +2799,843 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
   .filters #searchInput { min-width: 100%; flex-basis: 100%; }
   .filters #filterMp { flex: 1 1 160px; }
 }
+
+
+/* === Заявки на отгрузку + календарь === */
+#omShipPage, #omCalendarPage { display:none; }
+body.om-ship-mode .stats,
+body.om-ship-mode .section-head,
+body.om-ship-mode .table-card,
+body.om-ship-mode .form-card,
+body.om-ship-mode .footer,
+body.om-calendar-mode .stats,
+body.om-calendar-mode .section-head,
+body.om-calendar-mode .table-card,
+body.om-calendar-mode .form-card,
+body.om-calendar-mode .footer { display:none !important; }
+body.om-ship-mode #omShipPage { display:flex !important; }
+body.om-calendar-mode #omCalendarPage { display:flex !important; }
+body.om-ship-mode #omProjectsPage,
+body.om-calendar-mode #omProjectsPage,
+body.om-calendar-mode #omShipPage { display:none !important; }
+.ship-page, .calendar-page { flex-direction:column; gap:24px; }
+.ship-toolbar { display:flex; justify-content:space-between; gap:12px; align-items:center; flex-wrap:wrap; }
+.ship-title { font-family:'Fraunces', serif; font-size:28px; color:var(--text-primary); }
+.ship-sub { font-size:13px; color:var(--text-muted); margin-top:4px; }
+.ship-kpis { display:grid; grid-template-columns:repeat(6, minmax(130px,1fr)); gap:1px; background:var(--stone-line); border:1px solid var(--stone-line); border-radius:22px; overflow:hidden; margin:0 0 24px; }
+.ship-kpi-card { background:rgba(44,46,43,.72); padding:18px 16px; min-height:104px; position:relative; cursor:pointer; transition:.18s ease; border:0; text-align:left; color:var(--text-body); font:inherit; }
+.ship-kpi-card:hover, .ship-kpi-card.active { background:rgba(56,58,54,.94); }
+.ship-kpi-card.active::after { content:''; position:absolute; left:16px; right:16px; bottom:0; height:2px; background:var(--accent-copper); border-radius:999px; }
+.ship-kpi-label { font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:10px; }
+.ship-kpi-value { font-family:'Fraunces', serif; font-size:32px; line-height:1; color:var(--text-primary); }
+.ship-kpi-value.copper { color:var(--accent-copper-bright); }
+.ship-kpi-value.sage { color:var(--accent-sage); }
+.ship-kpi-value.danger { color:#D98272; }
+.ship-kpi-value.purple { color:#CDB9E8; }
+.ship-kpi-sub { color:var(--text-soft); font-size:11px; margin-top:8px; line-height:1.35; }
+.ship-filter-chip { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--stone-line); border-radius:999px; padding:7px 11px; color:var(--text-muted); font-size:11px; }
+.ship-filter-chip b { color:var(--text-primary); font-weight:500; }
+.ship-filter-clear { border:0; background:transparent; color:var(--accent-copper); cursor:pointer; font-size:12px; }
+.ship-grid { display:grid; grid-template-columns: repeat(4, minmax(150px,1fr)); gap:14px; }
+.ship-field { display:flex; flex-direction:column; gap:7px; }
+.ship-field.wide { grid-column: span 2; }
+.ship-field.full { grid-column: 1 / -1; }
+.ship-label { font-size:10px; letter-spacing:.11em; text-transform:uppercase; color:var(--text-muted); }
+.ship-input, .ship-select, .ship-textarea { width:100%; border:1px solid var(--stone-line); border-radius:14px; padding:10px 12px; background:var(--bg-input); color:var(--text-body); font:inherit; outline:none; }
+.ship-textarea { min-height:74px; resize:vertical; }
+.ship-checks { display:flex; gap:16px; flex-wrap:wrap; align-items:center; padding-top:8px; }
+.ship-checks label { display:flex; align-items:center; gap:8px; color:var(--text-body); font-size:13px; }
+.ship-actions { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:16px; }
+#shipSubmitBtn:disabled { opacity:.65; cursor:wait; }
+.ship-list { display:flex; flex-direction:column; gap:10px; }
+.ship-card { border:1px solid var(--stone-line); border-radius:18px; padding:14px; background:rgba(35,37,36,.34); display:grid; grid-template-columns: 1.2fr .8fr .8fr .9fr auto; gap:12px; align-items:start; transition:.18s ease; }
+.ship-card.done { opacity:.78; }
+.ship-card.status-unpaid { background:rgba(198,91,78,.22); border-color:rgba(198,91,78,.42); }
+.ship-card.status-paid-shipped { background:rgba(143,163,131,.28); border-color:rgba(143,163,131,.48); }
+.ship-card.status-confirmed { background:rgba(164,139,196,.28); border-color:rgba(164,139,196,.50); }
+.ship-card.status-notshipped { background:rgba(255,255,255,.035); border-color:rgba(212,197,160,.24); }
+.ship-card-title { color:var(--text-primary); font-weight:600; font-size:14px; }
+.ship-card-meta { color:var(--text-muted); font-size:12px; line-height:1.45; }
+.ship-pill { display:inline-flex; align-items:center; border:1px solid var(--stone-line); border-radius:999px; padding:3px 8px; font-size:11px; color:var(--text-muted); margin:2px 4px 2px 0; }
+.ship-pill.ok { color:var(--success); border-color:rgba(143,163,131,.45); }
+.ship-pill.warn { color:var(--accent-copper); border-color:rgba(199,144,93,.45); }
+.ship-pill.purple { color:#CDB9E8; border-color:rgba(164,139,196,.58); background:rgba(164,139,196,.16); }
+.ship-pill.pay-pre { color:#fff; border-color:#7F1D1D; background:#7F1D1D; }
+.ship-pill.pay-delay { color:#fff; border-color:#1F5A3A; background:#1F5A3A; }
+.ship-card-buttons { display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap; }
+.ship-details { grid-column:1 / -1; border-top:1px solid var(--stone-line); margin-top:4px; padding-top:12px; display:grid; grid-template-columns:repeat(4,minmax(150px,1fr)); gap:10px 18px; }
+.ship-detail-item { color:var(--text-body); font-size:12px; line-height:1.45; }
+.ship-detail-item b { display:block; color:var(--text-muted); font-size:10px; letter-spacing:.10em; text-transform:uppercase; margin-bottom:2px; font-weight:400; }
+.ship-detail-item.full { grid-column:1 / -1; white-space:pre-wrap; }
+.ship-mini-btn { border:1px solid var(--stone-line); background:transparent; color:var(--text-muted); border-radius:999px; padding:7px 10px; cursor:pointer; font-size:11px; }
+.ship-mini-btn:hover { color:var(--text-primary); border-color:var(--accent-copper); }
+.calendar-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.calendar-title { font-family:'Fraunces', serif; font-size:24px; color:var(--text-primary); }
+.calendar-nav { display:flex; gap:8px; align-items:center; }
+.calendar-grid { display:grid; grid-template-columns: repeat(7, minmax(120px,1fr)); gap:8px; }
+.calendar-dow { color:var(--text-muted); font-size:10px; text-transform:uppercase; letter-spacing:.12em; padding:0 8px 6px; }
+.calendar-day { min-height:130px; border:1px solid var(--stone-line); border-radius:16px; padding:9px; background:rgba(35,37,36,.26); overflow:hidden; }
+.calendar-day.other { opacity:.36; }
+.calendar-day.today { border-color:rgba(199,144,93,.72); box-shadow:0 0 0 1px rgba(199,144,93,.16) inset; }
+#omShipBtn { min-width:150px !important; }
+#omCalendarBtn { min-width:118px !important; }
+.calendar-filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+.calendar-filter-btn { border:1px solid var(--stone-line); background:transparent; color:var(--text-muted); border-radius:999px; padding:8px 12px; cursor:pointer; font-size:11px; letter-spacing:.03em; }
+.calendar-filter-btn.active { color:#232524; background:var(--text-primary); border-color:var(--text-primary); }
+.calendar-legend { display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:12px; color:var(--text-muted); margin-bottom:12px; }
+.calendar-legend-item { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--stone-line); border-radius:999px; padding:5px 9px; }
+.calendar-legend-dot { width:9px; height:9px; border-radius:999px; display:inline-block; }
+.calendar-legend-dot.om { background:var(--accent-sage); }
+.calendar-legend-dot.ship { background:var(--accent-copper); }
+.calendar-num { color:var(--text-primary); font-size:13px; margin-bottom:7px; display:flex; justify-content:space-between; }
+.cal-event { display:block; border:1px solid rgba(180,180,158,.16); border-radius:10px; padding:6px 7px; margin:4px 0; background:rgba(44,46,43,.58); color:var(--text-body); font-size:11px; line-height:1.25; overflow:hidden; cursor:pointer; }
+.cal-event.om { border-left:4px solid var(--accent-sage); background:rgba(107,128,104,.18); }
+.cal-event.ship { border-left:4px solid var(--accent-copper); background:rgba(199,144,93,.16); }
+.cal-event.done { opacity:.55; text-decoration:line-through; }
+.cal-event-icon { margin-right:4px; }
+.cal-more { color:var(--text-muted); font-size:11px; margin-top:4px; }
+@media (max-width:1180px){ .ship-kpis{grid-template-columns:repeat(3,minmax(130px,1fr));} }
+@media (max-width:980px){ .ship-grid{grid-template-columns:repeat(2,minmax(140px,1fr));}.ship-card{grid-template-columns:1fr 1fr}.calendar-grid{grid-template-columns:repeat(2,1fr)}.calendar-dow{display:none;} }
+@media (max-width:640px){ .ship-grid{grid-template-columns:1fr}.ship-field.wide{grid-column:auto}.ship-card{grid-template-columns:1fr}.calendar-grid{grid-template-columns:1fr}.ship-kpis{grid-template-columns:1fr 1fr}.ship-kpi-card{min-height:92px}.ship-kpi-value{font-size:26px} }
+
+/* === v47: аккуратное меню в панели заметок === */
+.chat-panel .om-nav {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding: 0 0 16px !important;
+  margin: 0 0 16px !important;
+}
+.chat-panel .om-nav-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 38px !important;
+  padding: 0 14px !important;
+  font-size: 12px !important;
+  white-space: normal !important;
+}
+#omShipBtn, #omCalendarBtn { min-width: 0 !important; }
+
+/* === v47: заметные чекбоксы заявок === */
+.ship-checks input[type="checkbox"],
+.calendar-legend input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  border: 2px solid rgba(212,197,160,.62);
+  border-radius: 7px;
+  background: rgba(212,197,160,.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+}
+.ship-checks input[type="checkbox"]:checked,
+.calendar-legend input[type="checkbox"]:checked {
+  background: var(--accent-copper);
+  border-color: var(--accent-copper-bright);
+}
+.ship-checks input[type="checkbox"]:checked::after,
+.calendar-legend input[type="checkbox"]:checked::after {
+  content: '✓';
+  position: absolute;
+  left: 4px;
+  top: -2px;
+  color: #232524;
+  font-weight: 700;
+  font-size: 18px;
+}
+.ship-checks label {
+  border: 1px solid var(--stone-line);
+  border-radius: 999px;
+  padding: 7px 11px 7px 8px;
+  background: rgba(35,37,36,.32);
+}
+.ship-checks label:hover { border-color: rgba(199,144,93,.55); }
+
+
+
+/* ===== v51: полноценная светлая тема — контрастные тексты и карточки ===== */
+body.om-light-theme {
+  --bg-deep: #F1EADD;
+  --bg-mid: #F7F1E7;
+  --bg-card: rgba(255, 251, 243, 0.94);
+  --bg-input: rgba(255, 255, 255, 0.98);
+  --stone-line: rgba(91, 73, 48, 0.20);
+  --stone-line-strong: rgba(91, 73, 48, 0.36);
+  --text-primary: #2B2923;
+  --text-body: #39362D;
+  --text-muted: #6D634F;
+  --text-soft: #8A7D63;
+  --accent-copper: #9B5F2F;
+  --accent-copper-bright: #B87B43;
+  --accent-sage: #60785E;
+  --accent-sage-deep: #496746;
+  --danger: #A23E32;
+  --success: #4F7B4A;
+  background: var(--bg-mid) !important;
+  color: var(--text-body) !important;
+}
+body.om-light-theme::before {
+  opacity: .035 !important;
+  filter: sepia(.25) brightness(1.22) saturate(.75) !important;
+}
+body.om-light-theme .wrap,
+body.om-light-theme .main-content,
+body.om-light-theme .brand,
+body.om-light-theme .section-head,
+body.om-light-theme .ship-page,
+body.om-light-theme .calendar-page,
+body.om-light-theme .projects-page {
+  color: var(--text-body) !important;
+}
+body.om-light-theme .header,
+body.om-light-theme .chat-panel,
+body.om-light-theme .modal-box,
+body.om-light-theme .modal-content,
+body.om-light-theme .supply-details-modal,
+body.om-light-theme .login-card {
+  background: rgba(249, 244, 235, .98) !important;
+  color: var(--text-body) !important;
+  border-color: var(--stone-line) !important;
+  box-shadow: 0 18px 50px rgba(58, 45, 28, .10);
+}
+body.om-light-theme .stat-card,
+body.om-light-theme .table-card,
+body.om-light-theme .form-card,
+body.om-light-theme .supply-card,
+body.om-light-theme .extra-block,
+body.om-light-theme .chat-note,
+body.om-light-theme .project-card,
+body.om-light-theme .ship-card,
+body.om-light-theme .calendar-day,
+body.om-light-theme .calendar-legend-item,
+body.om-light-theme .ship-checks label,
+body.om-light-theme .filter-toggle,
+body.om-light-theme .no-invoice-filter-control,
+body.om-light-theme .summary-card,
+body.om-light-theme .metric-card {
+  background: rgba(255, 251, 243, .88) !important;
+  color: var(--text-body) !important;
+  border-color: var(--stone-line) !important;
+}
+body.om-light-theme .stat-card:hover,
+body.om-light-theme .supply-card:hover,
+body.om-light-theme .project-card:hover,
+body.om-light-theme .ship-card:hover,
+body.om-light-theme .calendar-day:hover {
+  background: rgba(255, 247, 232, .96) !important;
+}
+body.om-light-theme .brand-name,
+body.om-light-theme h1,
+body.om-light-theme h2,
+body.om-light-theme h3,
+body.om-light-theme .section-title,
+body.om-light-theme .stat-value,
+body.om-light-theme .card-title,
+body.om-light-theme .supply-title,
+body.om-light-theme .ship-title,
+body.om-light-theme .ship-card-title,
+body.om-light-theme .calendar-title,
+body.om-light-theme .calendar-num,
+body.om-light-theme .proj-title,
+body.om-light-theme .modal-title,
+body.om-light-theme .login-logo {
+  color: var(--text-primary) !important;
+}
+body.om-light-theme .brand-tag,
+body.om-light-theme .date-now,
+body.om-light-theme .section-subtitle,
+body.om-light-theme .stat-label,
+body.om-light-theme .stat-sub,
+body.om-light-theme .card-meta,
+body.om-light-theme .supply-meta,
+body.om-light-theme .ship-sub,
+body.om-light-theme .ship-card-meta,
+body.om-light-theme .ship-detail-item b,
+body.om-light-theme .calendar-dow,
+body.om-light-theme .calendar-legend,
+body.om-light-theme .proj-meta,
+body.om-light-theme .muted,
+body.om-light-theme small {
+  color: var(--text-muted) !important;
+}
+body.om-light-theme input,
+body.om-light-theme select,
+body.om-light-theme textarea,
+body.om-light-theme .ship-input,
+body.om-light-theme .ship-select,
+body.om-light-theme .ship-textarea,
+body.om-light-theme .filter-input,
+body.om-light-theme .search-input {
+  background: rgba(255,255,255,.98) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(91,73,48,.28) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+body.om-light-theme input::placeholder,
+body.om-light-theme textarea::placeholder {
+  color: #8E8066 !important;
+  opacity: 1 !important;
+}
+body.om-light-theme select option {
+  background: #FFFDF8 !important;
+  color: #2B2923 !important;
+}
+body.om-light-theme .btn,
+body.om-light-theme button.btn,
+body.om-light-theme .proj-btn,
+body.om-light-theme .calendar-filter-btn.active,
+body.om-light-theme .om-nav-btn.active {
+  background: #D8C99F !important;
+  color: #27231C !important;
+  border-color: #D8C99F !important;
+}
+body.om-light-theme .btn-ghost,
+body.om-light-theme .btn-reset,
+body.om-light-theme .proj-btn-secondary,
+body.om-light-theme .ship-mini-btn,
+body.om-light-theme .theme-toggle-btn,
+body.om-light-theme .calendar-filter-btn,
+body.om-light-theme .om-nav-btn,
+body.om-light-theme .modal-close,
+body.om-light-theme .om-mini-btn {
+  background: rgba(255,255,255,.42) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--stone-line) !important;
+}
+body.om-light-theme .btn-ghost:hover,
+body.om-light-theme .btn-reset:hover,
+body.om-light-theme .proj-btn-secondary:hover,
+body.om-light-theme .ship-mini-btn:hover,
+body.om-light-theme .theme-toggle-btn:hover,
+body.om-light-theme .calendar-filter-btn:hover,
+body.om-light-theme .om-nav-btn:hover,
+body.om-light-theme .modal-close:hover,
+body.om-light-theme .om-mini-btn:hover {
+  color: var(--text-primary) !important;
+  border-color: var(--accent-copper) !important;
+  background: rgba(199,144,93,.12) !important;
+}
+body.om-light-theme .om-nav-btn.logout { color: #A34F43 !important; }
+body.om-light-theme .chat-note.urgent,
+body.om-light-theme .no-invoice-filter-control.active,
+body.om-light-theme .filters #filterNoInvoiceWrap,
+body.om-light-theme .filters .no-invoice-filter-control {
+  background: rgba(198, 91, 78, .11) !important;
+  color: #84372F !important;
+  border-color: rgba(162, 62, 50, .42) !important;
+}
+body.om-light-theme .filters #filterNoInvoiceWrap span,
+body.om-light-theme .filters .no-invoice-filter-control span,
+body.om-light-theme .no-invoice-pill {
+  color: #84372F !important;
+}
+body.om-light-theme .week-list-head.v36,
+body.om-light-theme .dispatch-list-head.v36,
+body.om-light-theme .kpi-head-v37,
+body.om-light-theme .dispatch-head-v37,
+body.om-light-theme .table-head,
+body.om-light-theme thead,
+body.om-light-theme th {
+  background: #EADFCA !important;
+  color: #6C421F !important;
+  border-color: rgba(108,66,31,.25) !important;
+}
+body.om-light-theme .week-item.v36,
+body.om-light-theme .dispatch-row.v36,
+body.om-light-theme .kpi-row-v37,
+body.om-light-theme .dispatch-row-v37b,
+body.om-light-theme .order-row,
+body.om-light-theme tbody tr {
+  background: rgba(255,255,255,.54) !important;
+  color: var(--text-body) !important;
+  border-color: rgba(91,73,48,.14) !important;
+}
+body.om-light-theme .week-item.v36:hover,
+body.om-light-theme .dispatch-row.v36:hover,
+body.om-light-theme .kpi-row-v37:hover,
+body.om-light-theme .dispatch-row-v37b:hover,
+body.om-light-theme .order-row:hover,
+body.om-light-theme tbody tr:hover {
+  background: rgba(249,238,216,.90) !important;
+}
+body.om-light-theme .ship-card.status-unpaid {
+  background: #F0C7C3 !important;
+  border-color: #C65B4E !important;
+  color: #3A2421 !important;
+}
+body.om-light-theme .ship-card.status-paid-shipped {
+  background: #C9E3C8 !important;
+  border-color: #6E9A69 !important;
+  color: #22321F !important;
+}
+body.om-light-theme .ship-card.status-confirmed {
+  background: #D8CBEA !important;
+  border-color: #9A82BF !important;
+  color: #2D2638 !important;
+}
+body.om-light-theme .ship-card.status-notshipped {
+  background: #FFFFFF !important;
+  border-color: rgba(91,73,48,.22) !important;
+  color: var(--text-body) !important;
+}
+body.om-light-theme .ship-pill,
+body.om-light-theme .badge,
+body.om-light-theme .status-pill,
+body.om-light-theme .cal-event,
+body.om-light-theme .calendar-legend-dot {
+  color: #2B2923 !important;
+}
+body.om-light-theme .ship-pill.prepay,
+body.om-light-theme .payment-prepay {
+  background: #7E2D2A !important;
+  color: #FFF7EF !important;
+  border-color: #7E2D2A !important;
+}
+body.om-light-theme .ship-pill.delay,
+body.om-light-theme .payment-delay {
+  background: #315F35 !important;
+  color: #F7FFF2 !important;
+  border-color: #315F35 !important;
+}
+body.om-light-theme .cal-event.om {
+  background: rgba(96,120,94,.20) !important;
+  color: #263B25 !important;
+  border-left-color: #60785E !important;
+}
+body.om-light-theme .cal-event.ship {
+  background: rgba(155,95,47,.18) !important;
+  color: #4F311B !important;
+  border-left-color: #9B5F2F !important;
+}
+body.om-light-theme .modal-overlay { background: rgba(60,48,32,.38) !important; }
+body.om-light-theme a { color: #7B4B25 !important; }
+body.om-light-theme hr { border-color: var(--stone-line) !important; }
+
+
+
+/* ===== v53: светлая тема 2.0 — не прозрачная, контрастная, без "выцветших" блоков ===== */
+body.om-light-theme {
+  --bg-deep: #EDE4D3 !important;
+  --bg-mid: #F6EFE2 !important;
+  --bg-card: #FFF9EE !important;
+  --bg-input: #FFFFFF !important;
+  --stone-line: rgba(88, 68, 39, .24) !important;
+  --stone-line-strong: rgba(88, 68, 39, .44) !important;
+  --text-primary: #211D16 !important;
+  --text-body: #332D22 !important;
+  --text-muted: #5E513D !important;
+  --text-soft: #7B6C54 !important;
+  --accent-copper: #8D4F22 !important;
+  --accent-copper-bright: #A9632D !important;
+  --accent-sage: #526F4E !important;
+  --accent-sage-deep: #355F37 !important;
+  --danger: #9A342B !important;
+  --success: #3E753E !important;
+  background: #F6EFE2 !important;
+  color: #332D22 !important;
+}
+body.om-light-theme::before {
+  opacity: .018 !important;
+  filter: sepia(.55) brightness(1.35) saturate(.55) !important;
+}
+body.om-light-theme .wrap,
+body.om-light-theme .main-content {
+  background: linear-gradient(180deg, #F8F1E5 0%, #F3E9D8 100%) !important;
+}
+body.om-light-theme .header,
+body.om-light-theme .chat-panel,
+body.om-light-theme .modal-box,
+body.om-light-theme .modal-content,
+body.om-light-theme .supply-details-modal,
+body.om-light-theme .login-card {
+  background: #FBF4E8 !important;
+  border-color: rgba(88,68,39,.26) !important;
+  color: #332D22 !important;
+  box-shadow: 0 16px 42px rgba(59, 43, 22, .12) !important;
+}
+body.om-light-theme .brand-name,
+body.om-light-theme h1,
+body.om-light-theme h2,
+body.om-light-theme h3,
+body.om-light-theme .section-title,
+body.om-light-theme .stat-value,
+body.om-light-theme .card-title,
+body.om-light-theme .supply-title,
+body.om-light-theme .ship-title,
+body.om-light-theme .ship-card-title,
+body.om-light-theme .calendar-title,
+body.om-light-theme .calendar-num,
+body.om-light-theme .proj-title,
+body.om-light-theme .modal-title,
+body.om-light-theme .chat-panel-title,
+body.om-light-theme .login-logo {
+  color: #211D16 !important;
+  text-shadow: none !important;
+}
+body.om-light-theme .brand-tag,
+body.om-light-theme .date-now,
+body.om-light-theme .section-subtitle,
+body.om-light-theme .stat-label,
+body.om-light-theme .stat-sub,
+body.om-light-theme .card-meta,
+body.om-light-theme .supply-meta,
+body.om-light-theme .ship-sub,
+body.om-light-theme .ship-card-meta,
+body.om-light-theme .ship-detail-item b,
+body.om-light-theme .calendar-dow,
+body.om-light-theme .calendar-legend,
+body.om-light-theme .proj-meta,
+body.om-light-theme .muted,
+body.om-light-theme small,
+body.om-light-theme label {
+  color: #5E513D !important;
+  opacity: 1 !important;
+}
+body.om-light-theme .stat-card,
+body.om-light-theme .table-card,
+body.om-light-theme .form-card,
+body.om-light-theme .supply-card,
+body.om-light-theme .extra-block,
+body.om-light-theme .chat-note,
+body.om-light-theme .project-card,
+body.om-light-theme .ship-card,
+body.om-light-theme .calendar-day,
+body.om-light-theme .calendar-legend-item,
+body.om-light-theme .ship-checks label,
+body.om-light-theme .filter-toggle,
+body.om-light-theme .no-invoice-filter-control,
+body.om-light-theme .summary-card,
+body.om-light-theme .metric-card,
+body.om-light-theme .ship-kpi-card {
+  background: #FFF9EE !important;
+  border-color: rgba(88,68,39,.24) !important;
+  color: #332D22 !important;
+  box-shadow: 0 8px 20px rgba(59, 43, 22, .055) !important;
+}
+body.om-light-theme .stat-card:hover,
+body.om-light-theme .supply-card:hover,
+body.om-light-theme .project-card:hover,
+body.om-light-theme .ship-card:hover,
+body.om-light-theme .calendar-day:hover,
+body.om-light-theme .metric-card:hover,
+body.om-light-theme .ship-kpi-card:hover {
+  background: #FFF2DD !important;
+  border-color: rgba(141,79,34,.42) !important;
+  box-shadow: 0 10px 24px rgba(141,79,34,.10) !important;
+}
+
+/* меню в правой панели */
+body.om-light-theme .chat-panel .om-nav {
+  border-bottom-color: rgba(88,68,39,.26) !important;
+}
+body.om-light-theme .chat-panel .om-nav-btn,
+body.om-light-theme .om-nav-btn {
+  background: #FBF4E8 !important;
+  color: #4B412F !important;
+  border-color: rgba(88,68,39,.24) !important;
+  box-shadow: none !important;
+}
+body.om-light-theme .chat-panel .om-nav-btn:hover,
+body.om-light-theme .om-nav-btn:hover {
+  background: #FFF0D7 !important;
+  color: #211D16 !important;
+  border-color: rgba(141,79,34,.45) !important;
+}
+body.om-light-theme .chat-panel .om-nav-btn.active,
+body.om-light-theme .om-nav-btn.active {
+  background: #D8C68F !important;
+  color: #211D16 !important;
+  border-color: #C9B478 !important;
+  font-weight: 700 !important;
+}
+body.om-light-theme .chat-panel .om-nav-btn.logout,
+body.om-light-theme .om-nav-btn.logout {
+  color: #8A3A31 !important;
+}
+
+/* поля и фильтры */
+body.om-light-theme input,
+body.om-light-theme select,
+body.om-light-theme textarea,
+body.om-light-theme .ship-input,
+body.om-light-theme .ship-select,
+body.om-light-theme .ship-textarea,
+body.om-light-theme .filter-input,
+body.om-light-theme .search-input {
+  background: #FFFFFF !important;
+  color: #211D16 !important;
+  border-color: rgba(88,68,39,.30) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95) !important;
+}
+body.om-light-theme input:focus,
+body.om-light-theme select:focus,
+body.om-light-theme textarea:focus {
+  border-color: rgba(141,79,34,.72) !important;
+  box-shadow: 0 0 0 3px rgba(141,79,34,.12) !important;
+}
+body.om-light-theme input::placeholder,
+body.om-light-theme textarea::placeholder {
+  color: #7F7058 !important;
+  opacity: 1 !important;
+}
+body.om-light-theme .filters {
+  background: #FBF4E8 !important;
+  border-bottom-color: rgba(88,68,39,.22) !important;
+}
+body.om-light-theme .filter-toggle,
+body.om-light-theme .no-invoice-filter-control {
+  background: #FFFFFF !important;
+  color: #4B412F !important;
+}
+body.om-light-theme .filter-toggle input[type="checkbox"],
+body.om-light-theme .ship-checks input[type="checkbox"],
+body.om-light-theme .calendar-legend input[type="checkbox"] {
+  background: #FFFFFF !important;
+  border: 2px solid #8D4F22 !important;
+  box-shadow: 0 1px 2px rgba(59,43,22,.10) !important;
+}
+body.om-light-theme .filter-toggle input[type="checkbox"]:checked,
+body.om-light-theme .ship-checks input[type="checkbox"]:checked,
+body.om-light-theme .calendar-legend input[type="checkbox"]:checked {
+  background: #8D4F22 !important;
+  border-color: #8D4F22 !important;
+}
+
+/* таблица ОМ: убираем серую мутность и повышаем читаемость */
+body.om-light-theme .table-wrap {
+  background: #FFFDF8 !important;
+  border-top: 1px solid rgba(88,68,39,.12) !important;
+}
+body.om-light-theme table,
+body.om-light-theme .orders-table-expanded {
+  background: #FFFDF8 !important;
+  color: #332D22 !important;
+}
+body.om-light-theme .orders-table-expanded thead th,
+body.om-light-theme .table-wrap thead th,
+body.om-light-theme thead th,
+body.om-light-theme th {
+  background: #E6D8BC !important;
+  color: #3B2B18 !important;
+  border-bottom: 1px solid rgba(88,68,39,.30) !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+body.om-light-theme .orders-table-expanded tbody tr,
+body.om-light-theme tbody tr,
+body.om-light-theme tr.order-row {
+  background: #FFFDF8 !important;
+  color: #332D22 !important;
+  opacity: 1 !important;
+}
+body.om-light-theme .orders-table-expanded tbody tr:nth-child(even),
+body.om-light-theme tbody tr:nth-child(even) {
+  background: #F8F0E2 !important;
+}
+body.om-light-theme .orders-table-expanded tbody tr:hover,
+body.om-light-theme tbody tr:hover,
+body.om-light-theme tr.order-row:hover {
+  background: #F0DFC2 !important;
+  color: #211D16 !important;
+}
+body.om-light-theme .orders-table-expanded td,
+body.om-light-theme tbody td,
+body.om-light-theme td {
+  color: #332D22 !important;
+  border-bottom-color: rgba(88,68,39,.16) !important;
+  opacity: 1 !important;
+}
+body.om-light-theme .cell-small,
+body.om-light-theme .cell-comment,
+body.om-light-theme .cell-status,
+body.om-light-theme .cell-strong,
+body.om-light-theme .cell-warehouse,
+body.om-light-theme .cell-driver,
+body.om-light-theme .cell-car {
+  color: #332D22 !important;
+  opacity: 1 !important;
+}
+body.om-light-theme .cell-num,
+body.om-light-theme .sos,
+body.om-light-theme .supply-linked {
+  color: #8D4F22 !important;
+  opacity: 1 !important;
+}
+body.om-light-theme .cell-mp,
+body.om-light-theme .badge,
+body.om-light-theme .status-pill,
+body.om-light-theme .supply-linked,
+body.om-light-theme .no-invoice-pill {
+  background: rgba(255,255,255,.62) !important;
+  color: #332D22 !important;
+  border-color: rgba(88,68,39,.32) !important;
+}
+body.om-light-theme .cell-mp.wb { color:#7C4B20 !important; border-color:#B78348 !important; }
+body.om-light-theme .cell-mp.ozon { color:#355F37 !important; border-color:#6A8D66 !important; }
+body.om-light-theme .cell-mp.ym { color:#423826 !important; border-color:#8C7B5B !important; }
+body.om-light-theme .flag { border-color: rgba(88,68,39,.42) !important; background:#FFFDF8 !important; }
+body.om-light-theme .flag.on { background:#5D865A !important; border-color:#5D865A !important; }
+body.om-light-theme .flag.on.done { background:#A9632D !important; border-color:#A9632D !important; }
+
+/* кнопки */
+body.om-light-theme .btn,
+body.om-light-theme button.btn,
+body.om-light-theme .proj-btn,
+body.om-light-theme .calendar-filter-btn.active,
+body.om-light-theme .section-action-primary,
+body.om-light-theme .login-btn {
+  background: #8D4F22 !important;
+  color: #FFF9EE !important;
+  border-color: #8D4F22 !important;
+  font-weight: 700 !important;
+}
+body.om-light-theme .btn:hover,
+body.om-light-theme .proj-btn:hover,
+body.om-light-theme .section-action-primary:hover,
+body.om-light-theme .login-btn:hover {
+  background: #A9632D !important;
+  color: #FFFFFF !important;
+  border-color: #A9632D !important;
+}
+body.om-light-theme .btn-ghost,
+body.om-light-theme .btn-reset,
+body.om-light-theme .proj-btn-secondary,
+body.om-light-theme .ship-mini-btn,
+body.om-light-theme .theme-toggle-btn,
+body.om-light-theme .calendar-filter-btn,
+body.om-light-theme .modal-close,
+body.om-light-theme .om-mini-btn,
+body.om-light-theme .section-action {
+  background: #FFF9EE !important;
+  color: #4B412F !important;
+  border-color: rgba(88,68,39,.28) !important;
+}
+body.om-light-theme .btn-ghost:hover,
+body.om-light-theme .btn-reset:hover,
+body.om-light-theme .proj-btn-secondary:hover,
+body.om-light-theme .ship-mini-btn:hover,
+body.om-light-theme .theme-toggle-btn:hover,
+body.om-light-theme .calendar-filter-btn:hover,
+body.om-light-theme .modal-close:hover,
+body.om-light-theme .om-mini-btn:hover,
+body.om-light-theme .section-action:hover {
+  background: #FFF0D7 !important;
+  color: #211D16 !important;
+  border-color: rgba(141,79,34,.55) !important;
+}
+
+/* заявки: статусы должны быть видны и в светлой теме */
+body.om-light-theme .ship-card.status-unpaid {
+  background: #F2C9C5 !important;
+  border-color: #B84940 !important;
+  color: #2E1714 !important;
+}
+body.om-light-theme .ship-card.status-paid-shipped {
+  background: #CCE7CB !important;
+  border-color: #5B9257 !important;
+  color: #183116 !important;
+}
+body.om-light-theme .ship-card.status-confirmed {
+  background: #D9CDED !important;
+  border-color: #8E73BA !important;
+  color: #261F33 !important;
+}
+body.om-light-theme .ship-card.status-notshipped {
+  background: #FFFFFF !important;
+  border-color: rgba(88,68,39,.26) !important;
+  color: #332D22 !important;
+}
+body.om-light-theme .ship-pill,
+body.om-light-theme .ship-status-badge,
+body.om-light-theme .payment-badge {
+  color: #211D16 !important;
+  border-color: rgba(88,68,39,.32) !important;
+  background: rgba(255,255,255,.64) !important;
+}
+body.om-light-theme .ship-pill.prepay,
+body.om-light-theme .payment-prepay {
+  background: #7E2D2A !important;
+  color: #FFF7EF !important;
+  border-color: #7E2D2A !important;
+}
+body.om-light-theme .ship-pill.delay,
+body.om-light-theme .payment-delay {
+  background: #315F35 !important;
+  color: #F7FFF2 !important;
+  border-color: #315F35 !important;
+}
+
+/* календарь */
+body.om-light-theme .calendar-day.empty { background: #F3E9D8 !important; }
+body.om-light-theme .cal-event.om {
+  background: #DDE9D8 !important;
+  color: #20351F !important;
+  border-left-color: #526F4E !important;
+}
+body.om-light-theme .cal-event.ship {
+  background: #F4DFC7 !important;
+  color: #4B2A12 !important;
+  border-left-color: #8D4F22 !important;
+}
+body.om-light-theme .calendar-legend-dot { color: #211D16 !important; }
+
+/* правая панель заметок */
+body.om-light-theme .chat-note {
+  background: #FFF2DD !important;
+  border-color: rgba(141,79,34,.20) !important;
+  color: #332D22 !important;
+}
+body.om-light-theme .chat-note.urgent {
+  background: #F4D0CA !important;
+  border-color: #C95F52 !important;
+  color: #331A16 !important;
+}
+body.om-light-theme .chat-note-time,
+body.om-light-theme .chat-note-author,
+body.om-light-theme .chat-note-body {
+  color: #332D22 !important;
+  opacity: 1 !important;
+}
+
+/* служебное */
+body.om-light-theme .omd-stat-box,
+body.om-light-theme .date-theme-row {
+  color: #4B412F !important;
+}
+body.om-light-theme .modal-overlay { background: rgba(44, 34, 20, .38) !important; }
+body.om-light-theme a { color: #7A431E !important; }
+body.om-light-theme hr { border-color: rgba(88,68,39,.24) !important; }
+
+
+
+/* v54: читаемый транзит/кроссдок в светлой теме */
+body.om-light-theme .shipment-kind.transit-cross {
+  border-left: 3px solid #1F5F8F !important;
+  padding-left: 8px !important;
+}
+body.om-light-theme .shipment-kind.transit-cross .kind {
+  background: #1F5F8F !important;
+  color: #FFFFFF !important;
+  border-color: #164A70 !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 2px 6px rgba(31,95,143,.18) !important;
+}
+body.om-light-theme .shipment-kind.transit-cross .wh {
+  color: #17324D !important;
+  font-weight: 650 !important;
+}
+body.om-light-theme .orders-table-expanded tr:hover .shipment-kind.transit-cross .kind,
+body.om-light-theme .order-row:hover .shipment-kind.transit-cross .kind {
+  background: #184D74 !important;
+  border-color: #123B59 !important;
+}
+
 </style>
 </head>
 <body class="app-locked">
@@ -2831,7 +3668,9 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
 <!-- ============== БОКОВАЯ ПАНЕЛЬ: ЗАМЕТКИ КОМАНДЫ ============== -->
 <aside id="chatPanel" class="chat-panel">
   <nav class="om-nav" aria-label="Навигация OM">
-    <button type="button" class="om-nav-btn active" id="omOrdersBtn" onclick="omSwitchView('orders')">Поставки ОМ</button>
+    <button type="button" class="om-nav-btn active" id="omCalendarBtn" onclick="omSwitchView('calendar')">Календарь</button>
+    <button type="button" class="om-nav-btn" id="omOrdersBtn" onclick="omSwitchView('orders')">Поставки ОМ</button>
+    <button type="button" class="om-nav-btn" id="omShipBtn" onclick="omSwitchView('ship')">Заявки на отгрузку</button>
     <button type="button" class="om-nav-btn" id="omProjectsBtn" onclick="omSwitchView('projects')">Проекты</button>
     <button type="button" class="om-nav-btn logout" onclick="omDoLogout()">Выход</button>
   </nav>
@@ -3295,6 +4134,123 @@ body.om-projects-mode #omProjectsPage { display:flex !important; }
     </div>
   </div>
 
+
+
+  <!-- ============== КАЛЕНДАРЬ ============== -->
+  <div id="omCalendarPage" class="calendar-page">
+    <div class="proj-section">
+      <div class="calendar-head">
+        <div>
+          <div class="calendar-title" id="shipCalendarTitle">Календарь</div>
+          <div class="ship-sub">поставки ОМ и заявки на отгрузку: всё сразу, но с цветами, иконками и фильтром</div>
+        </div>
+        <div class="calendar-nav">
+          <button class="ship-mini-btn" type="button" onclick="shipMoveMonth(-1)">←</button>
+          <button class="ship-mini-btn" type="button" onclick="shipGoToday()">сегодня</button>
+          <button class="ship-mini-btn" type="button" onclick="shipMoveMonth(1)">→</button>
+        </div>
+      </div>
+      <div class="calendar-legend">
+        <span class="calendar-legend-item"><span class="calendar-legend-dot om"></span>📦 ОМ</span>
+        <span class="calendar-legend-item"><span class="calendar-legend-dot ship"></span>🚚 Заявки на отгрузку</span>
+        <label class="calendar-legend-item"><input type="checkbox" id="shipCalendarHideDone" onchange="shipRenderCalendar()"> скрыть отработанные</label>
+      </div>
+      <div class="calendar-filters" style="margin-bottom:14px;">
+        <button class="calendar-filter-btn active" type="button" data-cal-filter="all" onclick="shipSetCalendarFilter('all')">всё</button>
+        <button class="calendar-filter-btn" type="button" data-cal-filter="om" onclick="shipSetCalendarFilter('om')">только ОМ</button>
+        <button class="calendar-filter-btn" type="button" data-cal-filter="ship" onclick="shipSetCalendarFilter('ship')">только заявки</button>
+      </div>
+      <div id="shipCalendar" class="calendar-grid"></div>
+    </div>
+  </div>
+
+  <!-- ============== ЗАЯВКИ НА ОТГРУЗКУ ============== -->
+  <div id="omShipPage" class="ship-page">
+    <div class="ship-kpis" id="shipKpis">
+      <button class="ship-kpi-card active" type="button" data-ship-filter="all" onclick="shipSetListFilter('all')">
+        <div class="ship-kpi-label">всего</div>
+        <div class="ship-kpi-value" id="shipKpiTotal">—</div>
+        <div class="ship-kpi-sub">все заявки в листе</div>
+      </button>
+      <button class="ship-kpi-card" type="button" data-ship-filter="active" onclick="shipSetListFilter('active')">
+        <div class="ship-kpi-label">активные</div>
+        <div class="ship-kpi-value sage" id="shipKpiActive">—</div>
+        <div class="ship-kpi-sub">ещё не отработаны</div>
+      </button>
+      <button class="ship-kpi-card" type="button" data-ship-filter="unpaid" onclick="shipSetListFilter('unpaid')">
+        <div class="ship-kpi-label">не оплачено</div>
+        <div class="ship-kpi-value danger" id="shipKpiUnpaid">—</div>
+        <div class="ship-kpi-sub">нужна оплата</div>
+      </button>
+      <button class="ship-kpi-card" type="button" data-ship-filter="confirmed" onclick="shipSetListFilter('confirmed')">
+        <div class="ship-kpi-label">подтверждено</div>
+        <div class="ship-kpi-value purple" id="shipKpiConfirmed">—</div>
+        <div class="ship-kpi-sub">подготовить к отгрузке</div>
+      </button>
+      <button class="ship-kpi-card" type="button" data-ship-filter="urgent" onclick="shipSetListFilter('urgent')">
+        <div class="ship-kpi-label">сегодня / просрочено</div>
+        <div class="ship-kpi-value copper" id="shipKpiUrgent">—</div>
+        <div class="ship-kpi-sub">по дате готовности</div>
+      </button>
+      <button class="ship-kpi-card" type="button" data-ship-filter="done" onclick="shipSetListFilter('done')">
+        <div class="ship-kpi-label">отработано</div>
+        <div class="ship-kpi-value" id="shipKpiDone">—</div>
+        <div class="ship-kpi-sub">закрытые заявки</div>
+      </button>
+    </div>
+
+    <div class="proj-section">
+      <div class="ship-toolbar">
+        <div>
+          <div class="proj-title">📋 Список заявок</div>
+          <div class="ship-sub" id="shipListHint">—</div>
+        </div>
+        <label class="ship-checks" style="padding:0"><span style="font-size:12px;color:var(--text-muted);">показывать отработанные</span> <input type="checkbox" id="shipShowDone" onchange="shipRenderRequests()"></label>
+      </div>
+      <div id="shipActiveFilter" class="ship-filter-chip" style="display:none;margin:12px 0 14px;"><span>фильтр:</span> <b id="shipActiveFilterText">—</b> <button class="ship-filter-clear" type="button" onclick="shipSetListFilter('all')">сбросить</button></div>
+      <div id="shipList" class="ship-list"><div class="proj-empty">заявки ещё не загружены</div></div>
+    </div>
+
+    <div class="proj-section">
+      <div class="ship-toolbar">
+        <div>
+          <div class="ship-title">🚚 Заявки на отгрузку</div>
+          <div class="ship-sub">структура по файлу «Заявки на отгрузку»: клиент, счёт, готовность, оплата, доставка, отгрузка</div>
+        </div>
+        <button class="proj-btn-secondary" type="button" onclick="shipLoadRequests(true)">обновить</button>
+      </div>
+
+      <form id="shipForm" style="margin-top:18px;">
+        <input type="hidden" id="shipRowNum" />
+        <div class="ship-grid">
+          <div class="ship-field"><label class="ship-label">ответственный</label><select class="ship-select" id="shipManager"><option></option><option>Татьяна</option><option>Анастасия</option></select></div>
+          <div class="ship-field wide"><label class="ship-label">клиент *</label><input class="ship-input" id="shipClient" type="text" required></div>
+          <div class="ship-field"><label class="ship-label">дата запроса</label><input class="ship-input" id="shipRequestDate" type="date"></div>
+          <div class="ship-field"><label class="ship-label">счёт</label><input class="ship-input" id="shipInvoice" type="text"></div>
+          <div class="ship-field"><label class="ship-label">дата готовности</label><input class="ship-input" id="shipReadyDate" type="date"></div>
+          <div class="ship-field"><label class="ship-label">формат оплаты</label><select class="ship-select" id="shipPaymentFormat"><option></option><option>Предоплата</option><option>Доплата</option><option>Отсрочка</option></select></div>
+          <div class="ship-field"><label class="ship-label">дата оплаты</label><input class="ship-input" id="shipPaymentDate" type="date"></div>
+          <div class="ship-field"><label class="ship-label">доставка</label><select class="ship-select" id="shipDelivery"><option></option><option>Самовывоз со склада</option><option>Доставка до адреса</option><option>ТК</option></select></div>
+          <div class="ship-field"><label class="ship-label">факт. дата отгрузки</label><input class="ship-input" id="shipDate" type="date"></div>
+          <div class="ship-field full"><label class="ship-label">комментарий / доп. информация</label><textarea class="ship-textarea" id="shipComment" placeholder="адрес, контакт, особенности отгрузки..."></textarea></div>
+        </div>
+        <div class="ship-checks">
+          <label><input type="checkbox" id="shipInvoiceSent"> счёт отправлен на склад</label>
+          <label><input type="checkbox" id="shipPaid"> оплачено</label>
+          <label><input type="checkbox" id="shipPrepare"> подготовить к отгрузке</label>
+          <label><input type="checkbox" id="shipDone"> отработано</label>
+        </div>
+        <div class="ship-actions">
+          <button type="button" class="btn-ghost btn-danger" id="shipDeleteBtn" style="display:none" onclick="shipDeleteCurrent()">удалить</button>
+          <button type="button" class="btn-ghost" onclick="shipResetForm()">очистить</button>
+          <button type="submit" class="btn" id="shipSubmitBtn">записать заявку</button>
+        </div>
+      </form>
+    </div>
+
+
+  </div>
+
   <div class="footer">
     <svg class="footer-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
       <g fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -3490,6 +4446,62 @@ const TG_CHAT_ID   = '-1001888266495';
 // Ссылка на гугл-таблицу — прячется в слово "таблица" в TG-сообщении.
 // Если хочется попадать сразу в нужный лист — добавь #gid=XXXXXX в конце.
 const SPREADSHEET_URL = 'https://docs.google.com/spreadsheets/d/1HnLLUf52mpVbGuB0jukQdNCTtYV9wdis6Rs2fbF87jE/edit';
+
+// Локальный офлайн-кэш: последняя удачная загрузка сохраняется в браузере.
+// Если интернет/Apps Script недоступны, дашборд показывает эту копию только для просмотра.
+const OM_OFFLINE_MAIN_CACHE_KEY = 'om_dashboard_last_snapshot_v56';
+const OM_OFFLINE_SHIP_CACHE_KEY = 'om_dashboard_ship_requests_snapshot_v56';
+
+function omOfflineNowLabel(){
+  const d = new Date();
+  return d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function omOfflineFormatLoadedAt(value){
+  if (!value) return 'неизвестно';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return String(value);
+  return d.toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+function omOfflineSave(key, payload){
+  try { localStorage.setItem(key, JSON.stringify(Object.assign({ savedAt: new Date().toISOString() }, payload || {}))); }
+  catch(e) { console.warn('[OM] offline cache save failed:', e); }
+}
+function omOfflineRead(key){
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) {
+    console.warn('[OM] offline cache read failed:', e);
+    return null;
+  }
+}
+function omOfflineSaveMainCache(data){
+  if (!data || !data.ok) return;
+  omOfflineSave(OM_OFFLINE_MAIN_CACHE_KEY, {
+    orders: Array.isArray(data.orders) ? data.orders : [],
+    messages: Array.isArray(data.messages) ? data.messages : [],
+    warehouses: data.warehouses || null,
+    dispatchByMp: data.dispatchByMp || null
+  });
+}
+function omOfflineReadMainCache(){ return omOfflineRead(OM_OFFLINE_MAIN_CACHE_KEY); }
+function omOfflineSaveShipCache(requests){
+  omOfflineSave(OM_OFFLINE_SHIP_CACHE_KEY, { requests: Array.isArray(requests) ? requests : [] });
+}
+function omOfflineReadShipCache(){ return omOfflineRead(OM_OFFLINE_SHIP_CACHE_KEY); }
+function omOfflineApplyMainCache(cache){
+  allOrders = Array.isArray(cache.orders) ? cache.orders : [];
+  allMessages = Array.isArray(cache.messages) ? cache.messages : [];
+  if (cache.warehouses && Object.keys(cache.warehouses).length) warehousesByMp = cache.warehouses;
+  if (cache.dispatchByMp && Object.keys(cache.dispatchByMp).length) dispatchByMp = cache.dispatchByMp;
+  populateMpSelects();
+  renderStats();
+  renderTable();
+  renderMessages();
+  shipRenderCalendar();
+}
+
 
 // Справочник МП → склад МП. Используется если Apps Script не ответил —
 // форма всё равно должна работать.
@@ -6061,6 +7073,7 @@ async function loadData() {
     clearTimeout(hintId);
     stage = 'parse';
     if (!data.ok) throw new Error(data.error || 'unknown error');
+    omOfflineSaveMainCache(data);
     allOrders = data.orders || [];
     allMessages = data.messages || [];
 
@@ -6092,6 +7105,7 @@ async function loadData() {
     renderStats();
     renderTable();
     renderMessages();
+    shipRenderCalendar();
     setStatus('синхронизировано', '');
   } catch (e) {
     const isTimeout = e.name === 'AbortError';
@@ -6101,8 +7115,18 @@ async function loadData() {
     else if (e.message && e.message.includes('не JSON')) reason = e.message;
     else if (e.message && e.message.toLowerCase().includes('failed to fetch')) reason = 'CORS / сеть';
     else reason = e.message || 'неизвестно';
-    setStatus(isTimeout ? 'офлайн · таймаут' : 'офлайн · нажми чтобы повторить', 'error');
     console.error('[OM] loadData failed:', e);
+
+    const cached = omOfflineReadMainCache();
+    if (cached && Array.isArray(cached.orders)) {
+      omOfflineApplyMainCache(cached);
+      const loadedAt = omOfflineFormatLoadedAt(cached.savedAt);
+      setStatus('офлайн · копия от ' + loadedAt, 'error');
+      toast('интернета нет — показала последнюю сохранённую копию от ' + loadedAt, true);
+      return;
+    }
+
+    setStatus(isTimeout ? 'офлайн · таймаут' : 'офлайн · нажми чтобы повторить', 'error');
     $('ordersBody').innerHTML = `
       <tr><td colspan="21">
         <div class="empty" style="text-align:left; padding: 32px 40px; line-height: 1.7;">
@@ -6937,6 +7961,12 @@ $('orderForm').addEventListener('reset', () => {
 const OM_LOGIN = "Singlecup";
 const OM_PASSWORD = "Coffeepod";
 let omDataLoaded = false;
+let shipRequests = [];
+let shipCalendarDate = new Date();
+let shipCalendarFilter = 'all';
+let shipRequestsLoaded = false;
+let shipOpenRows = new Set();
+let shipListFilter = 'all';
 function omUnlockAndLoad() {
   document.body.classList.remove('app-locked');
   const ov = document.getElementById('loginOverlay');
@@ -6944,10 +7974,12 @@ function omUnlockAndLoad() {
   if (!omDataLoaded) {
     populateMpSelects();
     loadData();
+    shipLoadRequests(false);
     omDataLoaded = true;
   }
   projRender();
   resRender();
+  omSwitchView('calendar');
 }
 function omDoLogin() {
   const login = (document.getElementById('loginInput') || {}).value || '';
@@ -6967,6 +7999,8 @@ function omDoLogout() {
   sessionStorage.removeItem('om_auth');
   document.body.classList.add('app-locked');
   document.body.classList.remove('om-projects-mode');
+  document.body.classList.remove('om-ship-mode');
+  document.body.classList.remove('om-calendar-mode');
   const ov = document.getElementById('loginOverlay');
   if (ov) ov.classList.remove('hidden');
   const login = document.getElementById('loginInput');
@@ -6978,13 +8012,22 @@ function omDoLogout() {
   setTimeout(() => login && login.focus(), 0);
 }
 function omSwitchView(view) {
+  const isCalendar = view === 'calendar';
   const isProjects = view === 'projects';
+  const isShip = view === 'ship';
+  document.body.classList.toggle('om-calendar-mode', isCalendar);
   document.body.classList.toggle('om-projects-mode', isProjects);
+  document.body.classList.toggle('om-ship-mode', isShip);
+  const calendarBtn = document.getElementById('omCalendarBtn');
   const ordersBtn = document.getElementById('omOrdersBtn');
   const projectsBtn = document.getElementById('omProjectsBtn');
-  if (ordersBtn) ordersBtn.classList.toggle('active', !isProjects);
+  const shipBtn = document.getElementById('omShipBtn');
+  if (calendarBtn) calendarBtn.classList.toggle('active', isCalendar);
+  if (ordersBtn) ordersBtn.classList.toggle('active', !isCalendar && !isProjects && !isShip);
   if (projectsBtn) projectsBtn.classList.toggle('active', isProjects);
+  if (shipBtn) shipBtn.classList.toggle('active', isShip);
   if (isProjects) { projRender(); resRender(); }
+  if (isShip || isCalendar) { shipLoadRequests(false); shipRenderCalendar(); }
 }
 function omInitAuth() {
   if (sessionStorage.getItem('om_auth') === '1') omUnlockAndLoad();
@@ -6994,6 +8037,333 @@ function omInitAuth() {
   }
 }
 
+
+
+// ============== ЗАЯВКИ НА ОТГРУЗКУ + КАЛЕНДАРЬ ==============
+function shipEl(id){ return document.getElementById(id); }
+function shipEscape(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function shipToIso(v){
+  if (!v) return '';
+  if (v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{2})\.(\d{2})\.(\d{4})/); if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  const d = new Date(s); return isNaN(d) ? '' : d.toISOString().slice(0,10);
+}
+function shipFmtDate(v){ const iso = shipToIso(v); if (!iso) return ''; const [y,m,d] = iso.split('-'); return `${d}.${m}.${y}`; }
+function shipTodayIso(){ return new Date().toISOString().slice(0,10); }
+async function shipLoadRequests(force){
+  if (shipRequestsLoaded && !force) { shipRenderRequests(); shipRenderCalendar(); return; }
+  const list = shipEl('shipList');
+  if (list) list.innerHTML = '<div class="proj-empty">загружаем заявки…</div>';
+  try {
+    const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'action=shippingRequests' + (force ? '&refresh=1' : '');
+    const data = await omApiGetJson(url, { cache:'no-store' }, 'заявки на отгрузку');
+    if (!data.ok) throw new Error(data.error || 'unknown');
+    shipRequests = Array.isArray(data.requests) ? data.requests : [];
+    shipRequestsLoaded = true;
+    omOfflineSaveShipCache(shipRequests);
+  } catch(e) {
+    console.error('[OM] shipping requests failed:', e);
+    const cached = omOfflineReadShipCache();
+    if (cached && Array.isArray(cached.requests)) {
+      shipRequests = cached.requests;
+      shipRequestsLoaded = true;
+      const loadedAt = omOfflineFormatLoadedAt(cached.savedAt);
+      if (list) list.innerHTML = '<div class="proj-empty">офлайн-режим · показываю копию заявок от '+shipEscape(loadedAt)+'</div>';
+      toast('заявки показаны из офлайн-копии от ' + loadedAt, true);
+      shipRenderRequests();
+      shipRenderCalendar();
+      return;
+    }
+    if (list) list.innerHTML = '<div class="proj-empty">не удалось загрузить заявки: '+shipEscape(e.message || e)+'</div>';
+    return;
+  }
+  shipRenderRequests();
+  shipRenderCalendar();
+}
+function shipPayloadFromForm(){
+  const rowNum = (shipEl('shipRowNum') || {}).value || '';
+  const client = (shipEl('shipClient') || {}).value || '';
+  return {
+    action:'shippingRequest', update: !!rowNum, rowNum,
+    manager: (shipEl('shipManager') || {}).value || '',
+    client: client.trim(),
+    requestDate: (shipEl('shipRequestDate') || {}).value || '',
+    invoice: (shipEl('shipInvoice') || {}).value || '',
+    invoiceSent: !!(shipEl('shipInvoiceSent') || {}).checked,
+    readyDate: (shipEl('shipReadyDate') || {}).value || '',
+    paymentFormat: (shipEl('shipPaymentFormat') || {}).value || '',
+    paid: !!(shipEl('shipPaid') || {}).checked,
+    paymentDate: (shipEl('shipPaymentDate') || {}).value || '',
+    prepare: !!(shipEl('shipPrepare') || {}).checked,
+    delivery: (shipEl('shipDelivery') || {}).value || '',
+    shipDate: (shipEl('shipDate') || {}).value || '',
+    done: !!(shipEl('shipDone') || {}).checked,
+    comment: (shipEl('shipComment') || {}).value || '',
+  };
+}
+function shipResetForm(){
+  const form = shipEl('shipForm'); if (form) form.reset();
+  if (shipEl('shipRowNum')) shipEl('shipRowNum').value = '';
+  if (shipEl('shipSubmitBtn')) shipEl('shipSubmitBtn').textContent = 'записать заявку';
+  if (shipEl('shipDeleteBtn')) shipEl('shipDeleteBtn').style.display = 'none';
+  const rd = shipEl('shipRequestDate'); if (rd && !rd.value) rd.value = shipTodayIso();
+}
+async function shipSaveRequest(ev){
+  if (ev) ev.preventDefault();
+  const payload = shipPayloadFromForm();
+  if (!payload.client) { toast('укажи клиента', true); return; }
+  const btn = shipEl('shipSubmitBtn');
+  const oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'записываю…'; }
+  try {
+    const res = await OM_NATIVE_FETCH(APPS_SCRIPT_URL, {
+      method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload), redirect:'follow'
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(_) { throw new Error('Apps Script вернул не JSON: ' + text.slice(0, 160)); }
+    if (!data.ok) throw new Error(data.error || 'не удалось сохранить заявку');
+    toast('заявка сохранена');
+    shipResetForm();
+    shipRequestsLoaded = false;
+    await shipLoadRequests(true);
+  } catch(e) {
+    console.error('[OM] save shipping request failed:', e);
+    toast(e.message || String(e), true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = oldText || 'записать заявку'; }
+  }
+}
+function shipEdit(rowNum){
+  const r = shipRequests.find(x => Number(x.rowNum) === Number(rowNum)); if (!r) return;
+  shipEl('shipRowNum').value = r.rowNum || '';
+  shipEl('shipManager').value = r.manager || '';
+  shipEl('shipClient').value = r.client || '';
+  shipEl('shipRequestDate').value = r.requestDateIso || shipToIso(r.requestDate) || '';
+  shipEl('shipInvoice').value = r.invoice || '';
+  shipEl('shipInvoiceSent').checked = !!r.invoiceSent;
+  shipEl('shipReadyDate').value = r.readyDateIso || shipToIso(r.readyDate) || '';
+  shipEl('shipPaymentFormat').value = r.paymentFormat || '';
+  shipEl('shipPaid').checked = !!r.paid;
+  shipEl('shipPaymentDate').value = r.paymentDateIso || shipToIso(r.paymentDate) || '';
+  shipEl('shipPrepare').checked = !!r.prepare;
+  shipEl('shipDelivery').value = r.delivery || '';
+  shipEl('shipDate').value = r.shipDateIso || shipToIso(r.shipDate) || '';
+  shipEl('shipDone').checked = !!r.done;
+  shipEl('shipComment').value = r.comment || '';
+  shipEl('shipSubmitBtn').textContent = 'сохранить изменения';
+  shipEl('shipDeleteBtn').style.display = '';
+  shipEl('shipForm').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+async function shipDeleteCurrent(){
+  const rowNum = (shipEl('shipRowNum') || {}).value;
+  if (!rowNum) return;
+  if (!confirm('Удалить эту заявку?')) return;
+  try {
+    const res = await OM_NATIVE_FETCH(APPS_SCRIPT_URL, {
+      method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action:'deleteShippingRequest', rowNum }), redirect:'follow'
+    });
+    const data = JSON.parse(await res.text());
+    if (!data.ok) throw new Error(data.error || 'не удалось удалить');
+    toast('заявка удалена');
+    shipResetForm(); shipRequestsLoaded = false; await shipLoadRequests(true);
+  } catch(e) { toast(e.message || String(e), true); }
+}
+function shipStatusClass(r){
+  const shipped = !!(r.done || r.shipDate || r.shipDateIso);
+  if (r.paid && shipped) return 'status-paid-shipped';
+  if (!r.paid) return 'status-unpaid';
+  if (r.prepare) return 'status-confirmed';
+  return 'status-notshipped';
+}
+function shipStatusLabel(r){
+  const shipped = !!(r.done || r.shipDate || r.shipDateIso);
+  if (r.paid && shipped) return 'всё отгружено и оплачено';
+  if (!r.paid) return 'не оплачено';
+  if (r.prepare) return 'подтверждено';
+  return 'не отгружено';
+}
+function shipPaymentClass(format){
+  const s = String(format || '').toLowerCase();
+  if (s.indexOf('предоплат') >= 0) return 'pay-pre';
+  if (s.indexOf('отсроч') >= 0) return 'pay-delay';
+  return '';
+}
+function shipToggleDetails(rowNum){
+  rowNum = Number(rowNum);
+  if (shipOpenRows.has(rowNum)) shipOpenRows.delete(rowNum);
+  else shipOpenRows.add(rowNum);
+  shipRenderRequests();
+}
+function shipDetailBlock(r){
+  const payCls = shipPaymentClass(r.paymentFormat);
+  return `<div class="ship-details">
+    <div class="ship-detail-item"><b>ответственный</b>${shipEscape(r.manager || '—')}</div>
+    <div class="ship-detail-item"><b>клиент</b>${shipEscape(r.client || '—')}</div>
+    <div class="ship-detail-item"><b>дата запроса</b>${shipEscape(r.requestDate || '—')}</div>
+    <div class="ship-detail-item"><b>счёт</b>${shipEscape(r.invoice || '—')}</div>
+    <div class="ship-detail-item"><b>счёт на складе</b>${r.invoiceSent ? 'да' : 'нет'}</div>
+    <div class="ship-detail-item"><b>дата готовности</b>${shipEscape(r.readyDate || '—')}</div>
+    <div class="ship-detail-item"><b>формат оплаты</b><span class="ship-pill ${payCls}">${shipEscape(r.paymentFormat || '—')}</span></div>
+    <div class="ship-detail-item"><b>оплата</b>${r.paid ? 'оплачено' : 'не оплачено'}${r.paymentDate ? ' · ' + shipEscape(r.paymentDate) : ''}</div>
+    <div class="ship-detail-item"><b>подтверждение</b>${r.prepare ? 'подтверждено / подготовить' : 'нет'}</div>
+    <div class="ship-detail-item"><b>доставка</b>${shipEscape(r.delivery || '—')}</div>
+    <div class="ship-detail-item"><b>факт. отгрузка</b>${shipEscape(r.shipDate || '—')}</div>
+    <div class="ship-detail-item"><b>отработано</b>${r.done ? 'да' : 'нет'}</div>
+    <div class="ship-detail-item full"><b>комментарий</b>${shipEscape(r.comment || r.text || '—')}</div>
+  </div>`;
+}
+
+function shipIsDone(r){ return !!(r && (r.done || r.shipDate || r.shipDateIso)); }
+function shipIsUrgent(r){
+  if (!r || shipIsDone(r)) return false;
+  const iso = r.readyDateIso || shipToIso(r.readyDate);
+  if (!iso) return false;
+  return iso <= shipTodayIso();
+}
+function shipKpiStats(){
+  const rows = shipRequests || [];
+  const active = rows.filter(r => !r.done);
+  return {
+    total: rows.length,
+    active: active.length,
+    unpaid: active.filter(r => !r.paid).length,
+    confirmed: active.filter(r => !!r.prepare).length,
+    urgent: rows.filter(shipIsUrgent).length,
+    done: rows.filter(r => !!r.done).length
+  };
+}
+function shipUpdateKpis(){
+  const st = shipKpiStats();
+  const set = (id, v) => { const el = shipEl(id); if (el) el.textContent = v; };
+  set('shipKpiTotal', st.total);
+  set('shipKpiActive', st.active);
+  set('shipKpiUnpaid', st.unpaid);
+  set('shipKpiConfirmed', st.confirmed);
+  set('shipKpiUrgent', st.urgent);
+  set('shipKpiDone', st.done);
+  document.querySelectorAll('[data-ship-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.shipFilter === shipListFilter));
+  const names = { all:'все заявки', active:'активные', unpaid:'не оплачено', confirmed:'подтверждено', urgent:'сегодня / просрочено', done:'отработано' };
+  const chip = shipEl('shipActiveFilter');
+  const text = shipEl('shipActiveFilterText');
+  if (chip) chip.style.display = shipListFilter && shipListFilter !== 'all' ? 'inline-flex' : 'none';
+  if (text) text.textContent = names[shipListFilter] || shipListFilter;
+}
+function shipSetListFilter(filter){
+  shipListFilter = filter || 'all';
+  if (shipListFilter === 'done') {
+    const show = shipEl('shipShowDone');
+    if (show) show.checked = true;
+  }
+  shipRenderRequests();
+}
+function shipApplyListFilter(list){
+  switch (shipListFilter) {
+    case 'active': return list.filter(r => !r.done);
+    case 'unpaid': return list.filter(r => !r.done && !r.paid);
+    case 'confirmed': return list.filter(r => !r.done && !!r.prepare);
+    case 'urgent': return list.filter(shipIsUrgent);
+    case 'done': return list.filter(r => !!r.done);
+    default: return list;
+  }
+}
+function shipRenderRequests(){
+  const listEl = shipEl('shipList'); if (!listEl) return;
+  shipUpdateKpis();
+  const showDone = !!(shipEl('shipShowDone') || {}).checked;
+  let list = (shipRequests || []).slice();
+  list = shipApplyListFilter(list);
+  if (!showDone && shipListFilter !== 'done') list = list.filter(r => !r.done);
+  list.sort((a,b) => String(a.done).localeCompare(String(b.done)) || String(b.readyDateIso || b.shipDateIso || a.requestDateIso || '').localeCompare(String(a.readyDateIso || a.shipDateIso || a.requestDateIso || '')));
+  const hint = shipEl('shipListHint'); if (hint) {
+    const st = shipKpiStats();
+    hint.textContent = `всего: ${st.total} · активно: ${st.active} · не оплачено: ${st.unpaid} · сегодня/просрочено: ${st.urgent}`;
+  }
+  if (!list.length) { listEl.innerHTML = '<div class="proj-empty">по выбранному фильтру заявок нет</div>'; return; }
+  listEl.innerHTML = list.map(r => {
+    const dateMain = r.readyDate || r.shipDate || r.requestDate || '—';
+    const isOpen = shipOpenRows.has(Number(r.rowNum));
+    const pills = [];
+    pills.push(`<span class="ship-pill ${r.paid ? 'ok' : 'warn'}">${r.paid ? 'оплачено' : 'не оплачено'}</span>`);
+    if (r.paymentFormat) pills.push(`<span class="ship-pill ${shipPaymentClass(r.paymentFormat)}">${shipEscape(r.paymentFormat)}</span>`);
+    if (r.prepare) pills.push('<span class="ship-pill purple">подтверждено</span>');
+    if (r.invoiceSent) pills.push('<span class="ship-pill ok">счёт на складе</span>');
+    if (r.done || r.shipDate) pills.push('<span class="ship-pill ok">отгружено</span>');
+    const cls = shipStatusClass(r);
+    return `<div class="ship-card ${cls} ${r.done ? 'done' : ''}">
+      <div><div class="ship-card-title">${shipEscape(r.client || 'без клиента')}</div><div class="ship-card-meta">${shipEscape(shipStatusLabel(r))}<br>ответственный: ${shipEscape(r.manager || '—')}</div></div>
+      <div class="ship-card-meta"><b>счёт:</b> ${shipEscape(r.invoice || '—')}<br><b>готовность:</b> ${shipEscape(dateMain)}</div>
+      <div class="ship-card-meta"><b>доставка:</b> ${shipEscape(r.delivery || '—')}<br><b>отгрузка:</b> ${shipEscape(r.shipDate || '—')}</div>
+      <div><div>${pills.join('')}</div><div class="ship-card-meta">${shipEscape(r.comment || '')}</div></div>
+      <div class="ship-card-buttons"><button class="ship-mini-btn" type="button" onclick="shipToggleDetails(${Number(r.rowNum)})">${isOpen ? 'свернуть' : 'открыть'}</button><button class="ship-mini-btn" type="button" onclick="shipEdit(${Number(r.rowNum)})">править</button></div>
+      ${isOpen ? shipDetailBlock(r) : ''}
+    </div>`;
+  }).join('');
+}
+function shipMonthName(d){ return d.toLocaleDateString('ru-RU', { month:'long', year:'numeric' }); }
+function shipSetCalendarFilter(filter){
+  shipCalendarFilter = filter || 'all';
+  document.querySelectorAll('[data-cal-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.calFilter === shipCalendarFilter));
+  shipRenderCalendar();
+}
+function shipCalendarEvents(){
+  const events = [];
+  (allOrders || []).forEach(o => {
+    const iso = shipToIso(o.datePlan || o.dateShipReutov);
+    if (!iso) return;
+    events.push({ type:'om', date: iso, done: !!o.shippedToMp || !!o.dateFact, title: `${o.mp || 'ОМ'} · ${o.supplyNumber || o.orderNumber || o.num || ''}`, meta: `${o.warehouseFull || o.warehouseFrom || ''}`.trim() });
+  });
+  (shipRequests || []).forEach(r => {
+    const iso = r.readyDateIso || r.shipDateIso || r.requestDateIso || shipToIso(r.readyDate || r.shipDate || r.requestDate);
+    if (!iso) return;
+    events.push({ type:'ship', date: iso, done: !!r.done, title: `${r.client || 'Заявка'} · счёт ${r.invoice || '—'}`, meta: r.delivery || '' });
+  });
+  return events;
+}
+function shipRenderCalendar(){
+  const cal = shipEl('shipCalendar'); if (!cal) return;
+  const title = shipEl('shipCalendarTitle'); if (title) title.textContent = shipMonthName(shipCalendarDate);
+  document.querySelectorAll('[data-cal-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.calFilter === shipCalendarFilter));
+  const y = shipCalendarDate.getFullYear(), m = shipCalendarDate.getMonth();
+  const first = new Date(y, m, 1);
+  const start = new Date(first);
+  const shift = (first.getDay() + 6) % 7;
+  start.setDate(first.getDate() - shift);
+  const hideDone = !!(shipEl('shipCalendarHideDone') || {}).checked;
+  const events = shipCalendarEvents()
+    .filter(e => shipCalendarFilter === 'all' || e.type === shipCalendarFilter)
+    .filter(e => !hideDone || !e.done);
+  const byDate = events.reduce((acc,e)=>{ (acc[e.date] = acc[e.date] || []).push(e); return acc; }, {});
+  const today = shipTodayIso();
+  const dows = ['пн','вт','ср','чт','пт','сб','вс'].map(x => `<div class="calendar-dow">${x}</div>`).join('');
+  let cells = '';
+  for (let i=0;i<42;i++){
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const iso = d.toISOString().slice(0,10);
+    const list = byDate[iso] || [];
+    const shown = list.slice(0,4);
+    cells += `<div class="calendar-day ${d.getMonth()!==m?'other':''} ${iso===today?'today':''}">
+      <div class="calendar-num"><span>${d.getDate()}</span><span>${list.length ? list.length : ''}</span></div>
+      ${shown.map(e => {
+        const icon = e.type === 'om' ? '📦' : '🚚';
+        const label = e.type === 'om' ? 'ОМ' : 'Заявка';
+        return `<div class="cal-event ${e.type} ${e.done?'done':''}" title="${shipEscape(label + (e.meta ? ' · ' + e.meta : ''))}"><span class="cal-event-icon">${icon}</span>${shipEscape(e.title)}</div>`;
+      }).join('')}
+      ${list.length > 4 ? `<div class="cal-more">ещё ${list.length - 4}</div>` : ''}
+    </div>`;
+  }
+  cal.innerHTML = dows + cells;
+}
+function shipMoveMonth(delta){ shipCalendarDate = new Date(shipCalendarDate.getFullYear(), shipCalendarDate.getMonth()+delta, 1); shipRenderCalendar(); }
+function shipGoToday(){ shipCalendarDate = new Date(); shipRenderCalendar(); }
+document.addEventListener('DOMContentLoaded', () => {
+  const f = shipEl('shipForm'); if (f) f.addEventListener('submit', shipSaveRequest);
+  shipResetForm();
+});
 
 const OM_PROJ_KEY = 'sowy_projects_v2';
 const OM_RES_KEY = 'sowy_resources_v2';
