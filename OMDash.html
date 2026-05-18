@@ -270,7 +270,7 @@ body::before {
   border-radius: 4px;
   max-width: 1100px;
   width: 100%;
-  max-height: 85vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
@@ -1857,25 +1857,33 @@ tbody tr.order-row:hover { background: rgba(199, 144, 93, 0.08); }
 .order-comment-compact .comment { max-height:30px; overflow:hidden; font-family:'Fraunces',serif; font-style:italic; color:var(--text-muted); line-height:1.25; }
 .order-date-duo .plan,
 .order-date-duo .fact { white-space: nowrap; }
+.order-date-duo .acceptance-days {
+  display: block;
+  font-size: 10px;
+  color: var(--sage);
+  font-style: italic;
+  margin-top: 1px;
+  letter-spacing: 0.02em;
+}
 .orders-table-expanded .supply-linked { padding: 2px 5px; }
 .orders-table-expanded .cell-mp { padding: 2px 6px; font-size: 10px; }
 
 .order-detail-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0,1fr));
-  gap: 10px;
+  gap: 8px;
 }
 .order-detail-card {
   border: 1px solid var(--stone-line);
   background: rgba(0,0,0,.14);
   border-radius: 4px;
-  padding: 14px 14px 12px;
+  padding: 10px 12px 8px;
 }
 .order-detail-card.wide { grid-column: span 3; }
 .order-detail-card h4 {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: .1em;
   font-family: 'Inter', sans-serif;
@@ -1883,11 +1891,11 @@ tbody tr.order-row:hover { background: rgba(199, 144, 93, 0.08); }
 }
 .order-detail-line {
   display: grid;
-  grid-template-columns: 130px 1fr;
+  grid-template-columns: 140px 1fr;
   gap: 10px;
   font-size: 12px;
-  line-height: 1.5;
-  padding: 2px 0;
+  line-height: 1.35;
+  padding: 1px 0;
 }
 .order-detail-label { color: var(--text-muted); }
 .order-detail-value { color: var(--text-body); }
@@ -1895,7 +1903,13 @@ tbody tr.order-row:hover { background: rgba(199, 144, 93, 0.08); }
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 12px;
+  position: sticky;
+  bottom: -28px;
+  background: var(--bg-card);
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--stone-line);
+  z-index: 2;
 }
 .order-edit-btn {
   border: 1px solid var(--accent-copper);
@@ -3590,8 +3604,15 @@ function acceptanceDaysText(o) {
   const d = dateDiffDays_(o.datePlan, o.dateFact);
   if (d === null) return '—';
   if (d === 0) return 'в день поставки';
-  if (d > 0) return `+${d} дн. до приёмки`;
-  return `${d} дн. до плановой`;
+  if (d > 0) return `${d} дн. после поставки`;
+  return `на ${Math.abs(d)} дн. раньше плановой`;
+}
+function acceptanceDaysShort(o) {
+  const d = dateDiffDays_(o.datePlan, o.dateFact);
+  if (d === null) return '';
+  if (d === 0) return '0 дн.';
+  if (d > 0) return `+${d} дн.`;
+  return `${d} дн.`;
 }
 function updateAcceptanceDaysHint() {
   const el = document.getElementById('acceptanceDaysHint');
@@ -6308,9 +6329,11 @@ function renderProgressCell(progress, o) {
 }
 
 function renderDateDuo(o) {
+  const days = o.dateFact ? acceptanceDaysShort(o) : '';
   return `<div class="order-date-duo">
     <span title="плановая дата">${escapeHtml(fmtDateWithTime(o.datePlan, orderPlanTime(o)))}</span>
     <span class="fact" title="факт. приемка на МП">${escapeHtml(o.dateFact || '—')}</span>
+    ${days ? `<span class="acceptance-days" title="приёмка через N дн. после поставки">${escapeHtml(days)}</span>` : ''}
   </div>`;
 }
 
@@ -6376,7 +6399,7 @@ function openOrderDetails(o) {
         <h4>план / факт</h4>
         ${detailLine('плановая дата', fmtDateWithTime(o.datePlan, orderPlanTime(o)))}
         ${detailLine('факт. приемка на МП', o.dateFact)}
-        ${detailLine('дней до приемки', acceptanceDaysText(o))}
+        ${detailLine('приёмка через', acceptanceDaysText(o))}
         ${detailLine('отгр. Реутов', fmtDateWithTime(o.dateShipReutov, orderShipTime(o)))}
         ${detailLine('неделя', o.week)}
       </div>
