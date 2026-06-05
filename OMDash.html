@@ -2177,6 +2177,25 @@ body.om-projects-mode .table-card,
 body.om-projects-mode .form-card,
 body.om-projects-mode .footer { display:none !important; }
 body.om-projects-mode #omProjectsPage { display:flex !important; }
+
+/* LEBO */
+#omLeboPage { display:none; }
+body.om-lebo-mode .stats,
+body.om-lebo-mode .section-head,
+body.om-lebo-mode .table-card,
+body.om-lebo-mode .form-card,
+body.om-lebo-mode .footer { display:none !important; }
+body.om-lebo-mode #omLeboPage { display:flex !important; }
+body.om-ship-mode #omLeboPage,
+body.om-calendar-mode #omLeboPage,
+body.om-projects-mode #omLeboPage { display:none !important; }
+
+/* KPI month picker */
+.kpi-month-bar { display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+.kpi-month-bar label { font-size:12px; color:var(--text-muted); }
+.kpi-month-select { background:var(--surface-card); border:1px solid var(--stone-line); color:var(--text-body); border-radius:6px; padding:4px 8px; font-size:12px; cursor:pointer; }
+.kpi-month-select:focus { outline:none; border-color:var(--accent-copper); }
+body.om-light-theme .kpi-month-select { background:#F5F0E8; color:#211D16; border-color:#C8BCA8; }
 .om-projects-page { flex-direction:column; gap:24px; }
 .proj-section {
   display:flex;
@@ -2858,15 +2877,69 @@ body.om-light-theme .ship-extra-filters .ship-filter-field label { color:#6f634f
 .ship-checks label { display:flex; align-items:center; gap:8px; color:var(--text-body); font-size:13px; }
 .ship-actions { display:flex; justify-content:flex-end; gap:10px; flex-wrap:wrap; margin-top:16px; }
 #shipSubmitBtn:disabled { opacity:.65; cursor:wait; }
-.ship-list { display:flex; flex-direction:column; gap:10px; max-height:390px; overflow-y:auto; padding-right:6px; scrollbar-width:thin; }
-.ship-list::after { content:''; flex:0 0 2px; }
-.ship-card { border:1px solid var(--stone-line); border-radius:18px; padding:14px; background:rgba(35,37,36,.34); display:grid; grid-template-columns: 1.2fr .8fr .8fr .9fr auto; gap:12px; align-items:start; transition:.18s ease; }
-.ship-card.done { opacity:.78; }
-.ship-card.status-unpaid { background:rgba(198,91,78,.22); border-color:rgba(198,91,78,.42); }
-.ship-card.status-paid-shipped { background:rgba(143,163,131,.28); border-color:rgba(143,163,131,.48); }
-.ship-card.status-confirmed { background:rgba(164,139,196,.28); border-color:rgba(164,139,196,.50); }
-.ship-card.status-cancelled { background:rgba(115,115,115,.24); border-color:rgba(160,160,160,.42); opacity:.76; }
-.ship-pill.cancelled { color:#E5E0D5; border-color:rgba(180,180,180,.55); background:rgba(120,120,120,.35); }
+/* ===== Таблица заявок на отгрузку ===== */
+.ship-list { overflow-x:auto; max-height:480px; overflow-y:auto; scrollbar-width:thin; }
+.ship-table { width:100%; border-collapse:collapse; font-size:13px; }
+.ship-table thead th {
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 16px 14px;
+  text-align: left;
+  background: var(--bg-mid);
+  border-bottom: 1px solid var(--stone-line);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.ship-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(180,180,158,.06);
+  color: var(--text-body);
+  vertical-align: top;
+  font-size: 12px;
+}
+.ship-table tbody tr { transition: background .18s; cursor: pointer; }
+.ship-table tbody tr:hover { background: rgba(199,144,93,.06); }
+.ship-table tbody tr.row-unpaid { background:rgba(198,91,78,.12); }
+.ship-table tbody tr.row-unpaid:hover { background:rgba(198,91,78,.18); }
+.ship-table tbody tr.row-confirmed { background:rgba(164,139,196,.10); }
+.ship-table tbody tr.row-confirmed:hover { background:rgba(164,139,196,.16); }
+.ship-table tbody tr.row-paid-shipped { background:rgba(143,163,131,.12); }
+.ship-table tbody tr.row-paid-shipped:hover { background:rgba(143,163,131,.18); }
+.ship-table tbody tr.row-cancelled { opacity:.58; }
+.ship-table tbody tr.row-done { opacity:.72; }
+.ship-table td.td-client { font-weight:600; color:var(--text-primary); min-width:130px; max-width:200px; }
+.ship-table td.td-client .td-sub { font-weight:400; font-size:11px; color:var(--text-muted); margin-top:2px; }
+.ship-table td.td-num { font-family:monospace; color:var(--text-muted); white-space:nowrap; }
+.ship-table td.td-date { white-space:nowrap; }
+.ship-table td.td-date .td-sub { font-size:11px; color:var(--text-muted); margin-top:2px; }
+.ship-table td.td-progress { white-space:nowrap; }
+.ship-table td.td-delivery { max-width:160px; }
+.ship-table td.td-comment {
+  max-width:200px;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-weight: 300;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.ship-table td.td-pills { min-width:120px; }
+.ship-table td.td-pills .ship-pill { display:inline-block; margin:1px 2px 1px 0; }
+.ship-table td.td-actions { white-space:nowrap; text-align:right; }
+.ship-table tr.detail-row td { padding:0; }
+.ship-table tr.detail-row .ship-details { margin:0; border-radius:0; border-top:none; border-left:3px solid var(--accent-copper); }
+/* light theme */
+body.om-light-theme .ship-table thead th { background:rgba(245,240,232,.95); border-bottom-color:#C8BCA8; color:#7A6E5F; }
+body.om-light-theme .ship-table tbody td { border-bottom-color:rgba(0,0,0,.05); color:#3A3328; }
+body.om-light-theme .ship-table tbody tr:hover { background:rgba(141,79,34,.05); }
+body.om-light-theme .ship-table td.td-client { color:#211D16; }
+body.om-light-theme .ship-table td.td-comment { color:#7A6E5F; }.ship-pill.cancelled { color:#E5E0D5; border-color:rgba(180,180,180,.55); background:rgba(120,120,120,.35); }
 .ship-card.status-notshipped { background:rgba(255,255,255,.035); border-color:rgba(212,197,160,.24); }
 .ship-card-title { color:var(--text-primary); font-weight:600; font-size:14px; }
 .ship-card-meta { color:var(--text-muted); font-size:12px; line-height:1.45; }
@@ -2928,10 +3001,18 @@ body.om-light-theme .om-inline-detail-item b { color:#7a6e58; }
 .calendar-day.selected { border-color:var(--accent-copper); box-shadow:0 0 0 1px rgba(199,144,93,.35) inset; }
 .cal-day-list { display:flex; flex-direction:column; gap:10px; }
 .cal-day-item { border:1px solid var(--stone-line); border-radius:16px; padding:12px 14px; background:rgba(35,37,36,.45); display:grid; grid-template-columns:minmax(120px,1fr) minmax(180px,2fr) minmax(120px,1fr) auto; gap:12px; align-items:center; }
+.cal-day-item.type-om { border-left:4px solid var(--accent-sage); background:rgba(107,128,104,.18); }
+.cal-day-item.type-ship { border-left:4px solid var(--accent-copper); background:rgba(199,144,93,.14); }
 .cal-day-type { font-size:11px; letter-spacing:.10em; text-transform:uppercase; color:var(--text-muted); }
+.cal-day-item.type-om .cal-day-type { color:var(--accent-sage); }
+.cal-day-item.type-ship .cal-day-type { color:var(--accent-copper-bright); }
 .cal-day-title { color:var(--text-primary); font-weight:600; }
 .cal-day-meta { color:var(--text-muted); font-size:12px; line-height:1.4; }
 body.om-light-theme .cal-day-item { background:#fffaf1; border-color:rgba(88,72,44,.22); }
+body.om-light-theme .cal-day-item.type-om { background:#DDE9D8; border-left-color:#526F4E; }
+body.om-light-theme .cal-day-item.type-ship { background:#F4DFC7; border-left-color:#8D4F22; }
+body.om-light-theme .cal-day-item.type-om .cal-day-type { color:#3A5E2F; }
+body.om-light-theme .cal-day-item.type-ship .cal-day-type { color:#6B3315; }
 body.om-light-theme .calendar-day:hover { border-color:#9b6a38; }
 @media (max-width:820px){ .cal-day-item { grid-template-columns:1fr; } }
 
@@ -2948,6 +3029,40 @@ body.om-light-theme .calendar-day:hover { border-color:#9b6a38; }
 body.om-light-theme .order-inline-row td { background:#fffaf1 !important; }
 body.om-light-theme .ship-card.status-cancelled { background:#E6E0D6 !important; border-color:#9B9285 !important; color:#29251E !important; }
 body.om-light-theme .ship-pill.cancelled { background:#77706A !important; color:#fff !important; border-color:#77706A !important; }
+
+/* Цвета доставки */
+.ship-pill.delivery-pickup { background:rgba(143,163,131,.28); color:#AFC89D; border-color:rgba(143,163,131,.55); }
+.ship-pill.delivery-courier { background:rgba(110,135,178,.22); color:#B9C8EE; border-color:rgba(110,135,178,.55); }
+.ship-pill.delivery-tk { background:rgba(186,140,80,.22); color:#D4A94E; border-color:rgba(186,140,80,.55); }
+body.om-light-theme .ship-pill.delivery-pickup { background:#D4EAC8; color:#3A5E2F; border-color:#7FAC6C; }
+body.om-light-theme .ship-pill.delivery-courier { background:#D0DCEF; color:#2C4A7A; border-color:#7A9CC7; }
+body.om-light-theme .ship-pill.delivery-tk { background:#F5E4C3; color:#7A5510; border-color:#C9A050; }
+
+/* Аннулированные — отдельный яркий цвет */
+.ship-card.status-cancelled { background:rgba(160,90,90,.18) !important; border-color:rgba(200,100,100,.45) !important; }
+body.om-light-theme .ship-card.status-cancelled { background:#F5DADA !important; border-color:#C07070 !important; color:#4A1A1A !important; }
+
+/* Прогресс заявки — стиль как в ОМ */
+.ship-progress { display:flex; flex-direction:column; align-items:flex-start; gap:3px; margin-top:4px; }
+.ship-progress-badge { display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:20px; border:1px solid rgba(199,144,93,.42); border-radius:14px; color:var(--accent-copper); background:rgba(199,144,93,.08); font-family:monospace; font-size:11px; font-weight:700; }
+.ship-progress-flags { display:flex; gap:3px; }
+.ship-progress-label { font-size:10px; color:var(--text-muted); margin-left:2px; }
+body.om-light-theme .ship-progress-badge { border-color:rgba(141,79,34,.42); color:#8D4F22; background:rgba(141,79,34,.06); }
+
+/* Шапка страницы заявок */
+.ship-page-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:18px 0 14px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:18px; }
+.ship-page-header-title { font-family:'Fraunces', serif; font-size:30px; color:var(--text-primary); line-height:1.15; }
+.ship-page-header-sub { font-size:13px; color:var(--text-muted); margin-top:3px; }
+body.om-light-theme .ship-page-header { border-bottom-color:rgba(0,0,0,.10); }
+
+/* Внутренние табы на странице Заявки / ЛЕБО */
+.ship-inner-tabs { display:flex; gap:6px; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,.10); padding-bottom:0; }
+.ship-inner-tab { background:transparent; border:none; border-bottom:2px solid transparent; padding:8px 16px; cursor:pointer; font-size:13px; color:var(--text-muted); letter-spacing:.03em; transition:color .18s, border-color .18s; margin-bottom:-1px; border-radius:0; }
+.ship-inner-tab:hover { color:var(--text-primary); }
+.ship-inner-tab.active { color:var(--text-primary); border-bottom-color:var(--accent-copper); font-weight:600; }
+body.om-light-theme .ship-inner-tabs { border-bottom-color:rgba(0,0,0,.12); }
+body.om-light-theme .ship-inner-tab { color:#7A6E5F; }
+body.om-light-theme .ship-inner-tab.active { color:#211D16; border-bottom-color:#8D4F22; }
 
 /* === v47: аккуратное меню в панели заметок === */
 .chat-panel .om-nav {
@@ -3765,6 +3880,7 @@ body.om-light-theme .order-row:hover .shipment-kind.transit-cross .kind {
       <div class="omd-stat-box loading" id="omdStatBox">
         <span class="omd-stat-icon" id="omdStatIcon">●</span><button type="button" class="omd-stat-text" id="statusText" title="нажми, чтобы перезагрузить">подключение…</button>
       </div>
+      <div id="omVersionBadge" style="font-size:11px;color:var(--accent-copper);letter-spacing:.08em;text-transform:uppercase;text-align:right;">v16 · 04.06 · calendar autorender</div>
       <div class="date-theme-row"><button type="button" class="theme-toggle-btn" id="themeToggleBtn" title="переключить тёмную/белую тему">☀</button><div class="date-now" id="dateNow"></div></div>
     </div>
   </div>
@@ -3779,6 +3895,13 @@ body.om-light-theme .order-row:hover .shipment-kind.transit-cross .kind {
       <div class="stat-label">всего</div>
       <div class="stat-value" id="statTotal">—</div>
       <div class="stat-sub">в архиве</div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+        <select class="kpi-month-select" id="omKpiMonthSelect" onchange="omApplyKpiMonth()" style="width:100%;">
+          <option value="">весь период</option>
+        </select>
+        <div id="omMonthHint" style="font-size:11px;color:var(--accent-sage);font-weight:600;"></div>
+        <div id="omMonthBreakdown" style="font-size:11px;line-height:1.55;color:var(--text-muted);"></div>
+      </div>
     </div>
     <div class="stat-card stat-clickable" id="weekCard" title="нажми чтобы посмотреть список">
       <div class="stat-label">эта неделя</div>
@@ -3811,6 +3934,7 @@ body.om-light-theme .order-row:hover .shipment-kind.transit-cross .kind {
       <div class="stat-sub">активные</div>
     </div>
   </div>
+
 
   <div class="section-head">
     <span class="section-num">— I —</span>
@@ -4069,6 +4193,7 @@ body.om-light-theme .order-row:hover .shipment-kind.transit-cross .kind {
 
 
 
+
   <!-- ============== PROJECTS ============== -->
   <div id="omProjectsPage" class="om-projects-page">
     <div class="proj-section">
@@ -4217,11 +4342,34 @@ body.om-light-theme .order-row:hover .shipment-kind.transit-cross .kind {
 
   <!-- ============== ЗАЯВКИ НА ОТГРУЗКУ ============== -->
   <div id="omShipPage" class="ship-page">
+    <div class="ship-page-header">
+      <div>
+        <div class="ship-page-header-title" id="shipPageTitle">🚚 Заявки на отгрузку</div>
+        <div class="ship-page-header-sub" id="shipPageSub">управление заявками клиентов · готовность, оплата, доставка, отгрузка</div>
+      </div>
+      <a class="proj-btn-secondary" id="shipPageTableLink" href="https://docs.google.com/spreadsheets/d/1HnLLUf52mpVbGuB0jukQdNCTtYV9wdis6Rs2fbF87jE/edit?pli=1&gid=2105970147#gid=2105970147" target="_blank" rel="noopener">↗ таблица</a>
+    </div>
+
+    <!-- Внутренние табы -->
+    <div class="ship-inner-tabs">
+      <button class="ship-inner-tab active" id="innerTabShip" type="button" onclick="shipSwitchInnerTab('ship')">📋 Заявки на отгрузку</button>
+      <button class="ship-inner-tab" id="innerTabLebo" type="button" onclick="shipSwitchInnerTab('lebo')">📋 ЛЕБО</button>
+    </div>
+
+    <!-- Панель: Заявки -->
+    <div id="innerPanelShip">
     <div class="ship-kpis" id="shipKpis">
       <button class="ship-kpi-card active" type="button" data-ship-filter="all" onclick="shipSetListFilter('all')">
         <div class="ship-kpi-label">всего</div>
         <div class="ship-kpi-value" id="shipKpiTotal">—</div>
         <div class="ship-kpi-sub">все заявки в листе</div>
+        <div style="margin-top:8px;" onclick="event.stopPropagation()">
+          <select class="kpi-month-select" id="shipKpiMonthSelect" onchange="shipApplyKpiMonth()" style="width:100%;margin-bottom:3px;">
+            <option value="">весь период</option>
+          </select>
+          <div id="shipKpiMonthHint" style="font-size:11px;color:var(--accent-sage);font-weight:600;"></div>
+          <div id="shipMonthBreakdown" style="font-size:10px;color:var(--text-muted);line-height:1.5;margin-top:2px;"></div>
+        </div>
       </button>
       <button class="ship-kpi-card" type="button" data-ship-filter="active" onclick="shipSetListFilter('active')">
         <div class="ship-kpi-label">активные</div>
@@ -4291,17 +4439,22 @@ body.om-light-theme .order-row:hover .shipment-kind.transit-cross .kind {
 
       <form id="shipForm" style="margin-top:18px;">
         <input type="hidden" id="shipRowNum" />
+        <input type="hidden" id="shipEditToken" />
         <div class="ship-grid">
           <div class="ship-field"><label class="ship-label">ответственный</label><select class="ship-select" id="shipManager"><option></option><option>Татьяна</option><option>Анастасия</option></select></div>
           <div class="ship-field wide"><label class="ship-label">клиент *</label><input class="ship-input" id="shipClient" type="text" required></div>
           <div class="ship-field"><label class="ship-label">дата запроса</label><input class="ship-input" id="shipRequestDate" type="date"></div>
           <div class="ship-field"><label class="ship-label">счёт</label><input class="ship-input" id="shipInvoice" type="text"></div>
+          <div class="ship-field"><label class="ship-label">сумма счёта, ₽</label><input class="ship-input" id="shipInvoiceAmount" type="number" min="0" step="0.01" placeholder="0.00"></div>
           <div class="ship-field"><label class="ship-label">дата готовности</label><input class="ship-input" id="shipReadyDate" type="date"></div>
           <div class="ship-field"><label class="ship-label">формат оплаты</label><select class="ship-select" id="shipPaymentFormat"><option></option><option>Предоплата</option><option>Доплата</option><option>Отсрочка</option></select></div>
           <div class="ship-field"><label class="ship-label">дата оплаты</label><input class="ship-input" id="shipPaymentDate" type="date"></div>
           <div class="ship-field"><label class="ship-label">доставка</label><select class="ship-select" id="shipDelivery"><option></option><option>Самовывоз со склада</option><option>Доставка до адреса</option><option>ТК</option></select></div>
+          <div class="ship-field"><label class="ship-label">кол-во коробов</label><input class="ship-input" id="shipBoxes" type="number" min="0" placeholder="шт"></div>
+          <div class="ship-field"><label class="ship-label">кол-во паллет</label><input class="ship-input" id="shipPallets" type="number" min="0" placeholder="шт"></div>
           <div class="ship-field"><label class="ship-label">факт. дата отгрузки</label><input class="ship-input" id="shipDate" type="date"></div>
-          <div class="ship-field full"><label class="ship-label">комментарий / доп. информация</label><textarea class="ship-textarea" id="shipComment" placeholder="адрес, контакт, особенности отгрузки..."></textarea></div>
+          <div class="ship-field"><label class="ship-label">адрес доставки</label><input class="ship-input" id="shipAddress" type="text" placeholder="адрес, контакт получателя..."></div>
+          <div class="ship-field full"><label class="ship-label">комментарий / доп. информация</label><textarea class="ship-textarea" id="shipComment" placeholder="особенности отгрузки, примечания..."></textarea></div>
         </div>
         <div class="ship-checks">
           <label><input type="checkbox" id="shipInvoiceSent"> счёт отправлен на склад</label>
@@ -4309,16 +4462,86 @@ body.om-light-theme .order-row:hover .shipment-kind.transit-cross .kind {
           <label><input type="checkbox" id="shipPrepare"> подготовить к отгрузке</label>
           <label><input type="checkbox" id="shipDone"> отработано</label>
         </div>
-        <div class="ship-actions">
-          <button type="button" class="btn-ghost btn-danger" id="shipDeleteBtn" style="display:none" onclick="shipDeleteCurrent()">удалить</button>
-          <button type="button" class="btn-ghost" onclick="shipResetForm()">очистить</button>
-          <button type="submit" class="btn" id="shipSubmitBtn">записать заявку</button>
+        <div class="btn-row-with-notify">
+          <div class="ship-actions">
+            <button type="button" class="btn-ghost btn-danger" id="shipDeleteBtn" style="display:none" onclick="shipDeleteCurrent()">удалить</button>
+            <button type="button" class="btn-ghost" id="shipCancelEditBtn" style="display:none" onclick="shipCancelEdit()">отменить правку</button>
+            <button type="button" class="btn-ghost" onclick="shipResetForm()">очистить</button>
+            <button type="submit" class="btn" id="shipSubmitBtn">записать заявку</button>
+          </div>
+          <div class="checkboxes notify-under-submit">
+            <div class="checkbox-item checkbox-notify"><input type="checkbox" id="shipSendTg"><label for="shipSendTg">отправить уведомление в Telegram и на email</label></div>
+          </div>
         </div>
       </form>
     </div>
 
+    </div><!-- /innerPanelShip -->
 
-  </div>
+    <!-- Панель: ЛЕБО -->
+    <div id="innerPanelLebo" style="display:none;">
+      <div class="ship-kpis" id="leboKpis">
+        <div class="kpi-month-bar" style="grid-column:1/-1;margin-bottom:4px;">
+          <label for="leboKpiMonthSelect">📅 период:</label>
+          <select class="kpi-month-select" id="leboKpiMonthSelect" onchange="leboApplyKpiMonth()">
+            <option value="">текущий месяц</option>
+          </select>
+          <span id="leboKpiMonthHint" style="font-size:11px;color:var(--text-muted);"></span>
+        </div>
+        <div class="ship-kpi-card" style="cursor:default;">
+          <div class="ship-kpi-label">всего записей</div>
+          <div class="ship-kpi-value" id="leboKpiTotal">—</div>
+          <div class="ship-kpi-sub">в листе</div>
+        </div>
+        <div class="ship-kpi-card" style="cursor:default;">
+          <div class="ship-kpi-label">за месяц</div>
+          <div class="ship-kpi-value sage" id="leboKpiMonth">—</div>
+          <div class="ship-kpi-sub">выбранный период</div>
+        </div>
+      </div>
+
+      <div class="proj-section">
+        <div class="ship-toolbar">
+          <div>
+            <div class="proj-title">📋 Список записей ЛЕБО</div>
+            <div class="ship-sub" id="leboListHint">—</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="ship-input" id="leboSearchFilter" type="search" placeholder="поиск..." oninput="leboRenderList()" style="width:200px;">
+            <a class="proj-btn-secondary" href="https://docs.google.com/spreadsheets/d/1HnLLUf52mpVbGuB0jukQdNCTtYV9wdis6Rs2fbF87jE/edit" target="_blank" rel="noopener">↗ таблица ЛЕБО</a>
+            <button class="proj-btn-secondary" type="button" onclick="leboLoadRecords(true)">обновить</button>
+          </div>
+        </div>
+        <div id="leboList" class="ship-list"><div class="proj-empty">записи ещё не загружены</div></div>
+      </div>
+
+      <div class="proj-section">
+        <div class="ship-toolbar">
+          <div>
+            <div class="ship-title">➕ Новая запись ЛЕБО</div>
+            <div class="ship-sub">болванка · поля будут добавлены позже</div>
+          </div>
+          <button class="proj-btn-secondary" type="button" onclick="leboResetForm()">очистить</button>
+        </div>
+        <form id="leboForm" style="margin-top:18px;">
+          <input type="hidden" id="leboRowNum" />
+          <input type="hidden" id="leboEditToken" />
+          <div class="ship-grid">
+            <div class="ship-field wide"><label class="ship-label">наименование / описание *</label><input class="ship-input" id="leboTitle" type="text" required placeholder="..."></div>
+            <div class="ship-field"><label class="ship-label">дата</label><input class="ship-input" id="leboDate" type="date"></div>
+            <div class="ship-field"><label class="ship-label">ответственный</label><select class="ship-select" id="leboManager"><option></option><option>Татьяна</option><option>Анастасия</option></select></div>
+            <div class="ship-field full"><label class="ship-label">комментарий</label><textarea class="ship-textarea" id="leboComment" placeholder="..."></textarea></div>
+          </div>
+          <div class="ship-actions">
+            <button type="button" class="btn-ghost btn-danger" id="leboDeleteBtn" style="display:none" onclick="leboDeleteCurrent()">удалить</button>
+            <button type="button" class="btn-ghost" id="leboCancelEditBtn" style="display:none" onclick="leboResetForm()">отменить правку</button>
+            <button type="submit" class="btn" id="leboSubmitBtn">записать</button>
+          </div>
+        </form>
+      </div>
+    </div><!-- /innerPanelLebo -->
+
+  </div><!-- /omShipPage -->
 
   <div class="footer">
     <svg class="footer-mark" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -5852,6 +6075,28 @@ async function sendOrderEmail(order) {
   }
 }
 
+async function sendShippingRequestEmail(req) {
+  if (!APPS_SCRIPT_URL) return { ok: false, error: 'APPS_SCRIPT_URL не задан' };
+
+  const params = new URLSearchParams();
+  params.set('action', 'sendShippingRequestEmail');
+  if (req.rowNum) params.set('row', String(req.rowNum));
+  if (req.client) params.set('client', String(req.client));
+  if (req.invoice) params.set('invoice', String(req.invoice));
+  if (req.readyDate) params.set('readyDate', String(req.readyDate));
+  if (req.requestDate) params.set('requestDate', String(req.requestDate));
+
+  const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + params.toString();
+
+  try {
+    const data = await omApiGetJson(url, {}, 'shipping request email');
+    if (!data.ok) return { ok: false, error: data.error || 'unknown' };
+    return { ok: true, sent_to: data.sent_to || 0 };
+  } catch (e) {
+    return { ok: false, error: e.message || 'network error' };
+  }
+}
+
 
 function ruOzonDateTimeText(text) {
   const raw = String(text || '').trim();
@@ -7197,10 +7442,13 @@ async function loadData() {
       dispatchByMp = data.dispatchByMp;
     }
     populateMpSelects();
+    omBuildOrderMonthOptions();
     renderStats();
     renderTable();
     renderMessages();
     shipRenderCalendar();
+    shipScheduleCalendarRender('orders-loaded');
+    omApplyKpiMonth();
     setStatus('синхронизировано', '');
   } catch (e) {
     const isTimeout = e.name === 'AbortError';
@@ -7286,8 +7534,27 @@ function populateMpSelects() {
   };
 }
 
+function omMainDateIso(o) {
+  if (!o) return '';
+  const candidates = [o.datePlan, o.dateShipReutov, o.dateFact, o.created, o.requestedDate];
+  for (const v of candidates) {
+    if (!v) continue;
+    const iso = (typeof shipToIso === 'function') ? shipToIso(v) : String(v).slice(0, 10);
+    if (iso && iso.length >= 10) return iso.slice(0, 10);
+  }
+  return '';
+}
+function omOrderYm(o) {
+  const iso = omMainDateIso(o);
+  return iso ? iso.slice(0, 7) : '';
+}
+function omSelectedOrders() {
+  const rows = Array.isArray(allOrders) ? allOrders : [];
+  return rows.slice();
+}
 function renderStats() {
-  $('statTotal').textContent = allOrders.length || '0';
+  const statOrders = omSelectedOrders();
+  $('statTotal').textContent = statOrders.length || '0';
   const today = new Date();
   const thisWeek = isoWeek(today);
   const thisYear = today.getFullYear();
@@ -7297,7 +7564,7 @@ function renderStats() {
   let dispatchCount = 0;
   let urgentDueCount = 0;
   const mpCount = {};
-  allOrders.forEach(o => {
+  statOrders.forEach(o => {
     if (o.datePlan) {
       const d = new Date(o.datePlan);
       if (!isNaN(d) && d.getFullYear() === thisYear && isoWeek(d) === thisWeek) weekCount++;
@@ -8077,10 +8344,33 @@ let omDataLoaded = false;
 let shipRequests = [];
 let shipCalendarDate = new Date();
 let shipCalendarFilter = 'all';
+let shipCalendarAutoMonthPending = true;
 let shipRequestsLoaded = false;
 let shipOpenRows = new Set();
 let shipListFilter = 'all';
 let shipSelectedCalendarDay = '';
+let shipCalendarRenderTimer = null;
+let shipCalendarRenderBurstTimer = null;
+function shipScheduleCalendarRender(reason){
+  if (shipCalendarRenderTimer) clearTimeout(shipCalendarRenderTimer);
+  shipCalendarRenderTimer = setTimeout(() => {
+    shipCalendarRenderTimer = null;
+    if (!document.body.classList.contains('om-calendar-mode')) return;
+    try {
+      shipRenderCalendar();
+      requestAnimationFrame(() => {
+        if (document.body.classList.contains('om-calendar-mode')) shipRenderCalendar();
+      });
+      if (shipCalendarRenderBurstTimer) clearTimeout(shipCalendarRenderBurstTimer);
+      shipCalendarRenderBurstTimer = setTimeout(() => {
+        shipCalendarRenderBurstTimer = null;
+        if (document.body.classList.contains('om-calendar-mode')) shipRenderCalendar();
+      }, 350);
+    } catch(e) {
+      console.warn('[OM] calendar delayed render failed:', reason, e);
+    }
+  }, 0);
+}
 function omUnlockAndLoad() {
   document.body.classList.remove('app-locked');
   const ov = document.getElementById('loginOverlay');
@@ -8094,19 +8384,27 @@ function omUnlockAndLoad() {
   projRender();
   resRender();
   omSwitchView('calendar');
+  shipScheduleCalendarRender('unlock');
+  setTimeout(() => shipScheduleCalendarRender('unlock-after-load'), 1200);
 }
 function omDoLogin() {
-  const login = (document.getElementById('loginInput') || {}).value || '';
-  const password = (document.getElementById('passwordInput') || {}).value || '';
-  const err = document.getElementById('loginError');
-  if (login.trim() === OM_LOGIN && password.trim() === OM_PASSWORD) {
-    sessionStorage.setItem('om_auth', '1');
-    if (err) err.textContent = '';
-    omUnlockAndLoad();
-  } else {
-    if (err) err.textContent = 'неверный логин или пароль';
-    const pass = document.getElementById('passwordInput');
-    if (pass) pass.value = '';
+  try {
+    const login = (document.getElementById('loginInput') || {}).value || '';
+    const password = (document.getElementById('passwordInput') || {}).value || '';
+    const err = document.getElementById('loginError');
+    if (login.trim() === OM_LOGIN && password.trim() === OM_PASSWORD) {
+      sessionStorage.setItem('om_auth', '1');
+      if (err) err.textContent = '';
+      omUnlockAndLoad();
+    } else {
+      if (err) err.textContent = 'неверный логин или пароль';
+      const pass = document.getElementById('passwordInput');
+      if (pass) pass.value = '';
+    }
+  } catch(e) {
+    console.error('[OM] login error:', e);
+    const err = document.getElementById('loginError');
+    if (err) err.textContent = 'ошибка входа: ' + (e.message || e);
   }
 }
 function omDoLogout() {
@@ -8129,9 +8427,11 @@ function omSwitchView(view) {
   const isCalendar = view === 'calendar';
   const isProjects = view === 'projects';
   const isShip = view === 'ship';
+  if (isCalendar) shipCalendarAutoMonthPending = true;
   document.body.classList.toggle('om-calendar-mode', isCalendar);
   document.body.classList.toggle('om-projects-mode', isProjects);
   document.body.classList.toggle('om-ship-mode', isShip);
+  document.body.classList.remove('om-lebo-mode');
   const calendarBtn = document.getElementById('omCalendarBtn');
   const ordersBtn = document.getElementById('omOrdersBtn');
   const projectsBtn = document.getElementById('omProjectsBtn');
@@ -8141,7 +8441,35 @@ function omSwitchView(view) {
   if (projectsBtn) projectsBtn.classList.toggle('active', isProjects);
   if (shipBtn) shipBtn.classList.toggle('active', isShip);
   if (isProjects) { projRender(); resRender(); }
-  if (isShip || isCalendar) { shipLoadRequests(false); shipRenderCalendar(); }
+  if (isShip || isCalendar) {
+    shipLoadRequests(false);
+    shipRenderCalendar();
+    if (isCalendar) shipScheduleCalendarRender('switch-calendar');
+  }
+}
+
+function shipSwitchInnerTab(tab) {
+  const isLebo = tab === 'lebo';
+  const panelShip = document.getElementById('innerPanelShip');
+  const panelLebo = document.getElementById('innerPanelLebo');
+  const tabShip = document.getElementById('innerTabShip');
+  const tabLebo = document.getElementById('innerTabLebo');
+  const pageTitle = document.getElementById('shipPageTitle');
+  const pageSub = document.getElementById('shipPageSub');
+  const tableLink = document.getElementById('shipPageTableLink');
+  if (panelShip) panelShip.style.display = isLebo ? 'none' : '';
+  if (panelLebo) panelLebo.style.display = isLebo ? '' : 'none';
+  if (tabShip) tabShip.classList.toggle('active', !isLebo);
+  if (tabLebo) tabLebo.classList.toggle('active', isLebo);
+  if (pageTitle) pageTitle.textContent = isLebo ? '📋 ЛЕБО' : '🚚 Заявки на отгрузку';
+  if (pageSub) pageSub.textContent = isLebo ? 'записи ЛЕБО · вкладка в разработке' : 'управление заявками клиентов · готовность, оплата, доставка, отгрузка';
+  if (tableLink) {
+    tableLink.href = isLebo
+      ? 'https://docs.google.com/spreadsheets/d/1HnLLUf52mpVbGuB0jukQdNCTtYV9wdis6Rs2fbF87jE/edit'
+      : 'https://docs.google.com/spreadsheets/d/1HnLLUf52mpVbGuB0jukQdNCTtYV9wdis6Rs2fbF87jE/edit?pli=1&gid=2105970147#gid=2105970147';
+    tableLink.textContent = isLebo ? '↗ таблица ЛЕБО' : '↗ таблица';
+  }
+  if (isLebo) { leboLoadRecords(false); leboInitMonthPicker(); }
 }
 function omInitAuth() {
   if (sessionStorage.getItem('om_auth') === '1') omUnlockAndLoad();
@@ -8197,7 +8525,7 @@ function shipCompareNearest(a,b){
 }
 
 async function shipLoadRequests(force){
-  if (shipRequestsLoaded && !force) { shipRenderRequests(); shipRenderCalendar(); return; }
+  if (shipRequestsLoaded && !force) { shipRenderRequests(); shipRenderCalendar(); shipScheduleCalendarRender('requests-cache-hit'); return; }
   const list = shipEl('shipList');
   if (list) list.innerHTML = '<div class="proj-empty">загружаем заявки…</div>';
   try {
@@ -8218,6 +8546,7 @@ async function shipLoadRequests(force){
       toast('заявки показаны из офлайн-копии от ' + loadedAt, true);
       shipRenderRequests();
       shipRenderCalendar();
+      shipScheduleCalendarRender('requests-offline-cache');
       return;
     }
     if (list) list.innerHTML = '<div class="proj-empty">не удалось загрузить заявки: '+shipEscape(e.message || e)+'</div>';
@@ -8225,16 +8554,21 @@ async function shipLoadRequests(force){
   }
   shipRenderRequests();
   shipRenderCalendar();
+  shipScheduleCalendarRender('requests-loaded');
+  shipBuildMonthOptions();
+  shipApplyKpiMonth();
 }
 function shipPayloadFromForm(){
   const rowNum = (shipEl('shipRowNum') || {}).value || '';
   const client = (shipEl('shipClient') || {}).value || '';
   return {
     action:'shippingRequest', update: !!rowNum, rowNum,
+    expectedEditToken: (shipEl('shipEditToken') || {}).value || '',
     manager: (shipEl('shipManager') || {}).value || '',
     client: client.trim(),
     requestDate: (shipEl('shipRequestDate') || {}).value || '',
     invoice: (shipEl('shipInvoice') || {}).value || '',
+    invoiceAmount: (shipEl('shipInvoiceAmount') || {}).value || '',
     invoiceSent: !!(shipEl('shipInvoiceSent') || {}).checked,
     readyDate: (shipEl('shipReadyDate') || {}).value || '',
     paymentFormat: (shipEl('shipPaymentFormat') || {}).value || '',
@@ -8242,26 +8576,40 @@ function shipPayloadFromForm(){
     paymentDate: (shipEl('shipPaymentDate') || {}).value || '',
     prepare: !!(shipEl('shipPrepare') || {}).checked,
     delivery: (shipEl('shipDelivery') || {}).value || '',
+    boxes: (shipEl('shipBoxes') || {}).value || '',
+    pallets: (shipEl('shipPallets') || {}).value || '',
     shipDate: (shipEl('shipDate') || {}).value || '',
+    address: (shipEl('shipAddress') || {}).value || '',
     done: !!(shipEl('shipDone') || {}).checked,
     comment: (shipEl('shipComment') || {}).value || '',
+    sendTg: !!(shipEl('shipSendTg') || {}).checked,
   };
 }
 function shipResetForm(){
   const form = shipEl('shipForm'); if (form) form.reset();
   if (shipEl('shipRowNum')) shipEl('shipRowNum').value = '';
+  if (shipEl('shipEditToken')) shipEl('shipEditToken').value = '';
   if (shipEl('shipSubmitBtn')) shipEl('shipSubmitBtn').textContent = 'записать заявку';
   if (shipEl('shipDeleteBtn')) shipEl('shipDeleteBtn').style.display = 'none';
+  if (shipEl('shipCancelEditBtn')) shipEl('shipCancelEditBtn').style.display = 'none';
   const rd = shipEl('shipRequestDate'); if (rd && !rd.value) rd.value = shipTodayIso();
+}
+function shipCancelEdit(){
+  shipResetForm();
+  const f = shipEl('shipForm'); if (f) f.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 async function shipSaveRequest(ev){
   if (ev) ev.preventDefault();
+  if (!omCheckSubmitCooldown('заявка на отгрузку')) return;
   const payload = shipPayloadFromForm();
   if (!payload.client) { toast('укажи клиента', true); return; }
   const btn = shipEl('shipSubmitBtn');
   const oldText = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'записываю…'; }
   try {
+    const sendTg = payload.sendTg;
+    if (sendTg) payload.telegram = 'Да!';
+    delete payload.sendTg;
     const res = await OM_NATIVE_FETCH(APPS_SCRIPT_URL, {
       method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
       body: JSON.stringify(payload), redirect:'follow'
@@ -8270,6 +8618,27 @@ async function shipSaveRequest(ev){
     let data;
     try { data = JSON.parse(text); } catch(_) { throw new Error('Apps Script вернул не JSON: ' + text.slice(0, 160)); }
     if (!data.ok) throw new Error(data.error || 'не удалось сохранить заявку');
+    omMarkSubmit();
+    // Отправка в TG + email если галочка стоит
+    if (sendTg) {
+      let tgResult = { ok: false, error: 'не отправляли' };
+      let emailResult = { ok: false, error: 'не отправляли' };
+      try {
+        const tgText = `🚚 Заявка на отгрузку\n👤 ${payload.client}${payload.invoice ? '\n📄 Счёт: ' + payload.invoice : ''}${payload.invoiceAmount ? ' · ' + Number(payload.invoiceAmount).toLocaleString('ru-RU') + ' ₽' : ''}${payload.readyDate ? '\n📅 Готовность: ' + shipFmtDate(payload.readyDate) : ''}${payload.delivery ? '\n🚛 Доставка: ' + payload.delivery : ''}${payload.address ? '\n📍 ' + payload.address : ''}${payload.comment ? '\n💬 ' + payload.comment : ''}\n${payload.update ? '✏️ обновлена' : '✅ создана'}`;
+        const tgRes = await fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ chat_id: TG_CHAT_ID, text: tgText, parse_mode: 'HTML' })
+        });
+        tgResult = tgRes.ok ? { ok: true } : { ok: false, error: 'TG HTTP ' + tgRes.status };
+      } catch(e) {
+        tgResult = { ok: false, error: e.message || String(e) };
+      }
+      emailResult = await sendShippingRequestEmail({ ...payload, rowNum: data.rowNum });
+      if (tgResult.ok && emailResult.ok) toast('уведомление по заявке отправлено · TG + email');
+      else if (tgResult.ok && !emailResult.ok) toast(`TG отправлен, email не ушёл: ${emailResult.error}`, true);
+      else if (!tgResult.ok && emailResult.ok) toast(`email отправлен, TG не ушёл: ${tgResult.error}`, true);
+      else toast(`уведомление не ушло: TG — ${tgResult.error}; email — ${emailResult.error}`, true);
+    }
     toast('заявка сохранена');
     shipResetForm();
     shipRequestsLoaded = false;
@@ -8284,10 +8653,12 @@ async function shipSaveRequest(ev){
 function shipEdit(rowNum){
   const r = shipRequests.find(x => Number(x.rowNum) === Number(rowNum)); if (!r) return;
   shipEl('shipRowNum').value = r.rowNum || '';
+  if (shipEl('shipEditToken')) shipEl('shipEditToken').value = r.editToken || '';
   shipEl('shipManager').value = r.manager || '';
   shipEl('shipClient').value = r.client || '';
   shipEl('shipRequestDate').value = r.requestDateIso || shipToIso(r.requestDate) || '';
   shipEl('shipInvoice').value = r.invoice || '';
+  if (shipEl('shipInvoiceAmount')) shipEl('shipInvoiceAmount').value = r.invoiceAmount || '';
   shipEl('shipInvoiceSent').checked = !!r.invoiceSent;
   shipEl('shipReadyDate').value = r.readyDateIso || shipToIso(r.readyDate) || '';
   shipEl('shipPaymentFormat').value = r.paymentFormat || '';
@@ -8295,11 +8666,16 @@ function shipEdit(rowNum){
   shipEl('shipPaymentDate').value = r.paymentDateIso || shipToIso(r.paymentDate) || '';
   shipEl('shipPrepare').checked = !!r.prepare;
   shipEl('shipDelivery').value = r.delivery || '';
+  if (shipEl('shipBoxes')) shipEl('shipBoxes').value = r.boxes || '';
+  if (shipEl('shipPallets')) shipEl('shipPallets').value = r.pallets || '';
   shipEl('shipDate').value = r.shipDateIso || shipToIso(r.shipDate) || '';
+  if (shipEl('shipAddress')) shipEl('shipAddress').value = r.address || '';
   shipEl('shipDone').checked = !!r.done;
   shipEl('shipComment').value = r.comment || '';
+  if (shipEl('shipSendTg')) shipEl('shipSendTg').checked = false;
   shipEl('shipSubmitBtn').textContent = 'сохранить изменения';
   shipEl('shipDeleteBtn').style.display = '';
+  if (shipEl('shipCancelEditBtn')) shipEl('shipCancelEditBtn').style.display = '';
   shipEl('shipForm').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 async function shipDeleteCurrent(){
@@ -8348,6 +8724,36 @@ function shipPaymentClass(format){
   if (s.indexOf('отсроч') >= 0) return 'pay-delay';
   return '';
 }
+function shipDeliveryClass(delivery){
+  const s = String(delivery || '').toLowerCase();
+  if (s.indexOf('самовывоз') >= 0) return 'delivery-pickup';
+  if (s.indexOf('адрес') >= 0) return 'delivery-courier';
+  if (s.indexOf('тк') >= 0 || s.indexOf('транспортн') >= 0) return 'delivery-tk';
+  return '';
+}
+function shipFmtShort(v){ const iso = shipToIso(v); if (!iso) return ''; const [,m,d] = iso.split('-'); return `${d}.${m}`; }
+function shipProgressHtml(r, withText){
+  // 4 этапа заявки на отгрузку (как в ОМ: флаги с конкретными подписями)
+  const s1 = !!(r.invoice || r.invoiceSent);  // счёт выставлен / на складе
+  const s2 = !!r.paid;                          // оплачено
+  const s3 = !!r.prepare;                       // подтверждено / подготовить
+  const s4 = !!(r.done || r.shipDate || r.shipDateIso); // отгружено
+  const cnt = [s1,s2,s3,s4].filter(Boolean).length;
+
+  // Тултип каждого флага — конкретное название шага (как в ОМ)
+  const f1 = `<span class="flag${s1?' on':''}" title="счёт выставлен"></span>`;
+  const f2 = `<span class="flag${s2?' on':''}" title="оплачено"></span>`;
+  const f3 = `<span class="flag${s3?' on':''}" title="подтверждено к отгрузке"></span>`;
+  const f4 = `<span class="flag${s4?' on done':''}" title="отгружено"></span>`;
+
+  const textLine = withText
+    ? `<div class="order-detail-progress" style="margin-top:4px;">`
+      + `${s1?'✓':'·'} счёт / ${s2?'✓':'·'} оплата / ${s3?'✓':'·'} подтверждено / ${s4?'✓':'·'} отгружено`
+      + `</div>`
+    : '';
+
+  return `<div class="ship-progress"><div style="display:flex;align-items:center;gap:5px;"><span class="ship-progress-badge">${cnt}/4</span><div class="ship-progress-flags">${f1}${f2}${f3}${f4}</div></div>${textLine}</div>`;
+}
 function shipToggleDetails(rowNum){
   rowNum = Number(rowNum);
   if (shipOpenRows.has(rowNum)) shipOpenRows.delete(rowNum);
@@ -8356,20 +8762,25 @@ function shipToggleDetails(rowNum){
 }
 function shipDetailBlock(r){
   const payCls = shipPaymentClass(r.paymentFormat);
+  const delCls = shipDeliveryClass(r.delivery);
   return `<div class="ship-details">
     <div class="ship-detail-item"><b>ответственный</b>${shipEscape(r.manager || '—')}</div>
     <div class="ship-detail-item"><b>клиент</b>${shipEscape(r.client || '—')}</div>
     <div class="ship-detail-item"><b>дата запроса</b>${shipEscape(r.requestDate || '—')}</div>
     <div class="ship-detail-item"><b>счёт</b>${shipEscape(r.invoice || '—')}</div>
+    ${r.invoiceAmount ? `<div class="ship-detail-item"><b>сумма счёта</b>${Number(r.invoiceAmount).toLocaleString('ru-RU')} ₽</div>` : ''}
     <div class="ship-detail-item"><b>счёт на складе</b>${r.invoiceSent ? 'да' : 'нет'}</div>
     <div class="ship-detail-item"><b>дата готовности</b>${shipEscape(r.readyDate || '—')}</div>
     <div class="ship-detail-item"><b>формат оплаты</b><span class="ship-pill ${payCls}">${shipEscape(r.paymentFormat || '—')}</span></div>
     <div class="ship-detail-item"><b>оплата</b>${r.paid ? 'оплачено' : 'не оплачено'}${r.paymentDate ? ' · ' + shipEscape(r.paymentDate) : ''}</div>
     <div class="ship-detail-item"><b>подтверждение</b>${r.prepare ? 'подтверждено / подготовить' : 'нет'}</div>
-    <div class="ship-detail-item"><b>доставка</b>${shipEscape(r.delivery || '—')}</div>
+    <div class="ship-detail-item"><b>доставка</b><span class="ship-pill ${delCls}">${shipEscape(r.delivery || '—')}</span></div>
+    ${r.address ? `<div class="ship-detail-item full"><b>адрес доставки</b>${shipEscape(r.address)}</div>` : ''}
+    ${r.boxes || r.pallets ? `<div class="ship-detail-item"><b>коробов / паллет</b>${[r.boxes ? r.boxes+' кор.' : '', r.pallets ? r.pallets+' пал.' : ''].filter(Boolean).join(' / ')}</div>` : ''}
     <div class="ship-detail-item"><b>факт. отгрузка</b>${shipEscape(r.shipDate || '—')}</div>
     <div class="ship-detail-item"><b>отработано</b>${r.done ? 'да' : 'нет'}</div>
     <div class="ship-detail-item"><b>статус</b>${shipEscape(shipStatusLabel(r))}</div>
+    <div class="ship-detail-item"><b>прогресс</b>${shipProgressHtml(r, true)}</div>
     <div class="ship-detail-item full"><b>комментарий</b>${shipEscape(r.comment || r.text || '—')}</div>
   </div>`;
 }
@@ -8465,7 +8876,7 @@ function shipApplyExtraFilters(list){
     if (f.mode === 'nearest' && shipIsDone(r)) return false;
     if (f.mode === 'archive' && !shipIsDone(r)) return false;
     if (f.q) {
-      const hay = [r.client, r.invoice, r.comment, r.text, r.manager, r.delivery, r.paymentFormat].map(x => String(x || '').toLowerCase()).join(' ');
+      const hay = [r.client, r.invoice, r.invoiceAmount, r.boxes, r.pallets, r.address, r.comment, r.text, r.manager, r.delivery, r.paymentFormat].map(x => String(x || '').toLowerCase()).join(' ');
       if (!hay.includes(f.q)) return false;
     }
     if (f.manager && String(r.manager || '') !== f.manager) return false;
@@ -8496,6 +8907,12 @@ function shipRenderRequests(){
   const listEl = shipEl('shipList'); if (!listEl) return;
   shipUpdateKpis();
   const showDone = !!(shipEl('shipShowDone') || {}).checked;
+  const modeEl = shipEl('shipDateModeFilter');
+  if (!showDone && modeEl && modeEl.value === 'archive') modeEl.value = 'nearest';
+  // Если галочка снята и активен фильтр на завершённые — сброс на все
+  if (!showDone && (shipListFilter === 'done' || shipListFilter === 'cancelled')) {
+    shipListFilter = 'active';
+  }
   let list = shipCleanRequests(shipRequests || []).slice();
   list = shipApplyListFilter(list);
   list = shipApplyExtraFilters(list);
@@ -8510,31 +8927,79 @@ function shipRenderRequests(){
     hint.textContent = `показано: ${list.length} · всего загружено: ${st.total} · активно: ${st.active} · не оплачено: ${st.unpaid} · сегодня/просрочено: ${st.urgent}${hiddenDone}${extra}`;
   }
   if (!list.length) { listEl.innerHTML = '<div class="proj-empty">по выбранному фильтру заявок нет</div>'; return; }
-  listEl.innerHTML = list.map(r => {
-    const dateMain = r.readyDate || r.shipDate || r.requestDate || '—';
+
+  const rows = list.map(r => {
+    const dateReady = shipFmtShort(r.readyDateIso || r.readyDate) || '—';
+    const dateReq   = shipFmtShort(r.requestDateIso || r.requestDate) || '—';
+    const dateShip  = shipFmtShort(r.shipDateIso || r.shipDate) || '—';
     const isDone = shipIsDone(r);
     const isOpen = shipOpenRows.has(Number(r.rowNum));
-    const pills = [];
-    pills.push(`<span class="ship-pill ${r.paid ? 'ok' : 'warn'}">${r.paid ? 'оплачено' : 'не оплачено'}</span>`);
-    if (r.paymentFormat) pills.push(`<span class="ship-pill ${shipPaymentClass(r.paymentFormat)}">${shipEscape(r.paymentFormat)}</span>`);
-    if (r.prepare) pills.push('<span class="ship-pill purple">подтверждено</span>');
-    if (r.invoiceSent) pills.push('<span class="ship-pill ok">счёт на складе</span>');
-    if (shipIsCancelled(r)) pills.push('<span class="ship-pill cancelled">аннулирован</span>');
-    else if (isDone) pills.push('<span class="ship-pill ok">отгружено</span>');
-    const cls = shipStatusClass(r);
-    return `<div class="ship-card ${cls} ${isDone ? 'done' : ''}" onclick="shipOpenModal(${Number(r.rowNum)})" title="нажми, чтобы открыть карточку заявки">
-      <div><div class="ship-card-title">${shipEscape(r.client || 'без клиента')}</div><div class="ship-card-meta">${shipEscape(shipStatusLabel(r))}<br>ответственный: ${shipEscape(r.manager || '—')}</div></div>
-      <div class="ship-card-meta"><b>счёт:</b> ${shipEscape(r.invoice || '—')}<br><b>готовность:</b> ${shipEscape(dateMain)}</div>
-      <div class="ship-card-meta"><b>доставка:</b> ${shipEscape(r.delivery || '—')}<br><b>отгрузка:</b> ${shipEscape(r.shipDate || '—')}</div>
-      <div><div>${pills.join('')}</div><div class="ship-card-meta">${shipEscape(r.comment || '')}</div></div>
-      <div class="ship-card-buttons"><button class="ship-mini-btn" type="button" onclick="event.stopPropagation(); shipToggleDetails(${Number(r.rowNum)})">${isOpen ? 'свернуть' : 'развернуть'}</button><button class="ship-mini-btn" type="button" onclick="event.stopPropagation(); shipEdit(${Number(r.rowNum)})">править</button></div>
-      ${isOpen ? shipDetailBlock(r) : ''}
-    </div>`;
+    const rowCls = shipIsCancelled(r) ? 'row-cancelled' : isDone ? 'row-done' : shipStatusClass(r).replace('status-','row-');
+
+    const statusPills = [];
+    statusPills.push(`<span class="ship-pill ${r.paid ? 'ok' : 'warn'}">${r.paid ? 'оплачено' : 'не оплачено'}</span>`);
+    if (r.paymentFormat) statusPills.push(`<span class="ship-pill ${shipPaymentClass(r.paymentFormat)}">${shipEscape(r.paymentFormat)}</span>`);
+    if (r.prepare) statusPills.push('<span class="ship-pill purple">подтверждено</span>');
+    if (r.invoiceSent) statusPills.push('<span class="ship-pill ok">счёт ✓</span>');
+    if (shipIsCancelled(r)) statusPills.push('<span class="ship-pill cancelled">аннулирован</span>');
+    else if (isDone) statusPills.push('<span class="ship-pill ok">отгружено</span>');
+
+    const deliveryCls = shipDeliveryClass(r.delivery);
+    const qty = [r.boxes ? r.boxes+' кор.' : '', r.pallets ? r.pallets+' пал.' : ''].filter(Boolean).join(' / ');
+
+    const mainRow = `<tr class="${rowCls}${isDone?' row-done':''}" onclick="shipOpenModal(${Number(r.rowNum)})">
+      <td class="td-client">
+        <div>${shipEscape(r.client || 'без клиента')}</div>
+        <div class="td-sub">${shipEscape(r.manager || '—')}</div>
+      </td>
+      <td class="td-num">
+        <div>${shipEscape(r.invoice || '—')}</div>
+        ${r.invoiceAmount ? `<div class="td-sub">${Number(r.invoiceAmount).toLocaleString('ru-RU')} ₽</div>` : ''}
+      </td>
+      <td class="td-date">
+        <div title="дата готовности">${dateReady}</div>
+        <div class="td-sub" title="дата запроса">${dateReq}</div>
+      </td>
+      <td class="td-progress">${shipProgressHtml(r, false)}</td>
+      <td class="td-delivery">
+        ${r.delivery ? `<span class="ship-pill ${deliveryCls}" style="font-size:10px;">${shipEscape(r.delivery)}</span>` : '<span style="color:var(--text-muted)">—</span>'}
+        ${r.address ? `<div class="td-sub" style="margin-top:3px;">${shipEscape(r.address)}</div>` : ''}
+        ${qty ? `<div class="td-sub">${qty}</div>` : ''}
+      </td>
+      <td class="td-date">
+        <div>${dateShip}</div>
+      </td>
+      <td class="td-pills">${statusPills.join('')}</td>
+      <td class="td-comment">${shipEscape(r.comment || '')}</td>
+      <td class="td-actions" onclick="event.stopPropagation()">
+        <button class="ship-mini-btn" type="button" onclick="shipToggleDetails(${Number(r.rowNum)})">${isOpen ? '▲' : '▼'}</button>
+        <button class="ship-mini-btn" type="button" onclick="shipEdit(${Number(r.rowNum)})">правка</button>
+      </td>
+    </tr>`;
+
+    const detailRow = isOpen ? `<tr class="detail-row"><td colspan="9">${shipDetailBlock(r)}</td></tr>` : '';
+    return mainRow + detailRow;
   }).join('');
+
+  listEl.innerHTML = `<table class="ship-table">
+    <thead><tr>
+      <th>клиент / ответственный</th>
+      <th>счёт / сумма</th>
+      <th>готовность / запрос</th>
+      <th>прогресс</th>
+      <th>доставка / адрес</th>
+      <th>отгрузка</th>
+      <th>статус</th>
+      <th>комментарий</th>
+      <th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
 }
 function shipMonthName(d){ return d.toLocaleDateString('ru-RU', { month:'long', year:'numeric' }); }
 function shipSetCalendarFilter(filter){
   shipCalendarFilter = filter || 'all';
+  shipCalendarAutoMonthPending = true;
   document.querySelectorAll('[data-cal-filter]').forEach(btn => btn.classList.toggle('active', btn.dataset.calFilter === shipCalendarFilter));
   shipRenderCalendar();
 }
@@ -8555,6 +9020,16 @@ function shipCalendarEvents(){
   });
   return events;
 }
+function shipEventMonth(e){ return String((e && e.date) || '').slice(0, 7); }
+function shipFindNearestEventMonth(events, baseDate){
+  const months = Array.from(new Set((events || []).map(shipEventMonth).filter(Boolean))).sort();
+  if (!months.length) return '';
+  const base = baseDate instanceof Date && !isNaN(baseDate)
+    ? `${baseDate.getFullYear()}-${shipPad2(baseDate.getMonth()+1)}`
+    : months[months.length - 1];
+  const past = months.filter(ym => ym <= base);
+  return past.length ? past[past.length - 1] : months[0];
+}
 function shipRenderCalendar(){
   const cal = shipEl('shipCalendar'); if (!cal) return;
   const title = shipEl('shipCalendarTitle'); if (title) title.textContent = shipMonthName(shipCalendarDate);
@@ -8568,6 +9043,24 @@ function shipRenderCalendar(){
   const events = shipCalendarEvents()
     .filter(e => shipCalendarFilter === 'all' || e.type === shipCalendarFilter)
     .filter(e => !hideDone || !e.done);
+  const waitingForInitialCalendarData = shipCalendarAutoMonthPending
+    && !events.length
+    && (!shipRequestsLoaded || !(Array.isArray(allOrders) && allOrders.length));
+  if (shipCalendarAutoMonthPending && events.length) {
+    const currentYm = `${y}-${shipPad2(m+1)}`;
+    const hasCurrentMonth = events.some(e => shipEventMonth(e) === currentYm);
+    if (!hasCurrentMonth) {
+      const targetYm = shipFindNearestEventMonth(events, shipCalendarDate);
+      if (targetYm && targetYm !== currentYm) {
+        const [ty, tm] = targetYm.split('-').map(Number);
+        shipCalendarAutoMonthPending = false;
+        shipCalendarDate = new Date(ty, tm - 1, 1);
+        shipRenderCalendar();
+        return;
+      }
+    }
+  }
+  if (!waitingForInitialCalendarData) shipCalendarAutoMonthPending = false;
   const byDate = events.reduce((acc,e)=>{ (acc[e.date] = acc[e.date] || []).push(e); return acc; }, {});
   const today = shipTodayIso();
   const dows = ['пн','вт','ср','чт','пт','сб','вс'].map(x => `<div class="calendar-dow">${x}</div>`).join('');
@@ -8611,7 +9104,7 @@ function shipOpenCalendarDay(iso){
     const icon = e.type === 'om' ? '📦' : '🚚';
     const label = e.type === 'om' ? 'Поставка ОМ' : 'Заявка на отгрузку';
     const status = e.done ? 'отработано' : 'активно';
-    return `<div class="cal-day-item">
+    return `<div class="cal-day-item type-${e.type === 'om' ? 'om' : 'ship'}">
       <div><div class="cal-day-type">${icon} ${label}</div><div class="cal-day-meta">${shipEscape(status)}</div></div>
       <div><div class="cal-day-title">${shipEscape(e.title || '—')}</div><div class="cal-day-meta">${shipEscape(e.meta || '')}</div></div>
       <div class="cal-day-meta">дата: ${shipEscape(shipCalendarDayTitle(e.date))}</div>
@@ -8642,11 +9135,13 @@ function shipOpenCalendarItem(type, id){
   }
 }
 
-function shipMoveMonth(delta){ shipCalendarDate = new Date(shipCalendarDate.getFullYear(), shipCalendarDate.getMonth()+delta, 1); shipRenderCalendar(); }
-function shipGoToday(){ shipCalendarDate = new Date(); shipRenderCalendar(); }
+function shipMoveMonth(delta){ shipCalendarAutoMonthPending = false; shipCalendarDate = new Date(shipCalendarDate.getFullYear(), shipCalendarDate.getMonth()+delta, 1); shipRenderCalendar(); }
+function shipGoToday(){ shipCalendarAutoMonthPending = false; shipCalendarDate = new Date(); shipRenderCalendar(); }
 document.addEventListener('DOMContentLoaded', () => {
   const f = shipEl('shipForm'); if (f) f.addEventListener('submit', shipSaveRequest);
+  const lf = document.getElementById('leboForm'); if (lf) lf.addEventListener('submit', leboSaveRecord);
   shipResetForm();
+  omInitMonthPickers();
 });
 
 const OM_PROJ_KEY = 'sowy_projects_v2';
@@ -8994,9 +9489,10 @@ function resCopy(text) {
   window.renderStats = function(){
     if (typeof oldRenderStats === 'function') oldRenderStats();
     ensureV36Controls();
-    const noInv = (allOrders || []).filter(isWithoutInvoice).length;
+    const statOrders = (typeof omSelectedOrders === 'function') ? omSelectedOrders() : (allOrders || []);
+    const noInv = statOrders.filter(isWithoutInvoice).length;
     if (safe$('statNoInvoice')) safe$('statNoInvoice').textContent = noInv;
-    const urgent = (allOrders || []).filter(isUrgentDue).length;
+    const urgent = statOrders.filter(isUrgentDue).length;
     const noCarSub = safe$('noCarCard') && safe$('noCarCard').querySelector('.stat-sub');
     if (noCarSub) noCarSub.innerHTML = 'не отгружены<span class="inline-hot">срочно внести · '+urgent+'</span>';
   };
@@ -9390,6 +9886,328 @@ function resCopy(text) {
     }
   };
 })();
+
+// ============== KPI: ВЫБОР МЕСЯЦА ==============
+function omBuildMonthOptions(selectId, currentVal) {
+  const sel = document.getElementById(selectId); if (!sel) return;
+  const now = new Date();
+  const existing = sel.value;
+  sel.innerHTML = '<option value="">весь период</option>';
+  for (let i = 0; i < 24; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+    const opt = document.createElement('option');
+    opt.value = val; opt.textContent = label;
+    sel.appendChild(opt);
+  }
+  sel.value = currentVal || existing || '';
+}
+function omBuildOrderMonthOptions() {
+  const sel = document.getElementById('omKpiMonthSelect');
+  if (!sel) return;
+  const current = sel.value;
+  const rows = Array.isArray(allOrders) ? allOrders : [];
+  const months = {};
+  rows.forEach(o => {
+    const ym = omOrderYm(o);
+    if (ym) months[ym] = (months[ym] || 0) + 1;
+  });
+  sel.innerHTML = '<option value="">весь период</option>';
+  Object.keys(months).sort().reverse().forEach(ym => {
+    const [y, m] = ym.split('-');
+    const d = new Date(Number(y), Number(m) - 1, 1);
+    const opt = document.createElement('option');
+    opt.value = ym;
+    opt.textContent = `${d.toLocaleDateString('ru-RU', { month:'long', year:'numeric' })} (${months[ym]})`;
+    sel.appendChild(opt);
+  });
+  sel.value = current && months[current] ? current : '';
+}
+function omInitMonthPickers() {
+  try { omBuildOrderMonthOptions(); } catch(_) {}
+  try { omBuildMonthOptions('shipKpiMonthSelect', ''); } catch(_) {}
+  try { omBuildMonthOptions('leboKpiMonthSelect', ''); } catch(_) {}
+}
+function omGetSelectedMonth(selectId) {
+  const sel = document.getElementById(selectId);
+  return sel && sel.value ? sel.value : '';
+}
+function omApplyKpiMonth() {
+  const ym = omGetSelectedMonth('omKpiMonthSelect');
+  const hint = document.getElementById('omMonthHint');
+  const breakdown = document.getElementById('omMonthBreakdown');
+  const rows = Array.isArray(allOrders) ? allOrders : [];
+  const orders = ym ? rows.filter(o => omOrderYm(o) === ym) : rows;
+  if (typeof renderStats === 'function') renderStats();
+  if (!ym) {
+    if (hint) hint.textContent = rows.length ? `${rows.length} поставок в листе` : 'нет данных';
+    if (breakdown) breakdown.innerHTML = '';
+    return;
+  }
+  const done = orders.filter(o => !!(o.shippedToMp || o.dateFact || o.correctionsMade)).length;
+  const noCar = orders.filter(isNoCar).length;
+  const noInvoice = orders.filter(isWithoutInvoice).length;
+  const sos = orders.filter(o => sosSeverity(o) > 0 || isUrgentDue(o)).length;
+  const mpCount = {};
+  orders.forEach(o => { if (o.mp) mpCount[o.mp] = (mpCount[o.mp] || 0) + 1; });
+  const mpLines = Object.entries(mpCount)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([m,c]) => `${m} <span style="color:var(--text-muted); font-size:13px;">· ${c}</span>`)
+    .join('<br>');
+  if (document.getElementById('statMp')) document.getElementById('statMp').innerHTML = mpLines || '—';
+  if (hint) hint.textContent = orders.length > 0 ? `${orders.length} поставок` : 'нет данных';
+  if (breakdown) {
+    breakdown.innerHTML = orders.length > 0
+      ? `<span style="color:var(--accent-sage)">${done} отгружено/закрыто</span>`
+        + (noCar > 0 ? `<br><span style="color:var(--accent-copper)">${noCar} без машины</span>` : '')
+        + (noInvoice > 0 ? `<br><span style="color:var(--accent-copper)">${noInvoice} без счёта 1С</span>` : '')
+        + (sos > 0 ? `<br><span style="color:var(--danger)">${sos} SOS</span>` : '')
+      : '';
+  }
+}
+function shipApplyKpiMonth() {
+  const ym = omGetSelectedMonth('shipKpiMonthSelect');
+  const hint = document.getElementById('shipKpiMonthHint');
+  const breakdown = document.getElementById('shipMonthBreakdown');
+  const reqs = Array.isArray(shipRequests) ? shipCleanRequests(shipRequests) : [];
+
+  // Дата создания заявки — requestDate (дата запроса) — основной критерий.
+  // Если пусто — берём readyDate, потом shipDate.
+  function getRecordYm(r) {
+    const candidates = [
+      r.requestDateIso, r.requestDate,   // дата запроса/создания — главный приоритет
+      r.readyDateIso,   r.readyDate,     // дата готовности
+      r.shipDateIso,    r.shipDate       // дата отгрузки
+    ];
+    for (const v of candidates) {
+      if (!v) continue;
+      const iso = shipToIso(v);
+      if (iso && iso.length >= 7) return iso.slice(0, 7);
+    }
+    return '';
+  }
+
+  if (!ym) {
+    if (hint) hint.textContent = '';
+    if (breakdown) breakdown.innerHTML = '';
+    return;
+  }
+
+  const filtered = reqs.filter(r => getRecordYm(r) === ym);
+  const total = filtered.length;
+  const done = filtered.filter(shipIsDone).length;
+  const unpaid = filtered.filter(r => !r.paid && !shipIsDone(r)).length;
+  const cancelled = filtered.filter(shipIsCancelled).length;
+
+  if (hint) hint.textContent = total > 0 ? `${total} заявок` : 'нет данных';
+  if (breakdown) {
+    breakdown.innerHTML = total > 0
+      ? `<span style="color:var(--accent-sage)">${done} отгружено</span>`
+        + (unpaid > 0 ? `<br><span style="color:var(--accent-copper)">${unpaid} не оплачено</span>` : '')
+        + (cancelled > 0 ? `<br><span style="color:var(--text-muted)">${cancelled} аннул.</span>` : '')
+      : '';
+  }
+}
+
+// Заполняем пикер месяца только теми месяцами, в которых есть заявки
+function shipBuildMonthOptions() {
+  const sel = document.getElementById('shipKpiMonthSelect');
+  if (!sel) return;
+  const reqs = Array.isArray(shipRequests) ? shipCleanRequests(shipRequests) : [];
+
+  function getRecordYm(r) {
+    const candidates = [r.requestDateIso, r.requestDate, r.readyDateIso, r.readyDate, r.shipDateIso, r.shipDate];
+    for (const v of candidates) {
+      if (!v) continue;
+      const iso = shipToIso(v);
+      if (iso && iso.length >= 7) return iso.slice(0, 7);
+    }
+    return '';
+  }
+
+  // Собираем все уникальные месяцы из данных
+  const months = {};
+  reqs.forEach(r => {
+    const ym = getRecordYm(r);
+    if (ym) months[ym] = (months[ym] || 0) + 1;
+  });
+
+  const sorted = Object.keys(months).sort().reverse(); // новые сверху
+  const current = sel.value;
+  sel.innerHTML = '<option value="">весь период</option>';
+  sorted.forEach(ym => {
+    const [y, m] = ym.split('-');
+    const d = new Date(Number(y), Number(m) - 1, 1);
+    const label = d.toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+    const opt = document.createElement('option');
+    opt.value = ym;
+    opt.textContent = `${label} (${months[ym]})`;
+    sel.appendChild(opt);
+  });
+  sel.value = current || '';
+}
+
+// ============== ЛЕБО ==============
+const LEBO_CACHE_KEY = 'om_lebo_cache_v1';
+let leboRecords = [];
+let leboLoaded = false;
+
+function leboEl(id) { return document.getElementById(id); }
+function leboEscape(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function leboToIso(v) { return shipToIso(v); }
+function leboFmtDate(v) { return shipFmtDate(v); }
+function leboTodayIso() { return shipTodayIso(); }
+
+async function leboLoadRecords(force) {
+  if (leboLoaded && !force) { leboRenderList(); return; }
+  const list = leboEl('leboList');
+  if (list) list.innerHTML = '<div class="proj-empty">загружаем записи ЛЕБО…</div>';
+  try {
+    const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + 'action=leboRecords' + (force ? '&refresh=1' : '') + '&_ts=' + Date.now();
+    const data = await omApiGetJson(url, { cache:'no-store' }, 'записи ЛЕБО');
+    if (!data.ok) throw new Error(data.error || 'unknown');
+    leboRecords = Array.isArray(data.records) ? data.records : [];
+    leboLoaded = true;
+    try { localStorage.setItem(LEBO_CACHE_KEY, JSON.stringify({ records: leboRecords, savedAt: Date.now() })); } catch(_) {}
+  } catch(e) {
+    console.warn('[OM] lebo load failed:', e);
+    try {
+      const cached = JSON.parse(localStorage.getItem(LEBO_CACHE_KEY) || 'null');
+      if (cached && Array.isArray(cached.records)) {
+        leboRecords = cached.records; leboLoaded = true;
+        if (list) list.innerHTML = '<div class="proj-empty">офлайн · показываю кэш</div>';
+        toast('ЛЕБО: офлайн-режим', true);
+        leboRenderList(); return;
+      }
+    } catch(_) {}
+    if (list) list.innerHTML = `<div class="proj-empty">не удалось загрузить записи ЛЕБО: ${leboEscape(e.message||e)}</div>`;
+    return;
+  }
+  leboRenderList();
+  leboUpdateKpis();
+}
+
+function leboUpdateKpis() {
+  const ym = omGetSelectedMonth('leboKpiMonthSelect');
+  const all = leboRecords;
+  const forMonth = ym ? all.filter(r => (r.dateIso||'').slice(0,7) === ym) : all;
+  const el = id => document.getElementById(id);
+  if (el('leboKpiTotal')) el('leboKpiTotal').textContent = all.length;
+  if (el('leboKpiMonth')) el('leboKpiMonth').textContent = forMonth.length;
+  const hint = el('leboKpiMonthHint');
+  if (hint) hint.textContent = ym ? `за ${ym}` : 'текущий месяц';
+}
+function leboInitMonthPicker() {
+  omBuildMonthOptions('leboKpiMonthSelect', '');
+  leboUpdateKpis();
+}
+function leboApplyKpiMonth() { leboUpdateKpis(); }
+
+function leboRenderList() {
+  const listEl = leboEl('leboList'); if (!listEl) return;
+  const q = ((leboEl('leboSearchFilter')||{}).value||'').trim().toLowerCase();
+  let list = leboRecords.slice();
+  if (q) list = list.filter(r => [r.title,r.comment,r.manager].map(x=>String(x||'').toLowerCase()).join(' ').includes(q));
+  const hint = leboEl('leboListHint');
+  if (hint) hint.textContent = `показано: ${list.length} · всего: ${leboRecords.length}`;
+  if (!list.length) { listEl.innerHTML = '<div class="proj-empty">записей нет</div>'; return; }
+  listEl.innerHTML = list.map(r => `
+    <div class="ship-card" onclick="leboEdit(${Number(r.rowNum)})">
+      <div>
+        <div class="ship-card-title">${leboEscape(r.title||'—')}</div>
+        <div class="ship-card-meta">${leboEscape(r.manager||'—')}</div>
+      </div>
+      <div class="ship-card-meta"><b>дата:</b> ${leboEscape(leboFmtDate(r.date)||r.date||'—')}</div>
+      <div class="ship-card-meta">${leboEscape(r.comment||'')}</div>
+      <div class="ship-card-buttons">
+        <button class="ship-mini-btn" type="button" onclick="event.stopPropagation();leboEdit(${Number(r.rowNum)})">править</button>
+      </div>
+    </div>`).join('');
+}
+
+function leboResetForm() {
+  const f = leboEl('leboForm'); if (f) f.reset();
+  if (leboEl('leboRowNum')) leboEl('leboRowNum').value = '';
+  if (leboEl('leboEditToken')) leboEl('leboEditToken').value = '';
+  if (leboEl('leboSubmitBtn')) leboEl('leboSubmitBtn').textContent = 'записать';
+  if (leboEl('leboDeleteBtn')) leboEl('leboDeleteBtn').style.display = 'none';
+  if (leboEl('leboCancelEditBtn')) leboEl('leboCancelEditBtn').style.display = 'none';
+  const d = leboEl('leboDate'); if (d && !d.value) d.value = leboTodayIso();
+}
+function leboEdit(rowNum) {
+  const r = leboRecords.find(x => Number(x.rowNum) === Number(rowNum)); if (!r) return;
+  leboEl('leboRowNum').value = r.rowNum||'';
+  if (leboEl('leboEditToken')) leboEl('leboEditToken').value = r.editToken || '';
+  leboEl('leboTitle').value = r.title||'';
+  leboEl('leboDate').value = leboToIso(r.date)||r.dateIso||'';
+  leboEl('leboManager').value = r.manager||'';
+  leboEl('leboComment').value = r.comment||'';
+  leboEl('leboSubmitBtn').textContent = 'сохранить изменения';
+  leboEl('leboDeleteBtn').style.display = '';
+  leboEl('leboCancelEditBtn').style.display = '';
+  leboEl('leboForm').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+async function leboSaveRecord(ev) {
+  if (ev) ev.preventDefault();
+  const rowNum = (leboEl('leboRowNum')||{}).value||'';
+  const title = (leboEl('leboTitle')||{}).value||'';
+  if (!title.trim()) { toast('укажи наименование', true); return; }
+  const btn = leboEl('leboSubmitBtn');
+  const oldText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'записываю…'; }
+  try {
+    const payload = {
+      action: 'leboRecord', update: !!rowNum, rowNum,
+      expectedEditToken: (leboEl('leboEditToken')||{}).value||'',
+      title: title.trim(),
+      date: (leboEl('leboDate')||{}).value||'',
+      manager: (leboEl('leboManager')||{}).value||'',
+      comment: (leboEl('leboComment')||{}).value||''
+    };
+    const res = await OM_NATIVE_FETCH(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload), redirect:'follow'
+    });
+    const data = JSON.parse(await res.text());
+    if (!data.ok) throw new Error(data.error||'не удалось сохранить запись');
+    toast('запись ЛЕБО сохранена');
+    leboResetForm(); leboLoaded = false; await leboLoadRecords(true);
+  } catch(e) {
+    toast(e.message||String(e), true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = oldText||'записать'; }
+  }
+}
+async function leboDeleteCurrent() {
+  const rowNum = (leboEl('leboRowNum')||{}).value; if (!rowNum) return;
+  if (!confirm('Удалить эту запись ЛЕБО?')) return;
+  try {
+    const res = await OM_NATIVE_FETCH(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'deleteLeboRecord', rowNum }), redirect:'follow'
+    });
+    const data = JSON.parse(await res.text());
+    if (!data.ok) throw new Error(data.error||'не удалось удалить');
+    toast('запись удалена'); leboResetForm(); leboLoaded = false; await leboLoadRecords(true);
+  } catch(e) { toast(e.message||String(e), true); }
+}
+
+// ============== ЗАЩИТА ОТ ДВОЙНОГО СОХРАНЕНИЯ ==============
+// Клиентская: 10 секунд cooldown после сохранения (для OM-заявок и ЛЕБО)
+const OM_SUBMIT_COOLDOWN = 10000;
+let omLastSubmitAt = 0;
+function omCheckSubmitCooldown(label) {
+  const now = Date.now();
+  if (now - omLastSubmitAt < OM_SUBMIT_COOLDOWN) {
+    const left = Math.ceil((OM_SUBMIT_COOLDOWN - (now - omLastSubmitAt)) / 1000);
+    toast(`⚠️ ${label||'запись'} только что была сохранена — подожди ${left} сек. чтобы избежать дубля`, true);
+    return false;
+  }
+  return true;
+}
+function omMarkSubmit() { omLastSubmitAt = Date.now(); }
 
 // ============== ИНИЦИАЛИЗАЦИЯ ==============
 // Данные OM грузим только после логина, чтобы поведение было как в SOWY.
