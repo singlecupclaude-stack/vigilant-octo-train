@@ -5183,12 +5183,14 @@ async function chatSend(text, urgent) {
     return;
   }
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'chat', sub: 'add', text, urgent })
+    const params = new URLSearchParams({
+      action: 'chat',
+      sub: 'add',
+      text,
+      urgent: urgent ? '1' : '0'
     });
-    const data = await res.json();
+    const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + params.toString();
+    const data = await omApiGetJson(url, {}, 'chat add');
     if (!data.ok) throw new Error(data.error || 'unknown');
     toast('заметка отправлена');
     setTimeout(loadData, 400);
@@ -5199,12 +5201,9 @@ async function chatSend(text, urgent) {
 
 async function chatToggleUrgent(id) {
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'chat', sub: 'toggleUrgent', id })
-    });
-    const data = await res.json();
+    const params = new URLSearchParams({ action: 'chat', sub: 'toggleUrgent', id });
+    const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + params.toString();
+    const data = await omApiGetJson(url, {}, 'chat toggle urgent');
     if (!data.ok) throw new Error(data.error || 'unknown');
     // Обновляем локально для скорости
     const msg = allMessages.find(m => m.id === id);
@@ -5216,12 +5215,9 @@ async function chatToggleUrgent(id) {
 
 async function chatDelete(id) {
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'chat', sub: 'delete', id })
-    });
-    const data = await res.json();
+    const params = new URLSearchParams({ action: 'chat', sub: 'delete', id });
+    const url = APPS_SCRIPT_URL + (APPS_SCRIPT_URL.includes('?') ? '&' : '?') + params.toString();
+    const data = await omApiGetJson(url, {}, 'chat delete');
     if (!data.ok) throw new Error(data.error || 'unknown');
     allMessages = allMessages.filter(m => m.id !== id);
     renderMessages();
@@ -8561,16 +8557,18 @@ async function shipLoadRequests(force){
 function shipPayloadFromForm(){
   const rowNum = (shipEl('shipRowNum') || {}).value || '';
   const client = (shipEl('shipClient') || {}).value || '';
+  const requestDate = (shipEl('shipRequestDate') || {}).value || shipTodayIso();
+  const readyDate = (shipEl('shipReadyDate') || {}).value || requestDate || shipTodayIso();
   return {
     action:'shippingRequest', update: !!rowNum, rowNum,
     expectedEditToken: (shipEl('shipEditToken') || {}).value || '',
     manager: (shipEl('shipManager') || {}).value || '',
     client: client.trim(),
-    requestDate: (shipEl('shipRequestDate') || {}).value || '',
+    requestDate,
     invoice: (shipEl('shipInvoice') || {}).value || '',
     invoiceAmount: (shipEl('shipInvoiceAmount') || {}).value || '',
     invoiceSent: !!(shipEl('shipInvoiceSent') || {}).checked,
-    readyDate: (shipEl('shipReadyDate') || {}).value || '',
+    readyDate,
     paymentFormat: (shipEl('shipPaymentFormat') || {}).value || '',
     paid: !!(shipEl('shipPaid') || {}).checked,
     paymentDate: (shipEl('shipPaymentDate') || {}).value || '',
@@ -8593,6 +8591,7 @@ function shipResetForm(){
   if (shipEl('shipDeleteBtn')) shipEl('shipDeleteBtn').style.display = 'none';
   if (shipEl('shipCancelEditBtn')) shipEl('shipCancelEditBtn').style.display = 'none';
   const rd = shipEl('shipRequestDate'); if (rd && !rd.value) rd.value = shipTodayIso();
+  const ready = shipEl('shipReadyDate'); if (ready && !ready.value) ready.value = shipTodayIso();
 }
 function shipCancelEdit(){
   shipResetForm();
