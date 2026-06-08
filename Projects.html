@@ -172,6 +172,11 @@
       padding: 0 13px;
       font-size: 12px;
       font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      line-height: 1;
     }
 
     .icon-button:hover, .text-button:hover {
@@ -1410,6 +1415,7 @@
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M20 6v5h-5M4 18v-5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 9A7 7 0 0 0 6.6 5.9L4 8.3m2 6.7a7 7 0 0 0 11.9 3.1L20 15.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <a class="text-button" id="sheetLink" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vRB-okcLAzGuIkCllX6q61IGjSj58YeVG1WtOHB9sDmwUYaoDT0XMbbO2qfbLXQSXJBRsf14bqj2vuD/pub?gid=939169345&single=true&output=csv" target="_blank" rel="noopener">CSV</a>
+        <button class="text-button" id="logoutBtn" type="button" title="Выйти и загрузить свежую версию (сброс кэша)">Выход</button>
       </div>
     </header>
 
@@ -2007,6 +2013,12 @@
       render();
     });
     el('refreshBtn').addEventListener('click', () => loadRows(true));
+    el('logoutBtn').addEventListener('click', () => {
+      // разлогин + сброс кэша: грузим свежую версию страницы мимо кэша
+      try { sessionStorage.removeItem(AUTH_KEY); } catch (e) {}
+      const base = location.href.split('#')[0].split('?')[0];
+      location.replace(base + '?v=' + Date.now());
+    });
     el('previewClose').addEventListener('click', closePreview);
     el('detailModalClose').addEventListener('click', closeDetailModal);
     el('detailModal').addEventListener('click', event => {
