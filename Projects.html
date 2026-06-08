@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -1788,8 +1788,18 @@
         ['service', 'Сервисы'],
         ['contact', 'Контакты']
       ];
+      const subtitleOf = row => normalize(row.desc || row.note || row.company || '');
       return definitions.map(([kind, title]) => {
-        const items = rows.filter(row => kindOf(row) === kind);
+        let items = rows.filter(row => kindOf(row) === kind);
+        if (kind === 'contact') {
+          // группируем контакты по компании, внутри — по имени
+          items = items.slice().sort((a, b) => {
+            const ca = subtitleOf(a), cb = subtitleOf(b);
+            if (ca !== cb) return ca < cb ? -1 : 1;
+            const ta = normalize(a.title), tb = normalize(b.title);
+            return ta < tb ? -1 : ta > tb ? 1 : 0;
+          });
+        }
         return { kind, title, items };
       }).filter(group => group.items.length);
     }
@@ -1922,7 +1932,13 @@
       const bundles = dashboardBundles(dashboards);
       const tables = rows.filter(row => kindOf(row) === 'table');
       const services = rows.filter(row => kindOf(row) === 'service');
-      const contacts = rows.filter(row => kindOf(row) === 'contact');
+      const contactSubtitle = row => normalize(row.desc || row.note || row.company || '');
+      const contacts = rows.filter(row => kindOf(row) === 'contact').sort((a, b) => {
+        const ca = contactSubtitle(a), cb = contactSubtitle(b);
+        if (ca !== cb) return ca < cb ? -1 : 1;
+        const ta = normalize(a.title), tb = normalize(b.title);
+        return ta < tb ? -1 : ta > tb ? 1 : 0;
+      });
       return `
         <section class="overview">
           <div class="overview-main">
