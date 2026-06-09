@@ -1,0 +1,2366 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SOWY ADS content v3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=Prata&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #281a12;
+      --paper: #f5eadf;
+      --paper-2: #fff8ef;
+      --line: rgba(43, 26, 19, .13);
+      --muted: #746856;
+      --champagne: #d8a95d;
+      --gold: #c9832b;
+      --copper: #a85d36;
+      --rose: #c86f61;
+      --espresso: #2b1a13;
+      --graphite: #2f2922;
+      --shadow: 0 26px 78px rgba(43, 26, 19, .22);
+      --soft-shadow: 0 18px 60px rgba(69, 46, 30, .10);
+    }
+
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--paper); scroll-behavior: smooth; }
+    [id^="kb-"] { scroll-margin-top: 18px; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      font-family: Manrope, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+      background:
+        linear-gradient(90deg, rgba(245,234,223,.99), rgba(245,234,223,.91) 45%, rgba(245,234,223,.34)),
+        var(--paper);
+      overflow-x: hidden;
+    }
+
+    .bg-map {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(980px, 70vw);
+      min-height: 720px;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .62;
+      filter: saturate(.92) contrast(.95);
+      background:
+        linear-gradient(90deg, transparent 0 calc(50% - 1px), rgba(43,26,19,.25) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
+        linear-gradient(0deg, transparent 0 calc(50% - 1px), rgba(43,26,19,.22) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)),
+        radial-gradient(circle at 18% 28%, rgba(216,169,93,.68) 0 4px, transparent 5px),
+        radial-gradient(circle at 44% 52%, rgba(201,131,43,.58) 0 5px, transparent 6px),
+        radial-gradient(circle at 72% 34%, rgba(168,93,54,.52) 0 4px, transparent 5px),
+        radial-gradient(circle at 66% 72%, rgba(200,111,97,.48) 0 5px, transparent 6px);
+      background-size: 96px 96px, 96px 96px, auto, auto, auto, auto;
+      mask-image: radial-gradient(ellipse at 64% 42%, #000 0 58%, transparent 82%);
+    }
+
+    .bg-veil {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(245,234,223,.99), rgba(245,234,223,.89) 52%, rgba(245,234,223,.16));
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      width: min(1500px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 30px 0 44px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 50px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(43,26,19,.18);
+      background: linear-gradient(135deg, var(--espresso), #5a3a24);
+      box-shadow: 0 12px 30px rgba(43, 26, 19, .25);
+      display: grid;
+      place-items: center;
+      color: var(--paper-2);
+      border-radius: 8px;
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    .brand-name {
+      font-family: Prata, Georgia, serif;
+      font-size: 24px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .brand-meta { color: var(--muted); font-size: 12px; margin-top: 5px; white-space: nowrap; }
+
+    .top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+    .text-button, .icon-button {
+      height: 36px;
+      border: 1px solid var(--line);
+      background: rgba(255, 248, 239, .74);
+      color: var(--ink);
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .text-button { padding: 0 13px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+    .icon-button { width: 36px; display: grid; place-items: center; }
+
+    .text-button:hover, .icon-button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(201,131,43,.44);
+      background: rgba(255, 248, 239, .96);
+    }
+
+    .text-button.active { border-color: rgba(201,131,43,.5); background: rgba(216,169,93,.28); color: #2f1c10; }
+    .icon-button.spinning { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 620px);
+      align-items: end;
+      gap: 30px;
+      padding: 34px 0 22px;
+    }
+
+    h1 {
+      max-width: 830px;
+      margin: 0;
+      font-family: Prata, Georgia, serif;
+      font-size: clamp(42px, 5.2vw, 78px);
+      line-height: .96;
+      font-weight: 400;
+      color: var(--ink);
+    }
+
+    .hero-copy {
+      max-width: 640px;
+      margin: 16px 0 0;
+      color: #5f513f;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border: 1px solid rgba(255, 248, 239, .42);
+      background: rgba(43, 26, 19, .88);
+      color: var(--paper-2);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      border-radius: 8px;
+      overflow: hidden;
+      width: 100%;
+      justify-self: end;
+    }
+
+    .summary-item { min-height: 92px; padding: 18px; border-right: 1px solid rgba(255,255,255,.13); }
+    .summary-item:last-child { border-right: 0; }
+    .summary-number { display: block; font-family: Prata, Georgia, serif; font-size: 30px; line-height: 1.05; color: #ffe2a6; white-space: nowrap; }
+    .summary-label {
+      display: block;
+      margin-top: 9px;
+      color: rgba(255,248,239,.68);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    /* ── Баннер статуса/ошибки ───────────────────────────────── */
+    .banner {
+      display: none;
+      margin: 14px 0 0;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      border: 1px solid;
+    }
+    .banner.show { display: block; }
+    .banner.info  { background: rgba(216,169,93,.16); border-color: rgba(201,131,43,.34); color: #6c4a18; }
+    .banner.error { background: rgba(200,111,97,.14); border-color: rgba(168,93,54,.4);  color: #8d3b30; }
+    .banner b { font-weight: 900; }
+
+    .workspace { display: grid; grid-template-columns: 336px minmax(0, 1fr); gap: 24px; align-items: start; }
+
+    .panel, .glass {
+      border: 1px solid var(--line);
+      background: rgba(255, 248, 239, .82);
+      box-shadow: var(--soft-shadow);
+      backdrop-filter: blur(18px);
+      border-radius: 8px;
+    }
+
+    .panel { position: sticky; top: 24px; padding: 18px; }
+
+    .filter-title {
+      margin: 18px 0 9px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+    }
+
+    .search {
+      width: 100%;
+      height: 44px;
+      border: 1px solid rgba(43,26,19,.14);
+      background: rgba(255,255,255,.58);
+      color: var(--ink);
+      border-radius: 8px;
+      outline: none;
+      padding: 0 13px;
+      font-size: 13px;
+    }
+
+    .segmented { display: grid; gap: 6px; }
+
+    .segment {
+      width: 100%;
+      height: 38px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #514131;
+      text-align: left;
+      border-radius: 8px;
+      padding: 0 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .segment small {
+      min-width: 24px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(43,26,19,.07);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .segment.active {
+      border-color: rgba(201,131,43,.32);
+      background: rgba(216,169,93,.20);
+      color: #2f1c10;
+    }
+
+    .sheet-link {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 38px;
+      margin-top: 18px;
+      border-radius: 8px;
+      border: 1px solid rgba(168,93,54,.30);
+      color: #8d4c35;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 900;
+      background: rgba(168,93,54,.09);
+      cursor: pointer;
+    }
+
+    /* ── Конфиг-панель ключей ────────────────────────────────── */
+    .cfg-drawer {
+      display: none;
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px dashed rgba(168,93,54,.4);
+      border-radius: 8px;
+      background: rgba(255,248,239,.7);
+    }
+    .cfg-drawer.show { display: block; }
+    .cfg-drawer label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 10px 0 5px; }
+    .cfg-drawer input {
+      width: 100%; height: 36px; padding: 0 10px; font-size: 12px;
+      border: 1px solid rgba(43,26,19,.16); border-radius: 7px; background: #fff;
+    }
+    .cfg-hint { font-size: 11px; color: #8a7a64; line-height: 1.45; margin-top: 6px; }
+    .cfg-save {
+      width: 100%; height: 38px; margin-top: 12px; border: none; border-radius: 8px;
+      background: var(--espresso); color: var(--paper-2); font-weight: 900; font-size: 12px; cursor: pointer;
+    }
+
+    .main { display: grid; gap: 18px; min-width: 0; }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      min-height: 48px;
+    }
+
+    .section-title { margin: 0; font-family: Prata, Georgia, serif; font-size: 28px; font-weight: 400; }
+    .status { color: var(--muted); font-size: 12px; text-align: right; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+
+    .metric-card {
+      min-height: 130px;
+      border: 1px solid rgba(43,26,19,.10);
+      background: rgba(255,248,239,.94);
+      border-radius: 8px;
+      padding: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--champagne);
+      opacity: .95;
+    }
+
+    .metric-card[data-tone="copper"]::before { background: var(--gold); }
+    .metric-card[data-tone="blue"]::before { background: var(--copper); }
+    .metric-card[data-tone="coral"]::before { background: var(--rose); }
+
+    .metric-label { color: var(--muted); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .10em; }
+    .metric-value { margin-top: 15px; font-family: Prata, Georgia, serif; font-size: 32px; line-height: 1; }
+    .metric-note { margin-top: 10px; color: #675844; font-size: 12px; line-height: 1.45; }
+
+    .board { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(330px, .75fr); gap: 16px; }
+
+    .deep-card {
+      border: 1px solid var(--line);
+      background: rgba(255, 248, 239, .86);
+      box-shadow: 0 18px 50px rgba(69, 46, 30, .10);
+      backdrop-filter: blur(16px);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .deep-head {
+      min-height: 54px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .deep-title { font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; }
+    .deep-meta { color: var(--muted); font-size: 12px; }
+
+    .chart { height: 230px; padding: 18px; display: flex; gap: 9px; align-items: end; }
+
+    .bar {
+      flex: 1;
+      min-width: 22px;
+      border-radius: 8px 8px 0 0;
+      background: linear-gradient(180deg, #f1c979, var(--gold));
+      position: relative;
+      transition: height .4s ease;
+    }
+
+    .bar:nth-child(2n) { background: linear-gradient(180deg, var(--copper), #7b3f25); }
+    .bar:nth-child(3n) { background: linear-gradient(180deg, #3e2a1d, var(--espresso)); }
+
+    .bar span {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .bar small {
+      position: absolute;
+      left: 50%; top: calc(100% + 6px);
+      transform: translateX(-50%);
+      color: var(--muted); font-size: 9px; font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .table { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; min-width: 820px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid rgba(43,26,19,.08); text-align: left; vertical-align: middle; }
+    th { color: var(--muted); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; position: sticky; top: 0; background: rgba(255,248,239,.98); z-index: 1; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .table tbody tr:hover { background: rgba(216,169,93,.08); }
+    .table td:first-child { overflow: hidden; }
+    .table td strong { font-size: 12.5px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .table td .status { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .table-wrap { max-height: 580px; overflow: auto; border-radius: 0 0 8px 8px; }
+    .pill.act { width: 100%; max-width: 100%; box-sizing: border-box; white-space: normal; line-height: 1.2; min-height: 28px; }
+
+    /* ── Список кампаний на CSS-grid (надёжнее table) ───────── */
+    .camp-wrap { max-height: 600px; overflow-y: auto; overflow-x: auto; }
+    .camp-head, .camp-row {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 64px 104px 58px 58px 72px 178px;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 16px;
+    }
+    .camp-head {
+      position: sticky; top: 0; z-index: 2;
+      background: rgba(255,248,239,.98);
+      border-bottom: 1px solid var(--line);
+      color: var(--muted); font-size: 10px; font-weight: 900;
+      text-transform: uppercase; letter-spacing: .08em;
+    }
+    .camp-head .r, .camp-row .r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .camp-row { border-bottom: 1px solid rgba(43,26,19,.07); font-size: 12.5px; }
+    .camp-row:hover { background: rgba(216,169,93,.08); }
+    .camp-name { min-width: 0; }
+    .camp-name strong { display: block; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .camp-name span { display: block; font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+    .camp-empty { padding: 26px; text-align: center; color: var(--muted); font-size: 13px; }
+    .toggle-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+    .toggle-row .segment { justify-content: center; height: 34px; font-size: 12px; }
+
+    /* сортируемые заголовки */
+    .camp-head > div[data-sort] { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 4px; }
+    .camp-head > div[data-sort].r { justify-content: flex-end; }
+    .camp-head .arrow { font-size: 9px; opacity: .4; }
+    .camp-head > div[data-sort].sorted { color: var(--gold); }
+    .camp-head > div[data-sort].sorted .arrow { opacity: 1; }
+
+    /* строка фильтров под шапкой */
+    .camp-filters {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 64px 104px 58px 58px 72px 178px;
+      gap: 10px; padding: 7px 16px;
+      position: sticky; top: 35px; z-index: 2;
+      background: rgba(248,238,226,.98);
+      border-bottom: 1px solid var(--line);
+    }
+    .camp-filters input, .camp-filters select {
+      width: 100%; height: 28px; padding: 0 6px; font-size: 11px;
+      border: 1px solid rgba(43,26,19,.16); border-radius: 6px; background: #fff; color: var(--ink);
+      min-width: 0;
+    }
+    .camp-filters .r input { text-align: right; }
+
+    /* подытог-заголовок группы */
+    .camp-group {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 64px 104px 58px 58px 72px 178px;
+      gap: 10px; padding: 8px 16px; align-items: center;
+      background: rgba(43,26,19,.055);
+      border-bottom: 1px solid rgba(43,26,19,.1);
+      border-top: 1px solid rgba(43,26,19,.1);
+    }
+    .camp-group .gname { font-weight: 900; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+    .camp-group .gname small { font-weight: 700; color: var(--muted); font-size: 11px; }
+    .camp-group .r { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 12px; white-space: nowrap; }
+    .camp-row .act { cursor: pointer; }
+    .camp-row .act::after { content: " ›"; opacity: .55; }
+
+    /* ссылки обучения */
+    .learn-links { display: grid; gap: 4px; margin-top: 4px; }
+    .learn-links a {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 10px; border-radius: 8px; text-decoration: none;
+      color: #51412f; font-size: 12.5px; font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .learn-links a:hover { background: rgba(216,169,93,.16); border-color: rgba(201,131,43,.28); }
+    .learn-links a::before { content: "📘"; font-size: 13px; }
+
+    /* модалка объяснения */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 50;
+      background: rgba(43,26,19,.42); backdrop-filter: blur(3px);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-card {
+      position: relative; width: min(560px, 100%); max-height: 86vh; overflow: auto;
+      background: var(--paper-2); border: 1px solid var(--line); border-radius: 12px;
+      box-shadow: var(--shadow); padding: 26px 26px 22px;
+    }
+    .modal-close {
+      position: absolute; top: 14px; right: 14px; width: 32px; height: 32px;
+      border: 1px solid var(--line); background: #fff; border-radius: 8px; cursor: pointer;
+      font-size: 14px; color: var(--muted);
+    }
+    .modal-kicker { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+    .modal-card h2 { margin: 8px 0 4px; font-family: Prata, Georgia, serif; font-weight: 400; font-size: 26px; line-height: 1.1; }
+    .modal-sub { color: #6c5c46; font-size: 13px; line-height: 1.55; margin: 6px 0 16px; }
+    .modal-stat { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+    .modal-stat .chip { border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 11px; font-weight: 800; background: #fff; }
+    .modal-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
+    .modal-steps li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; color: #4a3a2a; font-size: 13px; line-height: 1.5; }
+    .modal-steps .num { width: 24px; height: 24px; }
+
+    /* ── Логин ───────────────────────────────────────────────── */
+    .login-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      overflow: hidden;
+      background:
+        radial-gradient(1100px 700px at 80% -10%, rgba(216,169,93,.28), transparent 60%),
+        radial-gradient(900px 600px at -10% 110%, rgba(168,93,54,.22), transparent 55%),
+        linear-gradient(120deg, #2b1a13, #3c281c 55%, #543521);
+    }
+    /* точечная «карта» как в дашборде, мягко на фоне */
+    .login-overlay::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+      background:
+        radial-gradient(circle at 18% 28%, rgba(216,169,93,.5) 0 3px, transparent 4px),
+        radial-gradient(circle at 44% 62%, rgba(201,131,43,.4) 0 4px, transparent 5px),
+        radial-gradient(circle at 72% 34%, rgba(200,111,97,.4) 0 3px, transparent 4px),
+        radial-gradient(circle at 86% 74%, rgba(216,169,93,.35) 0 4px, transparent 5px),
+        linear-gradient(90deg, transparent 0 calc(50% - .5px), rgba(255,248,239,.05) calc(50% - .5px) calc(50% + .5px), transparent calc(50% + .5px));
+      background-size: 220px 220px, 260px 260px, 300px 300px, 280px 280px, 120px 120px;
+      mask-image: radial-gradient(ellipse at 70% 40%, #000 0 55%, transparent 85%);
+    }
+    .login-box {
+      position: relative; z-index: 1;
+      width: min(390px, 100%);
+      background: linear-gradient(180deg, rgba(53,34,24,.92), rgba(38,24,17,.96));
+      border: 1px solid rgba(255,248,239,.14);
+      border-radius: 18px;
+      box-shadow: 0 40px 90px rgba(20,12,8,.55);
+      backdrop-filter: blur(14px);
+      padding: 40px 36px 30px;
+      color: var(--paper-2);
+      text-align: center;
+      animation: loginIn .55s cubic-bezier(.2,.8,.25,1) both;
+    }
+    .login-box::before {
+      content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+      border-radius: 18px 18px 0 0;
+      background: linear-gradient(90deg, var(--rose), var(--gold), var(--champagne));
+    }
+    @keyframes loginIn { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: none; } }
+    .login-owl {
+      width: 66px; height: 66px; margin: 4px auto 16px; display: block;
+      color: var(--champagne);
+      filter: drop-shadow(0 8px 20px rgba(216,169,93,.35));
+      animation: owlFloat 4.5s ease-in-out infinite;
+    }
+    @keyframes owlFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+    .login-owl .blink { animation: owlBlink 5.5s infinite; transform-origin: center; }
+    @keyframes owlBlink { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+    .login-kicker { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .3em; color: var(--champagne); }
+    .login-box h2 { margin: 6px 0 0; font-family: Prata, Georgia, serif; font-weight: 400; font-size: 34px; line-height: 1; }
+    .login-box .login-sub { color: rgba(255,248,239,.55); font-size: 12.5px; line-height: 1.5; margin: 12px 0 26px; }
+    .login-field { text-align: left; margin-bottom: 13px; }
+    .login-field label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .14em; color: rgba(255,248,239,.5); margin-bottom: 6px; }
+    .login-field input {
+      width: 100%; height: 46px; padding: 0 14px; font-size: 14px;
+      background: rgba(255,248,239,.06); color: var(--paper-2);
+      border: 1px solid rgba(255,248,239,.16); border-radius: 10px; outline: none;
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    .login-field input::placeholder { color: rgba(255,248,239,.32); }
+    .login-field input:focus { border-color: var(--champagne); background: rgba(255,248,239,.1); box-shadow: 0 0 0 3px rgba(216,169,93,.16); }
+    .login-error { min-height: 18px; font-size: 12px; color: #f3b0a4; margin: 2px 0 8px; font-weight: 700; }
+    .login-btn {
+      width: 100%; height: 48px; margin-top: 6px;
+      background: linear-gradient(135deg, var(--gold), #b06a2f);
+      color: #2b1a13;
+      border: none; border-radius: 10px;
+      font-size: 12px; font-weight: 900; letter-spacing: .22em; text-transform: uppercase; cursor: pointer;
+      box-shadow: 0 14px 30px rgba(201,131,43,.3);
+      transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
+    }
+    .login-btn:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: 0 18px 38px rgba(201,131,43,.4); }
+    .login-btn:active { transform: translateY(0); }
+    .login-foot { margin-top: 20px; font-size: 11px; color: rgba(255,248,239,.4); font-style: italic; }
+    .login-foot b { color: var(--champagne); font-style: normal; font-weight: 800; }
+    .logout-link { color: var(--muted); font-size: 11px; cursor: pointer; text-decoration: underline; align-self: center; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 24px;
+      border: 1px solid rgba(43,26,19,.11);
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+
+    .pill.good { color: #684716; background: rgba(216,169,93,.20); }
+    .pill.warn { color: #8f4f34; background: rgba(168,93,54,.14); }
+    .pill.bad { color: #9b433b; background: rgba(200,111,97,.16); }
+    .pill.ozon { color: #3b2a20; background: rgba(43,26,19,.10); }
+    .pill.ym { color: #8f4f34; background: rgba(168,93,54,.12); }
+    .pill.neutral { color: #5d4e3c; background: rgba(43,26,19,.06); }
+
+    .insights { display: grid; gap: 10px; padding: 14px; }
+
+    .insight {
+      min-height: 102px;
+      border: 1px solid rgba(43,26,19,.10);
+      background: rgba(255,248,239,.94);
+      border-radius: 8px;
+      padding: 13px 13px 13px 17px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .insight::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--gold);
+    }
+
+    .insight[data-tone="bad"]::before { background: var(--rose); }
+    .insight[data-tone="good"]::before { background: var(--champagne); }
+    .insight-title { margin: 0 0 7px; font-size: 14px; font-weight: 900; }
+    .insight-copy { margin: 0; color: #675844; font-size: 12px; line-height: 1.55; }
+
+    .definition-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+    .definition {
+      min-height: 128px;
+      border: 1px solid rgba(43,26,19,.10);
+      background: rgba(255,248,239,.90);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .definition h3 { margin: 0 0 8px; font-family: Prata, Georgia, serif; font-size: 20px; font-weight: 400; }
+    .definition p { margin: 0; color: #675844; font-size: 12px; line-height: 1.55; }
+
+    .knowledge { display: grid; gap: 18px; }
+
+    .knowledge-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(360px, .92fr);
+      gap: 16px;
+    }
+
+    .playbook-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .playbook {
+      min-height: 178px;
+      border: 1px solid rgba(43,26,19,.10);
+      background: rgba(255,248,239,.94);
+      border-radius: 8px;
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .playbook::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 5px;
+      background: var(--champagne);
+    }
+
+    .playbook[data-tone="danger"]::before { background: var(--rose); }
+    .playbook[data-tone="money"]::before { background: var(--gold); }
+    .playbook[data-tone="traffic"]::before { background: var(--espresso); }
+
+    .playbook h3 { margin: 0 0 9px; font-size: 15px; line-height: 1.25; font-weight: 900; }
+
+    .steps {
+      margin: 0; padding: 0; list-style: none;
+      display: grid; gap: 7px;
+      color: #675844; font-size: 12px; line-height: 1.45;
+    }
+
+    .steps li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; }
+
+    .num {
+      width: 22px; height: 22px; border-radius: 999px;
+      display: grid; place-items: center;
+      background: rgba(43,26,19,.08); color: #4a2b17;
+      font-size: 10px; font-weight: 900;
+    }
+
+    .funnel-card { padding: 16px; }
+    .funnel { display: grid; gap: 10px; }
+
+    .funnel-step {
+      min-height: 58px;
+      display: grid;
+      grid-template-columns: 112px minmax(0, 1fr) 96px;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border: 1px solid rgba(43,26,19,.09);
+      border-radius: 8px;
+      background: rgba(255,255,255,.35);
+    }
+
+    .funnel-name { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .funnel-bar { height: 14px; border-radius: 999px; background: rgba(43,26,19,.08); overflow: hidden; }
+    .funnel-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f1c979, var(--gold)); transition: width .4s ease; }
+    .funnel-value { text-align: right; font-family: Prata, Georgia, serif; font-size: 18px; }
+
+    .checklist { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .checklist th, .checklist td { padding: 12px; border-bottom: 1px solid rgba(43,26,19,.09); vertical-align: top; }
+    .checklist td:first-child { width: 170px; font-weight: 900; color: #3a2416; }
+
+    .mini-slides { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 14px; }
+
+    .slide {
+      min-height: 190px; border-radius: 8px; padding: 16px;
+      background: rgba(43, 26, 19, .90); color: var(--paper-2);
+      box-shadow: 0 18px 50px rgba(43, 26, 19, .14);
+      display: grid; align-content: space-between; gap: 18px;
+      position: relative; overflow: hidden;
+    }
+
+    .slide::after {
+      content: ""; position: absolute; right: -40px; bottom: -46px;
+      width: 150px; height: 150px;
+      border: 1px solid rgba(255,226,166,.22); border-radius: 50%;
+    }
+
+    .slide:nth-child(2) { background: #7c4827; }
+    .slide:nth-child(3) { background: #a85d36; }
+
+    .slide-kicker { color: rgba(255,248,239,.68); font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; }
+    .slide h3 { margin: 0; font-family: Prata, Georgia, serif; font-size: 27px; line-height: 1.08; font-weight: 400; }
+    .slide p { margin: 0; color: rgba(255,248,239,.76); font-size: 12px; line-height: 1.55; }
+
+    .terms-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding: 14px; }
+
+    .term {
+      min-height: 122px; border: 1px solid rgba(43,26,19,.10);
+      border-radius: 8px; background: rgba(255,248,239,.92); padding: 13px;
+    }
+
+    .term strong { display: block; margin-bottom: 7px; font-size: 15px; font-weight: 900; }
+    .term span { display: block; color: #675844; font-size: 12px; line-height: 1.45; }
+
+    /* ── Заглушка / пустое состояние ─────────────────────────── */
+    .stub {
+      padding: 18px; margin: 14px; border-radius: 8px;
+      border: 1px dashed rgba(168,93,54,.4); background: rgba(168,93,54,.06);
+      font-size: 13px; line-height: 1.6; color: #6c4a2c;
+    }
+    .stub b { font-weight: 900; color: #5a2f16; }
+    .skeleton { color: transparent !important; position: relative; border-radius: 6px; }
+    .skeleton::after {
+      content: ""; position: absolute; inset: 0; border-radius: 6px;
+      background: linear-gradient(90deg, rgba(43,26,19,.06), rgba(43,26,19,.13), rgba(43,26,19,.06));
+      background-size: 200% 100%; animation: shimmer 1.3s infinite;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    @media (max-width: 1180px) {
+      .hero, .workspace, .board { grid-template-columns: 1fr; }
+      .panel { position: static; }
+      .metric-grid, .definition-grid, .mini-slides, .terms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .knowledge-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .app { width: min(100% - 24px, 1500px); padding-top: 18px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      h1 { font-size: 42px; }
+      .summary, .metric-grid, .definition-grid, .playbook-grid, .mini-slides, .terms-grid { grid-template-columns: 1fr; }
+      .funnel-step { grid-template-columns: 1fr; }
+      .funnel-value { text-align: left; }
+      .summary-item { border-right: 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+      .chart { height: 180px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-map"></div>
+  <div class="bg-veil"></div>
+
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <svg class="login-owl" viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 30 Q20 13 35 16"/>
+        <path d="M74 30 Q76 13 61 16"/>
+        <ellipse cx="48" cy="53" rx="29" ry="31"/>
+        <g class="blink">
+          <circle cx="37" cy="45" r="11"/>
+          <circle cx="59" cy="45" r="11"/>
+          <circle cx="37" cy="45" r="3.6" fill="currentColor" stroke="none"/>
+          <circle cx="59" cy="45" r="3.6" fill="currentColor" stroke="none"/>
+        </g>
+        <path d="M44 57 L48 64 L52 57 Z" fill="currentColor" stroke="none"/>
+        <path d="M30 70 Q48 80 66 70"/>
+      </svg>
+      <div class="login-kicker">SOWY · ADS</div>
+      <h2>Рекламная комната</h2>
+      <div class="login-sub">WB, Ozon и Яндекс Маркет в одном месте.<br>Реклама, которая говорит человеческим языком.</div>
+      <div class="login-field">
+        <label>Логин</label>
+        <input type="text" id="loginInput" placeholder="Логин" autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label>Пароль</label>
+        <input type="password" id="passwordInput" placeholder="Пароль" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter'){document.getElementById('loginBtn').click();}">
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <button class="login-btn" id="loginBtn">Войти в дашборд</button>
+      <div class="login-foot">скрипты <b>Совы</b> · кофейная витрина</div>
+    </div>
+  </div>
+
+  <div class="app" id="app" style="display:none">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">AD</div>
+        <div>
+          <div class="brand-name">SOWY ADS</div>
+          <div class="brand-meta">WB / Ozon / Яндекс Маркет advertising room · v3</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="text-button period active" data-days="7">7 дней</button>
+        <button class="text-button period" data-days="14">14 дней</button>
+        <button class="text-button period" data-days="30">30 дней</button>
+        <button class="text-button" id="btnConfig">Ключи</button>
+        <button class="text-button" id="btnDbg">Диагностика</button>
+        <button class="text-button" id="btnLogout" title="Выйти">Выйти</button>
+        <button class="icon-button" id="btnRefresh" title="Обновить">↻</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <h1>Реклама, которая говорит человеческим языком.</h1>
+        <p class="hero-copy">Дашборд собирает кампании WB, Ozon и Яндекс Маркета, показывает расход, заказы, ДРР, CTR, корзины и сразу объясняет простым языком, что проверить: ставки, карточку, остатки, цену, доставку или конкурентов.</p>
+      </div>
+      <div class="summary">
+        <div class="summary-item">
+          <span class="summary-number" id="sumDrr">—</span>
+          <span class="summary-label">средний ДРР</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-number" id="sumRevenue">—</span>
+          <span class="summary-label">рекламная выручка</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-number" id="sumSignals">—</span>
+          <span class="summary-label">сигналов внимания</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="banner" id="banner"></div>
+
+    <div class="deep-card" id="dbgCard" style="display:none;margin-top:14px">
+      <div class="deep-head">
+        <div class="deep-title">Диагностика · сырые ответы API</div>
+        <div class="deep-meta">пришли скриншот этого блока — подгоню разбор</div>
+      </div>
+      <pre id="dbgOut" style="margin:0;padding:16px;font-size:11px;line-height:1.45;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto;color:#4a3a2a;font-family:ui-monospace,Menlo,Consolas,monospace"></pre>
+    </div>
+
+    <section class="workspace">
+      <aside class="panel">
+        <input class="search" id="search" value="" placeholder="Поиск по кампании, SKU, кабинету">
+
+        <div class="filter-title">Площадка</div>
+        <div class="segmented" id="platformFilter">
+          <button class="segment active" data-plat="all"><span>Все площадки</span><small id="cnt-all">0</small></button>
+          <button class="segment" data-plat="wb"><span>Wildberries</span><small id="cnt-wb">0</small></button>
+          <button class="segment" data-plat="ozon"><span>Ozon</span><small id="cnt-ozon">0</small></button>
+          <button class="segment" data-plat="ym"><span>Яндекс Маркет</span><small id="cnt-ym">0</small></button>
+        </div>
+
+        <div class="filter-title">Что показать</div>
+        <div class="segmented" id="viewFilter">
+          <button class="segment" data-view="spending"><span>С расходом</span><small id="cnt-spending">0</small></button>
+          <button class="segment" data-view="attention"><span>Требует внимания</span><small id="cnt-attention">0</small></button>
+          <button class="segment" data-view="scale"><span>Можно масштабировать</span><small id="cnt-scale">0</small></button>
+          <button class="segment" data-view="lowcart"><span>Низкая корзина</span><small id="cnt-lowcart">0</small></button>
+          <button class="segment" data-view="highdrr"><span>Высокий ДРР</span><small id="cnt-highdrr">0</small></button>
+          <button class="segment active" data-view="all"><span>Все кампании</span><small id="cnt-allc">0</small></button>
+        </div>
+
+        <div class="filter-title">Статус кампаний</div>
+        <div class="segmented toggle-row" id="statusFilter">
+          <button class="segment" data-status="all"><span>Все</span></button>
+          <button class="segment active" data-status="active"><span>Активные</span></button>
+          <button class="segment" data-status="paused"><span>Неактивные</span></button>
+        </div>
+
+        <div class="filter-title">Обучение</div>
+        <nav class="learn-links">
+          <a href="#kb-playbooks">Что делать, если метрика просела</a>
+          <a href="#kb-funnel">Воронка рекламы: где искать проблему</a>
+          <a href="#kb-nopro">Режим «мы не рекламщики»</a>
+          <a href="#kb-slides">Мини-презентация для команды</a>
+          <a href="#kb-dict">Словарь метрик простым языком</a>
+        </nav>
+
+        <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1q28NHetM5NOFH4pmNHA7RS8O-tjHlngWr7LiILSm4c4/edit" target="_blank" rel="noopener">КОНФИГ и рекламные листы</a>
+
+        <!-- Конфиг-панель ключей (localStorage) -->
+        <div class="cfg-drawer" id="cfgDrawer">
+          <label>WB токен (Promotion API)</label>
+          <input id="cfgWb" placeholder="eyJ… (тот же, что у Совы)">
+          <label>Ozon Performance · Client ID</label>
+          <input id="cfgOzId" placeholder="напр. 12345-1700000000000@advertising.performance.ozon.ru">
+          <label>Ozon Performance · Client Secret</label>
+          <input id="cfgOzSecret" placeholder="секрет из кабинета Performance">
+          <label>Яндекс Маркет · Api-Key</label>
+          <input id="cfgYm" placeholder="ACMA:…">
+          <p class="cfg-hint">Ozon-реклама требует ОТДЕЛЬНЫЕ Performance-доступы (не Seller Api-Key): seller.ozon.ru → Настройки → API-ключи → Performance API → создать аккаунт → добавить ключ. Сохранится только в этом браузере (localStorage).</p>
+          <button class="cfg-save" id="cfgSave">Сохранить и обновить</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="section-head">
+          <h2 class="section-title">Сводка периода</h2>
+          <div class="status" id="statusLine">загрузка…<br>источник: WB / Ozon / ЯМ через прокси</div>
+        </div>
+
+        <section class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-label">Расход</div>
+            <div class="metric-value" id="mSpend">—</div>
+            <div class="metric-note" id="mSpendNote">Сумма рекламных трат за период по всем площадкам.</div>
+          </div>
+          <div class="metric-card" data-tone="copper">
+            <div class="metric-label">Корзина</div>
+            <div class="metric-value" id="mCart">—</div>
+            <div class="metric-note" id="mCartNote">Если падает, сначала проверяем товар, не только РК.</div>
+          </div>
+          <div class="metric-card" data-tone="blue">
+            <div class="metric-label">CTR</div>
+            <div class="metric-value" id="mCtr">—</div>
+            <div class="metric-note" id="mCtrNote">Обложка и цена в выдаче: цепляет ли объявление.</div>
+          </div>
+          <div class="metric-card" data-tone="coral">
+            <div class="metric-label">Риски</div>
+            <div class="metric-value" id="mRisks">—</div>
+            <div class="metric-note" id="mRisksNote">Кампании, которые лучше не масштабировать до проверки.</div>
+          </div>
+        </section>
+
+        <section class="board">
+          <div class="deep-card">
+            <div class="deep-head">
+              <div class="deep-title">Динамика расхода по дням</div>
+              <div class="deep-meta" id="chartMeta">—</div>
+            </div>
+            <div class="chart" id="chart"></div>
+          </div>
+
+          <div class="deep-card">
+            <div class="deep-head">
+              <div class="deep-title">На что смотреть</div>
+              <div class="deep-meta">авторазбор</div>
+            </div>
+            <div class="insights" id="insights"></div>
+          </div>
+        </section>
+
+        <section class="deep-card">
+          <div class="deep-head">
+            <div class="deep-title">Кампании</div>
+            <div class="deep-meta" id="campMeta">WB, Ozon и ЯМ в одной таблице</div>
+          </div>
+          <div class="camp-wrap">
+            <div class="camp-head" id="campHead">
+              <div data-sort="name">Кампания <span class="arrow"></span></div>
+              <div data-sort="platform">Площадка <span class="arrow"></span></div>
+              <div class="r" data-sort="spend">Расход <span class="arrow"></span></div>
+              <div class="r" data-sort="drr">ДРР <span class="arrow"></span></div>
+              <div class="r" data-sort="ctr">CTR <span class="arrow"></span></div>
+              <div class="r" data-sort="cart">Корзина <span class="arrow"></span></div>
+              <div>Действие</div>
+            </div>
+            <div class="camp-filters">
+              <div><input id="fName" placeholder="поиск по названию…"></div>
+              <div>
+                <select id="fPlat">
+                  <option value="">все</option>
+                  <option value="wb">WB</option>
+                  <option value="ozon">Ozon</option>
+                  <option value="ym">ЯМ</option>
+                </select>
+              </div>
+              <div><input id="fSpend" type="number" inputmode="numeric" placeholder="₽ от"></div>
+              <div><input id="fDrr" type="number" inputmode="numeric" placeholder="ДРР ≤"></div>
+              <div><input id="fCtr" type="number" inputmode="numeric" placeholder="CTR ≥"></div>
+              <div><input id="fCart" type="number" inputmode="numeric" placeholder="≥ %"></div>
+              <div>
+                <select id="fTone">
+                  <option value="">все</option>
+                  <option value="bad">🔴 красные</option>
+                  <option value="warn">🟡 жёлтые</option>
+                  <option value="good">🟢 зелёные</option>
+                </select>
+              </div>
+            </div>
+            <div id="campRows">
+              <div class="camp-empty">загрузка кампаний…</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="definition-grid">
+          <div class="definition">
+            <h3>ДРР</h3>
+            <p>Сколько рекламы потратили на 100 рублей рекламной выручки. Если растёт, реклама начинает съедать маржу. У кофе-капсул маржа тонкая, поэтому ДРР держим в узком коридоре.</p>
+          </div>
+          <div class="definition">
+            <h3>CTR</h3>
+            <p>Люди увидели рекламу и кликнули. Если низкий, смотри обложку, цену, рейтинг, позицию и релевантность запроса. На ЯМ ещё важны условия доставки и видимость оффера.</p>
+          </div>
+          <div class="definition">
+            <h3>Корзина</h3>
+            <p>Клик превратился в желание купить. Если падает, проверяем остатки (по складам в Сове), цену, конкурентов, карточку и доставку.</p>
+          </div>
+        </section>
+
+        <section class="knowledge">
+          <div class="section-head">
+            <h2 class="section-title">База решений</h2>
+            <div class="status">инструкции для ежедневной работы<br>можно расширять под ваши правила</div>
+          </div>
+
+          <section class="knowledge-grid">
+            <div class="deep-card" id="kb-playbooks">
+              <div class="deep-head">
+                <div class="deep-title">Что делать если метрика просела</div>
+                <div class="deep-meta">короткие инструкции</div>
+              </div>
+              <div class="playbook-grid">
+                <article class="playbook" data-tone="danger">
+                  <h3>Падает конверсия в корзину</h3>
+                  <ol class="steps">
+                    <li><span class="num">1</span><span>Проверь остатки по складам и срок доставки: товар может быть виден, но неудобен к покупке. В Сове открой лист «Остатки» / «Остатки WB».</span></li>
+                    <li><span class="num">2</span><span>Сравни цену с топ-3 конкурентами и посмотри, не пропала ли скидка/акция.</span></li>
+                    <li><span class="num">3</span><span>Открой карточку глазами клиента: первое фото, рейтинг, отзывы, варианты, понятность комплектации (сколько капсул, под какую систему).</span></li>
+                    <li><span class="num">4</span><span>Только после этого меняй ставки или отключай группу.</span></li>
+                    <li><span class="num">5</span><span>Если это Яндекс Маркет, отдельно проверь доставку, цену с учётом скидок и наличие оффера в нужном регионе.</span></li>
+                  </ol>
+                </article>
+                <article class="playbook" data-tone="traffic">
+                  <h3>Низкий CTR</h3>
+                  <ol class="steps">
+                    <li><span class="num">1</span><span>Проверь главный кадр: товар должен быстро считываться в выдаче.</span></li>
+                    <li><span class="num">2</span><span>Сравни цену, рейтинг и количество отзывов рядом с конкурентами.</span></li>
+                    <li><span class="num">3</span><span>Посмотри запросы: реклама может показываться людям с другим намерением (искали кофемашину, а не капсулы).</span></li>
+                    <li><span class="num">4</span><span>Если CTR слабый и CPC растёт, не повышай ставку вслепую.</span></li>
+                  </ol>
+                </article>
+                <article class="playbook" data-tone="money">
+                  <h3>ДРР выше нормы</h3>
+                  <ol class="steps">
+                    <li><span class="num">1</span><span>Проверь маржинальность: один и тот же ДРР может быть нормой или катастрофой.</span></li>
+                    <li><span class="num">2</span><span>Раздели кампании: где есть клики без корзин, где есть корзины без заказов.</span></li>
+                    <li><span class="num">3</span><span>Урежь мусорные фразы, товары без остатков и дорогие группы.</span></li>
+                    <li><span class="num">4</span><span>Оставь бюджет там, где ДРР и корзина одновременно здоровые.</span></li>
+                  </ol>
+                </article>
+                <article class="playbook">
+                  <h3>Бюджет заканчивается</h3>
+                  <ol class="steps">
+                    <li><span class="num">1</span><span>Не пополняй всё подряд: сначала смотри ДРР, корзину, остатки и дневной темп заказов.</span></li>
+                    <li><span class="num">2</span><span>Если кампания прибыльная и товар есть, пополнение бюджета может сохранить продажи.</span></li>
+                    <li><span class="num">3</span><span>Если товар почти закончился, лучше снизить темп, чем выкупить последние остатки рекламой.</span></li>
+                    <li><span class="num">4</span><span>Фиксируй причину решения, чтобы потом понимать, что сработало.</span></li>
+                  </ol>
+                </article>
+                <article class="playbook" data-tone="traffic">
+                  <h3>Заказы резко упали</h3>
+                  <ol class="steps">
+                    <li><span class="num">1</span><span>Не паникуем и не крутим всё сразу: сначала сравни сегодня с тем же днём недели.</span></li>
+                    <li><span class="num">2</span><span>Проверь, не закончился ли бюджет и не остановились ли кампании.</span></li>
+                    <li><span class="num">3</span><span>Посмотри остатки и доставку: товар мог стать недоступным или приехать слишком поздно.</span></li>
+                    <li><span class="num">4</span><span>Проверь цену и конкурентов: если конкурент резко снизил цену, реклама может продолжать кликаться, но хуже продавать.</span></li>
+                  </ol>
+                </article>
+                <article class="playbook" data-tone="money">
+                  <h3>Клики есть, продаж нет</h3>
+                  <ol class="steps">
+                    <li><span class="num">1</span><span>Это значит: реклама привела человека, но товар не убедил купить.</span></li>
+                    <li><span class="num">2</span><span>Открой карточку как покупатель: понятно ли, что это, кому подходит и почему стоит купить сейчас.</span></li>
+                    <li><span class="num">3</span><span>Сравни цену, отзывы, фото и доставку с соседними товарами в выдаче.</span></li>
+                    <li><span class="num">4</span><span>Если карточка слабая, снижение/рост ставки проблему не лечит, оно только меняет скорость траты денег.</span></li>
+                  </ol>
+                </article>
+              </div>
+            </div>
+
+            <div class="deep-card" id="kb-funnel">
+              <div class="deep-head">
+                <div class="deep-title">Воронка рекламы</div>
+                <div class="deep-meta">где искать проблему</div>
+              </div>
+              <div class="funnel-card">
+                <div class="funnel" id="funnel">
+                  <div class="funnel-step">
+                    <div class="funnel-name">Показы</div>
+                    <div class="funnel-bar"><div class="funnel-fill" id="fl-views" style="width:0%"></div></div>
+                    <div class="funnel-value" id="fv-views">—</div>
+                  </div>
+                  <div class="funnel-step">
+                    <div class="funnel-name">Клики</div>
+                    <div class="funnel-bar"><div class="funnel-fill" id="fl-clicks" style="width:0%"></div></div>
+                    <div class="funnel-value" id="fv-clicks">—</div>
+                  </div>
+                  <div class="funnel-step">
+                    <div class="funnel-name">Корзины</div>
+                    <div class="funnel-bar"><div class="funnel-fill" id="fl-cart" style="width:0%"></div></div>
+                    <div class="funnel-value" id="fv-cart">—</div>
+                  </div>
+                  <div class="funnel-step">
+                    <div class="funnel-name">Заказы</div>
+                    <div class="funnel-bar"><div class="funnel-fill" id="fl-orders" style="width:0%"></div></div>
+                    <div class="funnel-value" id="fv-orders">—</div>
+                  </div>
+                </div>
+              </div>
+              <table class="checklist">
+                <tbody>
+                  <tr>
+                    <td>Показы есть, кликов мало</td>
+                    <td>Проблема обычно в первом впечатлении: фото, цена в выдаче, рейтинг, нерелевантные запросы, слабая позиция.</td>
+                  </tr>
+                  <tr>
+                    <td>Клики есть, корзин мало</td>
+                    <td>Проблема чаще в карточке и оффере: остатки, цена, конкуренты, отзывы, комплектация, срок доставки.</td>
+                  </tr>
+                  <tr>
+                    <td>Корзины есть, заказов мало</td>
+                    <td>Проверяем цену на финальном шаге, доставку, промо, варианты товара, отзывы и наличие нужных размеров/моделей.</td>
+                  </tr>
+                  <tr>
+                    <td>Заказы есть, ДРР плохой</td>
+                    <td>Кампания продаёт, но дорого. Нужны ставки, минус-фразы, разделение товаров и проверка маржи.</td>
+                  </tr>
+                  <tr>
+                    <td>ЯМ даёт клики, но мало заказов</td>
+                    <td>Проверяем не только рекламу: цену с учётом скидки, доставку, регион доступности, рейтинг магазина и конкурентные предложения.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="deep-card" id="kb-nopro">
+            <div class="deep-head">
+              <div class="deep-title">Режим “мы не рекламщики”</div>
+              <div class="deep-meta">как читать дашборд без подготовки</div>
+            </div>
+            <table class="checklist">
+              <tbody>
+                <tr>
+                  <td>Сначала смотрим цвет</td>
+                  <td>Зелёное — можно наблюдать или аккуратно растить. Жёлтое — нужна проверка. Красное — не масштабируем, пока не поняли причину.</td>
+                </tr>
+                <tr>
+                  <td>Потом смотрим где сломалось</td>
+                  <td>Показы → клики → корзины → заказы → деньги. Каждый шаг отвечает на свой вопрос: увидели, заинтересовались, захотели, купили, окупилось.</td>
+                </tr>
+                <tr>
+                  <td>Не лечим всё ставкой</td>
+                  <td>Ставка влияет на то, сколько и где нас показывают. Но она не исправляет плохую цену, пустой склад, слабые фото или плохие отзывы.</td>
+                </tr>
+                <tr>
+                  <td>Один плохой день не приговор</td>
+                  <td>Сравниваем с прошлой неделей и смотрим тренд. Реагируем быстро на критичные вещи: бюджет 0, остатки 0, резкий рост ДРР, резкое падение корзины.</td>
+                </tr>
+                <tr>
+                  <td>Фиксируем действие</td>
+                  <td>Если поменяли ставку, бюджет, цену или карточку, записываем дату. Иначе потом невозможно понять, что помогло, а что просто совпало.</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="deep-card" id="kb-slides">
+            <div class="deep-head">
+              <div class="deep-title">Мини-презентация для команды</div>
+              <div class="deep-meta">три слайда в одном экране</div>
+            </div>
+            <div class="mini-slides">
+              <article class="slide">
+                <div class="slide-kicker">01 / смысл</div>
+                <h3>Реклама не живёт отдельно от товара.</h3>
+                <p>Если просела корзина, мы не начинаем со ставок. Сначала проверяем наличие, цену, конкурентов, карточку и доставку.</p>
+              </article>
+              <article class="slide">
+                <div class="slide-kicker">02 / порядок</div>
+                <h3>Сначала диагноз, потом действие.</h3>
+                <p>CTR отвечает за интерес, корзина за готовность купить, заказ за финальное доверие, ДРР за экономику.</p>
+              </article>
+              <article class="slide">
+                <div class="slide-kicker">03 / правило</div>
+                <h3>Масштабируем только здоровое.</h3>
+                <p>Хорошая кампания должна иметь приемлемый ДРР, нормальную корзину и достаточные остатки. Иначе рост бюджета усилит проблему.</p>
+              </article>
+              <article class="slide">
+                <div class="slide-kicker">04 / ЯМ</div>
+                <h3>Маркет особенно чувствителен к офферу.</h3>
+                <p>На ЯМ реклама может быть нормальной, но покупатель уйдёт из-за доставки, цены, рейтинга магазина или более сильного предложения рядом.</p>
+              </article>
+              <article class="slide">
+                <div class="slide-kicker">05 / команда</div>
+                <h3>Дашборд не ругает, а подсказывает.</h3>
+                <p>Наша задача не “угадать рекламу”, а каждый день видеть изменения и идти по чеклисту: товар, цена, остатки, карточка, ставка.</p>
+              </article>
+              <article class="slide">
+                <div class="slide-kicker">06 / реакция</div>
+                <h3>Решение должно быть маленьким и проверяемым.</h3>
+                <p>Меняем одну-две вещи, ждём данные, сравниваем результат. Так команда учится, а не просто крутит рычаги.</p>
+              </article>
+            </div>
+          </section>
+
+          <section class="deep-card" id="kb-dict">
+            <div class="deep-head">
+              <div class="deep-title">Словарь метрик</div>
+              <div class="deep-meta">простым языком</div>
+            </div>
+            <div class="terms-grid">
+              <div class="term"><strong>Показы</strong><span>Сколько раз рекламу увидели. Много показов без кликов означает, что объявление не цепляет или показы не тем людям.</span></div>
+              <div class="term"><strong>CTR</strong><span>Доля показов, которые стали кликами. Влияют фото, цена, рейтинг, место в выдаче и релевантность.</span></div>
+              <div class="term"><strong>CPC</strong><span>Цена одного клика. Если растёт, проверяем конкуренцию, ставки и CTR.</span></div>
+              <div class="term"><strong>Корзина</strong><span>Клик превратился в добавление в корзину. Это главный сигнал, что товар и оффер понравились.</span></div>
+              <div class="term"><strong>Заказ</strong><span>Покупатель дошёл до оформления. Если корзины есть, а заказов мало, ищем проблему ближе к покупке.</span></div>
+              <div class="term"><strong>ДРР</strong><span>Доля рекламных расходов. Показывает, насколько реклама дорогая относительно рекламной выручки.</span></div>
+              <div class="term"><strong>ROAS</strong><span>Сколько рублей выручки получили на 1 рубль рекламы. Это обратная логика к ДРР.</span></div>
+              <div class="term"><strong>Остатки</strong><span>Не рекламная метрика, но влияет на рекламу напрямую: без товара нельзя стабильно масштабировать кампанию.</span></div>
+              <div class="term"><strong>ЯМ</strong><span>Яндекс Маркет. Кроме рекламы обязательно смотрим цену, доставку, регион, рейтинг магазина и конкурентные офферы.</span></div>
+              <div class="term"><strong>Оффер</strong><span>То, что видит покупатель: цена, скидка, доставка, рейтинг, фото, название, выгода. Слабый оффер ломает рекламу.</span></div>
+              <div class="term"><strong>Ставка</strong><span>Сколько мы готовы платить за показ или клик. Она помогает получить трафик, но не делает товар привлекательнее.</span></div>
+              <div class="term"><strong>Тренд</strong><span>Направление изменения за несколько дней. Важнее, чем случайный скачок за один день.</span></div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </section>
+  </div>
+
+  <div class="modal-overlay" id="modal" style="display:none">
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" title="Закрыть">✕</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+  "use strict";
+  // ════════════════════════════════════════════════════════════
+  // SOWY ADS v3 — слой данных. Та же схема, что и SOWY_v3:
+  // workerFetch → Apps Script прокси (?p=base64) → Cloudflare Worker → API.
+  // ════════════════════════════════════════════════════════════
+
+  // ── Прокси (один-в-один с SOWY_v3) ──────────────────────────
+  var WORKER_URL  = 'https://script.google.com/macros/s/AKfycbxQnUw5VC2qbXRR9AR2t3v25HOzDRhS9SGdwdPi9muiJf-dgQjxGvqIPlEYhTK6rDoC/exec';
+  window.WORKER_URLS = [
+    WORKER_URL,
+    'https://young-fire-5c0f.singlecupclaude.workers.dev'
+  ];
+
+  // ── Ключи. По умолчанию — как у Совы; localStorage переопределяет. ──
+  var DEFAULTS = {
+    wb: 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjYwMzAydjEiLCJ0eXAiOiJKV1QifQ.eyJhY2MiOjMsImVudCI6MSwiZXhwIjoxNzk0OTU5NjU2LCJmb3IiOiJzZWxmIiwiaWQiOiIwMTllNDAxNi0yZmVjLTcxNTItOWE3Yy0xMDc3NTJlNGJlMTUiLCJpaWQiOjM3MTI4NzgxLCJvaWQiOjEzODgzLCJzIjo4MTY2Miwic2lkIjoiNTUxZDc5NjItZTg5MC01YjU4LTg0MTEtOTYxZjhhZmRlNDAzIiwidCI6ZmFsc2UsInVpZCI6MzcxMjg3ODF9.yeI2zsr3kYse_tXTWVqK665xmcdmT_xCylwOWz3ACyv_NcPyrcYIXmTmyoh-U5Oct9E0O5WxejTEVixaifm8lQ',
+    ozId: '95508644-1780989376761@advertising.performance.ozon.ru',       // Ozon Performance Client ID
+    ozSecret: 'lMSm28JdYVBz15jonOAme6YrvXhRi_Xxi9R3LfncflyAWQ8AXrBJ6_KKRajfvEHdBwAwjbYFNGcyvC0DvA',   // Ozon Performance Client Secret
+    ym: 'ACMA:jH1sUGjF7WzheJwgT1WlVqEGvKvyx8YdskBji0hB:4e009b36'
+  };
+  var YM_CAMPAIGNS = ['21577916', '93482655']; // FBY · Single cup coffee + ИП Тимашков
+
+  function loadCfg() {
+    var c = Object.assign({}, DEFAULTS);
+    try {
+      var raw = localStorage.getItem('sowy_ads_cfg');
+      if (raw) Object.assign(c, JSON.parse(raw));
+    } catch (e) {}
+    return c;
+  }
+  var CFG = loadCfg();
+
+  // ── Пороги светофора (рекламные) ────────────────────────────
+  var TH = {
+    drrGreen: 12,   // ДРР ≤ 12% — здорово
+    drrYellow: 20,  // 12–20% — наблюдать; > 20% — дорого
+    cartGreen: 8,   // конверсия в корзину ≥ 8% — хорошо
+    cartRed: 4      // < 4% — плохо
+  };
+
+  // ════════════════════════════════════════════════════════════
+  // workerFetch — точная копия проверенной реализации Совы.
+  // ════════════════════════════════════════════════════════════
+  var _jsonpCounter = 0;
+  var _preferJsonp = false;
+
+  async function workerFetch(targetUrl, method, headers, body, timeoutMs) {
+    var ms = timeoutMs || 45000;
+    var payloadJson = JSON.stringify({
+      url: targetUrl, method: method || 'GET', headers: headers || {}, body: body || null
+    });
+    var payloadB64 = btoa(unescape(encodeURIComponent(payloadJson)));
+
+    var proxyList = (Array.isArray(window.WORKER_URLS) && window.WORKER_URLS.length)
+      ? window.WORKER_URLS : [WORKER_URL];
+
+    var maxAttempts = 2;
+    var lastErr;
+
+    for (var proxyIdx = 0; proxyIdx < proxyList.length; proxyIdx++) {
+      var proxyUrl = proxyList[proxyIdx];
+      for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          if (!_preferJsonp) {
+            try {
+              var url = proxyUrl + (proxyUrl.includes('?') ? '&' : '?')
+                + 'p=' + encodeURIComponent(payloadB64) + '&_=' + Date.now();
+              var ctrl = new AbortController();
+              var t = setTimeout(function () { ctrl.abort(); }, ms);
+              try {
+                var r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+                if (r.ok) return await r.json();
+                var isTransient = r.status === 404 || r.status === 429 || r.status >= 500;
+                if (isTransient && attempt < maxAttempts) {
+                  await new Promise(function (res) { setTimeout(res, 500 * attempt + Math.random() * 250); });
+                  continue;
+                }
+                throw new Error('Worker HTTP ' + r.status + ' @ ' + proxyUrl);
+              } finally { clearTimeout(t); }
+            } catch (fetchErr) {
+              if (fetchErr instanceof TypeError || /CORS|NetworkError|Failed to fetch|Load failed|AbortError/i.test(String(fetchErr))) {
+                _preferJsonp = true;
+              } else { throw fetchErr; }
+            }
+          }
+          // JSONP fallback
+          var result = await new Promise(function (resolve, reject) {
+            var cbName = '_sowyJsonp_' + (++_jsonpCounter) + '_' + Date.now();
+            var url2 = proxyUrl + (proxyUrl.includes('?') ? '&' : '?')
+              + 'p=' + encodeURIComponent(payloadB64) + '&callback=' + cbName + '&_=' + Date.now();
+            var script = document.createElement('script');
+            var done = false;
+            var timer = setTimeout(function () {
+              if (done) return; done = true; cleanup();
+              reject(new Error('Timeout (' + ms + 'ms) через прокси: ' + proxyUrl));
+            }, ms);
+            function cleanup() {
+              try { delete window[cbName]; } catch (_) { window[cbName] = undefined; }
+              if (script.parentNode) script.parentNode.removeChild(script);
+            }
+            window[cbName] = function (data) {
+              if (done) return; done = true; clearTimeout(timer); cleanup(); resolve(data);
+            };
+            script.onerror = function () {
+              if (done) return; done = true; clearTimeout(timer); cleanup();
+              reject(new Error('JSONP load error через прокси: ' + proxyUrl));
+            };
+            script.src = url2;
+            document.head.appendChild(script);
+          });
+          return result;
+        } catch (e) {
+          lastErr = e;
+          if (attempt < maxAttempts && !String(e.message).startsWith('Timeout')) {
+            await new Promise(function (res) { setTimeout(res, 500 * attempt + Math.random() * 250); });
+            continue;
+          }
+          _preferJsonp = false;
+          break;
+        }
+      }
+    }
+    throw new Error('Не удалось получить данные через прокси. Последняя ошибка: ' + (lastErr && lastErr.message ? lastErr.message : lastErr));
+  }
+
+  // ── Утилиты ────────────────────────────────────────────────
+  function fmtMoney(n) {
+    if (n == null || isNaN(n)) return '—';
+    return Math.round(n).toLocaleString('ru-RU') + ' ₽';
+  }
+  function fmtShort(n) {
+    if (n == null || isNaN(n)) return '—';
+    if (n >= 1e6) return (n / 1e6).toFixed(2).replace(/\.?0+$/, '') + 'м';
+    if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+    return String(Math.round(n));
+  }
+  function pct(n, digits) { return (n == null || isNaN(n)) ? '—' : n.toFixed(digits == null ? 1 : digits) + '%'; }
+  function ymd(d) { return d.toISOString().slice(0, 10); }
+  function daysAgo(n) { var d = new Date(); d.setDate(d.getDate() - n); return d; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+  function asArr(x) { return Array.isArray(x) ? x : []; }
+  function dbg() { try { console.log.apply(console, ['[SOWY ADS]'].concat([].slice.call(arguments))); } catch (e) {} }
+
+  // Сбор сырых ответов для встроенной диагностической панели.
+  var RAWLOG = [];
+  function typeOf(x) { return Array.isArray(x) ? ('array[' + x.length + ']') : (x === null ? 'null' : typeof x); }
+  function rawlog(label, obj) {
+    var sample;
+    try { sample = JSON.stringify(obj, null, 1); } catch (e) { sample = String(obj); }
+    if (sample && sample.length > 1400) sample = sample.slice(0, 1400) + ' …(обрезано)';
+    RAWLOG.push('▼ ' + label + '  [тип: ' + typeOf(obj) + ']\n' + sample);
+    dbg(label, obj);
+    var out = document.getElementById('dbgOut');
+    if (out) out.textContent = RAWLOG.join('\n\n');
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // WB — Promotion API (advert-api.wildberries.ru)
+  // ════════════════════════════════════════════════════════════
+  var WB_ADV = 'https://advert-api.wildberries.ru';
+  var WB_STATUS = { '-1': 'удаляется', '4': 'готова', '7': 'завершена', '8': 'отказался', '9': 'активна', '11': 'пауза' };
+  var WB_TYPE = { '4': 'каталог', '5': 'карточка', '6': 'поиск', '7': 'поиск+каталог', '8': 'авто', '9': 'аукцион' };
+
+  async function wbAdv(path, method, body) {
+    var headers = { 'Authorization': CFG.wb };
+    if (body) headers['Content-Type'] = 'application/json';
+    return workerFetch(WB_ADV + path, method || 'GET', headers, body || null);
+  }
+
+  // Итоги по кампании из ответа v3 fullstats: берём верхний уровень,
+  // а если там пусто — суммируем из days.
+  function wbTotals(s) {
+    if (!s) return null;
+    var t = { views: +s.views || 0, clicks: +s.clicks || 0, sum: +s.sum || 0,
+              atbs: +s.atbs || 0, orders: +s.orders || 0, sum_price: +s.sum_price || 0 };
+    if (!(t.views || t.clicks || t.sum) && Array.isArray(s.days)) {
+      s.days.forEach(function (d) {
+        t.views += +d.views || 0; t.clicks += +d.clicks || 0; t.sum += +d.sum || 0;
+        t.atbs += +d.atbs || 0; t.orders += +d.orders || 0; t.sum_price += +d.sum_price || 0;
+      });
+    }
+    return t;
+  }
+
+  async function loadWB(days) {
+    if (!CFG.wb) return { campaigns: [], days: {}, error: 'нет WB токена' };
+    var from = ymd(daysAgo(days)), to = ymd(new Date());
+
+    // 1) Все подключённые кампании
+    var count = await wbAdv('/adv/v1/promotion/count', 'GET', null);
+    rawlog('WB /adv/v1/promotion/count', count);
+    var ids = [];
+    asArr(count && count.adverts).forEach(function (g) {
+      asArr(g && g.advert_list).forEach(function (a) { if (a && a.advertId != null) ids.push(a.advertId); });
+    });
+    dbg('WB подключено кампаний:', ids.length);
+    if (!ids.length) {
+      var cErr = count && (count.errorText || count.detail || count.title);
+      return { campaigns: [], days: {}, note: 'WB: кампаний не найдено' + (cErr ? ' (' + cErr + ')' : '') };
+    }
+
+    // 2) Расход по кампаниям за период — один лёгкий запрос (/adv/v1/upd).
+    //    Отсюда же берём имя/тип/статус кампании (campName/advertType/advertStatus).
+    var spendBy = {}, metaBy = {};
+    try {
+      var upd = await wbAdv('/adv/v1/upd?from=' + from + '&to=' + to, 'GET', null);
+      rawlog('WB /adv/v1/upd (расход за период)', upd);
+      asArr(upd).forEach(function (u) {
+        var id = u && u.advertId; if (id == null) return;
+        spendBy[id] = (spendBy[id] || 0) + (u.updSum || u.sum || 0);
+        if (!metaBy[id]) metaBy[id] = {
+          name: u.campName || u.name || '',
+          type: (u.advertType != null ? u.advertType : u.type),
+          status: (u.advertStatus != null ? u.advertStatus : u.status)
+        };
+      });
+    } catch (e) { dbg('WB upd ошибка:', e.message); }
+    var spendIds = Object.keys(spendBy).map(Number).filter(function (id) { return spendBy[id] > 0; });
+    dbg('WB кампаний с расходом за период:', spendIds.length);
+
+    // 3) Имя/тип/статус берём из upd (см. metaBy). Эндпоинт /adv/v1/promotion/adverts
+    //    в новом шлюзе WB отдаёт 404 — поэтому его не дёргаем.
+    var orderIds = spendIds.concat(ids.filter(function (id) { return !(spendBy[id] > 0); }));
+    var details = {};
+
+    // 4) Детальная статистика по тратившим — GET /adv/v3/fullstats
+    //    (v2 отключён WB с 23.10.2025). ids через запятую, beginDate/endDate, ≤31 дня.
+    var statsById = {}, dayAgg = {}, statsErr = null;
+    var statIds = spendIds.slice(0, 300);
+    for (var si = 0; si < statIds.length; si += 50) {
+      var idsChunk = statIds.slice(si, si + 50);
+      var fsUrl = '/adv/v3/fullstats?ids=' + idsChunk.join(',') + '&beginDate=' + from + '&endDate=' + to;
+      try {
+        var stats = await wbAdv(fsUrl, 'GET', null);
+        if (si === 0) rawlog('WB /adv/v3/fullstats (1й чанк)', stats);
+        var statArr = asArr(stats);
+        if (!statArr.length && stats && !Array.isArray(stats)) {
+          statsErr = (stats.errorText || stats.error || stats.detail || stats.title) || statsErr;
+        }
+        statArr.forEach(function (s) {
+          var sid = (s.advertId != null ? s.advertId : s.id);
+          statsById[sid] = s;
+          asArr(s.days).forEach(function (d) {
+            var key = (d.date || '').slice(0, 10);
+            if (!key) return;
+            if (!dayAgg[key]) dayAgg[key] = { spend: 0, orders: 0 };
+            dayAgg[key].spend += (d.sum || 0);
+            dayAgg[key].orders += (d.orders || 0);
+          });
+        });
+      } catch (e) { statsErr = e.message; dbg('WB fullstats ошибка:', e.message); }
+      if (si + 50 < statIds.length) await new Promise(function (r) { setTimeout(r, 350); });
+    }
+
+    // 5) Сборка. Расход берём из upd (надёжно), остальные метрики — из fullstats где есть.
+    var campaigns = orderIds.map(function (id) {
+      var d = details[id] || {};
+      var m = metaBy[id] || {};
+      var s = statsById[id] || null;
+      var t = wbTotals(s);
+      var updSpend = spendBy[id] || 0;
+      var spend = t ? (t.sum || updSpend) : updSpend;
+      var revenue = t ? t.sum_price : 0;
+      var clicks = t ? t.clicks : 0, views = t ? t.views : 0;
+      var atbs = t ? t.atbs : 0, orders = t ? t.orders : 0;
+      var statusNum = (d.status != null ? d.status : m.status);
+      var typeNum = (d.type != null ? d.type : m.type);
+      return buildCampaign({
+        platform: 'wb', id: id,
+        name: d.name || m.name || ('Кампания ' + id),
+        statusLabel: WB_STATUS[String(statusNum)] || (statusNum != null ? String(statusNum) : '—'),
+        active: statusNum === 9,
+        typeLabel: WB_TYPE[String(typeNum)] || (typeNum != null ? 'тип ' + typeNum : 'WB'),
+        spend: spend, revenue: revenue, views: views, clicks: clicks, atbs: atbs, orders: orders,
+        ctr: views > 0 ? clicks / views * 100 : (s && s.ctr || 0),
+        cpc: clicks > 0 ? spend / clicks : (s && s.cpc || 0),
+        hasSpend: updSpend > 0 || spend > 0,
+        noStats: !s
+      });
+    });
+    dbg('WB готово. всего:', campaigns.length, '· с расходом:', spendIds.length, '· statsErr:', statsErr);
+    return { campaigns: campaigns, days: dayAgg, statsErr: statsErr, total: ids.length, spending: spendIds.length };
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // OZON — Performance API. Активируется при наличии креды.
+  // ════════════════════════════════════════════════════════════
+  var OZON_PERF = 'https://api-performance.ozon.ru';
+
+  async function ozonToken() {
+    var resp = await workerFetch(OZON_PERF + '/api/client/token', 'POST',
+      { 'Content-Type': 'application/json' },
+      { client_id: CFG.ozId, client_secret: CFG.ozSecret, grant_type: 'client_credentials' });
+    var tok = resp && (resp.access_token || (resp.result && resp.result.access_token));
+    rawlog('Ozon /api/client/token (есть токен: ' + (tok ? 'да' : 'НЕТ') + ')', tok ? { token_type: resp.token_type, expires_in: resp.expires_in } : resp);
+    return tok;
+  }
+
+  async function loadOzon(days) {
+    if (!CFG.ozId || !CFG.ozSecret) return { campaigns: [], stub: true };
+    var token = await ozonToken();
+    if (!token) return { campaigns: [], stub: true, error: 'не получен токен Performance' };
+    var auth = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+
+    // Список кампаний
+    var camp = await workerFetch(OZON_PERF + '/api/client/campaign', 'GET', auth, null);
+    rawlog('Ozon /api/client/campaign', camp);
+    var list = asArr(camp && (camp.list || camp.result));
+    if (!list.length && Array.isArray(camp)) list = camp;
+
+    // Дневная статистика — /statistics/daily/json. ВАЖНО: id передаются
+    // ОТДЕЛЬНЫМИ повторяющимися параметрами campaignIds, не через запятую.
+    // Дробим по 40 (длина URL) и берём активные кампании.
+    var statById = {};
+    var statsOk = false;
+    var dateFrom = ymd(daysAgo(days)), dateTo = ymd(new Date());
+    var runIds = list.filter(function (c) { return /RUNNING|ACTIVE/i.test(String(c.state || c.status || '')); })
+                     .map(function (c) { return String(c.id); }).filter(Boolean);
+    if (!runIds.length) runIds = list.map(function (c) { return String(c.id); }).filter(Boolean);
+    for (var oi = 0; oi < runIds.length; oi += 40) {
+      var chunkIds = runIds.slice(oi, oi + 40);
+      var qs = chunkIds.map(function (id) { return 'campaignIds=' + encodeURIComponent(id); }).join('&');
+      try {
+        var st = await workerFetch(
+          OZON_PERF + '/api/client/statistics/daily/json?' + qs + '&dateFrom=' + dateFrom + '&dateTo=' + dateTo,
+          'GET', auth, null);
+        if (oi === 0) rawlog('Ozon /statistics/daily/json (1й чанк)', st);
+        var rows = asArr(st && st.rows);
+        if (!rows.length) rows = asArr(st && st.result);
+        if (!rows.length && Array.isArray(st)) rows = st;
+        if (rows.length) statsOk = true;
+        rows.forEach(function (rw) {
+          var id = String(rw.id || rw.campaignId || rw.campaign_id);
+          if (!statById[id]) statById[id] = { spend: 0, views: 0, clicks: 0, orders: 0, revenue: 0 };
+          var a = statById[id];
+          a.spend += Number(rw.moneySpent || rw.money_spent || rw.spent || 0);
+          a.views += Number(rw.views || 0);
+          a.clicks += Number(rw.clicks || 0);
+          a.orders += Number(rw.orders || 0);
+          a.revenue += Number(rw.ordersMoney || rw.orders_money || rw.revenue || 0);
+        });
+      } catch (e) { dbg('Ozon daily чанк ошибка:', e.message); }
+    }
+
+    var campaigns = list.map(function (c) {
+      var a = statById[String(c.id)] || { spend: 0, views: 0, clicks: 0, orders: 0, revenue: 0 };
+      var stateRaw = String(c.state || c.status || '');
+      return buildCampaign({
+        platform: 'ozon', id: c.id,
+        name: c.title || ('РК ' + c.id),
+        statusLabel: ozStateLabel(stateRaw),
+        active: /RUNNING|ACTIVE/i.test(stateRaw),
+        typeLabel: ozTypeLabel(c.advObjectType || c.placement || ''),
+        spend: a.spend, revenue: a.revenue, views: a.views, clicks: a.clicks,
+        atbs: 0, orders: a.orders,
+        ctr: a.views > 0 ? a.clicks / a.views * 100 : 0,
+        cpc: a.clicks > 0 ? a.spend / a.clicks : 0,
+        hasSpend: a.spend > 0,
+        noStats: !statsOk
+      });
+    });
+    return { campaigns: campaigns, stub: false, statsOk: statsOk };
+  }
+  function ozStateLabel(s) {
+    if (/RUNNING|ACTIVE/i.test(s)) return 'активна';
+    if (/STOPPED|PAUSE/i.test(s)) return 'пауза';
+    if (/ARCHIVED|FINISH/i.test(s)) return 'завершена';
+    return s || '—';
+  }
+  function ozTypeLabel(t) {
+    if (/SKU|PRODUCT/i.test(t)) return 'трафареты';
+    if (/SEARCH/i.test(t)) return 'поиск';
+    if (/BANNER/i.test(t)) return 'баннер';
+    return 'Ozon';
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // ЯНДЕКС МАРКЕТ — список кампаний (магазинов). Рекламная
+  // статистика в Partner API ограничена, показываем кабинеты.
+  // ════════════════════════════════════════════════════════════
+  // Сумма буст-комиссии по заказу (order- и item-level).
+  function ymBidFee(o) {
+    var bf = Number(o.bidFee || o.fee || 0);
+    asArr(o.items).forEach(function (it) { bf += Number(it.bidFee || it.fee || 0); });
+    return bf;
+  }
+  // Выручка по заказу — перебираем известные поля, иначе считаем по позициям.
+  function ymOrderRevenue(o) {
+    var cand = [o.total, o.itemsTotal, o.buyerItemsTotal, o.buyerTotal, o.paymentTotal, o.priceTotal];
+    for (var i = 0; i < cand.length; i++) { var v = Number(cand[i]); if (v > 0) return v; }
+    var sum = 0;
+    asArr(o.items).forEach(function (it) {
+      var lineTotal = Number(it.total || it.sum || 0);
+      if (lineTotal > 0) { sum += lineTotal; return; }
+      var price = Number(it.price || it.buyerPrice ||
+        (it.prices && it.prices[0] && (it.prices[0].costPerItem || it.prices[0].total || it.prices[0].price)) || 0);
+      var cnt = Number(it.count || it.quantity || 1);
+      if (price > 0) sum += price * cnt;
+    });
+    return sum;
+  }
+
+  async function loadYM(days) {
+    if (!CFG.ym) return { campaigns: [] };
+    var hdrGet = { 'Api-Key': CFG.ym };
+    var hdrPost = { 'Api-Key': CFG.ym, 'Content-Type': 'application/json' };
+    var from = ymd(daysAgo(days)), to = ymd(new Date());
+
+    // Список магазинов (кампаний бизнес-аккаунта)
+    var camps = [];
+    try {
+      var resp = await workerFetch('https://api.partner.market.yandex.ru/campaigns', 'GET', hdrGet, null);
+      rawlog('ЯМ /campaigns', resp);
+      camps = asArr(resp && (resp.campaigns || resp.result));
+    } catch (e) { dbg('ЯМ campaigns ошибка:', e.message); }
+    if (!camps.length) camps = YM_CAMPAIGNS.map(function (id) { return { id: id, domain: 'Магазин ' + id }; });
+
+    // По каждому магазину: расход на Буст продаж = сумма bidFee в заказах.
+    var out = [];
+    for (var ci = 0; ci < camps.length; ci++) {
+      var c = camps[ci], id = c.id;
+      var boost = 0, revenue = 0, boostOrders = 0;
+      try {
+        var page = 1, pages = 1;
+        do {
+          var od = await workerFetch(
+            'https://api.partner.market.yandex.ru/campaigns/' + id + '/stats/orders',
+            'POST', hdrPost, { dateFrom: from, dateTo: to, page: page, pageSize: 200 });
+          if (ci === 0 && page === 1) rawlog('ЯМ stats/orders (1й магазин)', od);
+          var res = (od && od.result) || od;
+          var ords = asArr(res && res.orders);
+          if (ci === 0 && page === 1 && ords.length) rawlog('ЯМ заказ — образец полей', ords[0]);
+          ords.forEach(function (o) {
+            var bf = ymBidFee(o);
+            if (bf > 0) { boost += bf; revenue += ymOrderRevenue(o); boostOrders++; }
+          });
+          var paging = res && res.paging;
+          pages = (paging && (paging.pagesCount || paging.totalPageCount)) || 1;
+          page++;
+        } while (page <= pages && page <= 8);
+      } catch (e) { dbg('ЯМ stats/orders ошибка:', e.message); }
+
+      // Попытка вытащить показы/клики (отчёт «клики и показы»). Для FBY-буста
+      // часто пусто — тогда CTR останется «н/д». Полностью защищённо.
+      var ymViews = 0, ymClicks = 0;
+      try {
+        var ms = await workerFetch(
+          'https://api.partner.market.yandex.ru/campaigns/' + id + '/stats/main-daily?fromDate=' + from + '&toDate=' + to,
+          'GET', hdrGet, null);
+        if (ci === 0) rawlog('ЯМ stats/main-daily', ms);
+        var mres = (ms && ms.result) || ms;
+        asArr(mres && (mres.mainStats || mres.stats || mres.rows || (Array.isArray(mres) ? mres : []))).forEach(function (d) {
+          ymViews += Number(d.shows || d.showsCount || d.views || 0);
+          ymClicks += Number(d.clicks || d.clicksCount || 0);
+        });
+      } catch (e) { dbg('ЯМ main-daily ошибка:', e.message); }
+
+      var hasBoost = boost > 0;
+      out.push(buildCampaign({
+        platform: 'ym', id: id,
+        name: (c.domain || ('Магазин ' + id)) + (c.placementType ? ' · ' + c.placementType : ''),
+        statusLabel: hasBoost ? 'буст активен' : 'подключён',
+        active: true,
+        typeLabel: hasBoost ? 'буст продаж' : 'кабинет',
+        spend: boost, revenue: revenue, views: ymViews, clicks: ymClicks, atbs: 0, orders: boostOrders,
+        ctr: ymViews > 0 ? ymClicks / ymViews * 100 : 0, cpc: ymClicks > 0 ? boost / ymClicks : 0,
+        hasSpend: hasBoost, noStats: !hasBoost
+      }));
+    }
+    return { campaigns: out };
+  }
+
+  // ── Сборка унифицированной кампании + диагноз ───────────────
+  function buildCampaign(o) {
+    var drr = o.revenue > 0 ? o.spend / o.revenue * 100 : (o.spend > 0 ? Infinity : 0);
+    var cart = o.clicks > 0 ? o.atbs / o.clicks * 100 : 0;
+    var roas = o.spend > 0 ? o.revenue / o.spend : 0;
+    var c = Object.assign({
+      drr: drr, cart: cart, roas: roas, noStats: false
+    }, o);
+    diagnose(c);
+    return c;
+  }
+
+  // Авто-диагноз: tone (good/warn/bad/neutral), action (текст), risk(bool)
+  function diagnose(c) {
+    if (c.noStats || (c.spend === 0 && c.views === 0)) {
+      c.risk = false; c.tone = 'neutral';
+      if (c.platform === 'ym') { c.action = 'кабинет подключён'; c.reason = 'ym_cabinet'; }
+      else if (c.hasSpend) { c.action = 'есть расход, нет детальной статистики'; c.reason = 'no_stats'; }
+      else { c.action = c.active ? 'активна, без трат' : 'нет трат за период'; c.reason = 'no_spend'; }
+      return;
+    }
+    if (c.spend > 0 && c.orders === 0 && c.clicks > 0) {
+      c.tone = 'bad'; c.action = 'клики есть, продаж нет — карточка'; c.risk = true; c.reason = 'no_sales'; return;
+    }
+    if (c.cart > 0 && c.cart < TH.cartRed) {
+      c.tone = 'bad'; c.action = 'низкая корзина — проверь товар'; c.risk = true; c.reason = 'low_cart'; return;
+    }
+    if (c.drr === Infinity || c.drr > TH.drrYellow) {
+      c.tone = 'warn'; c.action = 'высокий ДРР — урезать мусор'; c.risk = true; c.reason = 'high_drr'; return;
+    }
+    if (c.drr <= TH.drrGreen && c.cart >= TH.cartGreen && c.active) {
+      c.tone = 'good'; c.action = 'здорова, можно растить'; c.risk = false; c.reason = 'healthy'; return;
+    }
+    c.tone = 'neutral'; c.action = 'наблюдать'; c.risk = false; c.reason = 'watch';
+  }
+
+  // Объяснения диагнозов для кликабельного статуса.
+  var EXPLAIN = {
+    low_cart: { title: 'Низкая конверсия в корзину', tone: 'bad',
+      sub: 'Люди кликают по рекламе, но мало кто добавляет товар в корзину. Почти всегда дело не в ставке, а в самом товаре и оффере.',
+      steps: ['Проверь остатки по складам и срок доставки (лист «Остатки» в Сове): товар может быть виден, но неудобен к покупке.',
+              'Сравни цену с топ-3 конкурентами, проверь не пропала ли скидка/акция.',
+              'Открой карточку глазами клиента: первое фото, рейтинг, отзывы, понятно ли сколько капсул и под какую систему.',
+              'И только после этого меняй ставки или отключай группу.'] },
+    high_drr: { title: 'Высокий ДРР', tone: 'warn',
+      sub: 'Реклама дороговата относительно выручки, которую приносит. Для кофе-капсул с тонкой маржой это съедает прибыль.',
+      steps: ['Проверь маржинальность товара: один и тот же ДРР для разных SKU — норма или катастрофа.',
+              'Раздели кампанию: где клики без корзин, где корзины без заказов.',
+              'Урежь мусорные фразы, товары без остатков и дорогие группы.',
+              'Оставь бюджет там, где ДРР и корзина одновременно здоровые.'] },
+    no_sales: { title: 'Клики есть, продаж нет', tone: 'bad',
+      sub: 'Реклама приводит человека, но товар не убеждает купить. Ставка это не лечит — она лишь меняет скорость траты денег.',
+      steps: ['Открой карточку как покупатель: понятно ли, что это, кому подходит и почему купить сейчас.',
+              'Сравни цену, отзывы, фото и доставку с соседними товарами в выдаче.',
+              'Проверь остатки и доступность размеров/вариантов.',
+              'Если карточка слабая — сначала чини её, потом возвращайся к ставкам.'] },
+    healthy: { title: 'Здорова — можно растить', tone: 'good',
+      sub: 'ДРР в норме и корзина хорошая. Кампанию можно масштабировать, но аккуратно и по одному шагу.',
+      steps: ['Сначала проверь остатки: хватит ли товара на рост темпа (лист «Остатки» в Сове).',
+              'Поднимай бюджет/ставку небольшими шагами, не в 2 раза сразу.',
+              'Дай данным накопиться 2-3 дня и сравни ДРР и корзину до/после.',
+              'Зафиксируй дату изменения, чтобы понимать, что именно сработало.'] },
+    no_stats: { title: 'Есть расход, нет детальной статистики', tone: 'neutral',
+      sub: 'Расход за период подтянулся, а детальные метрики (CTR, корзина) по этой кампании пока не пришли от площадки.',
+      steps: ['Нажми ↻ через минуту — у площадки бывают лимиты на детальную статистику.',
+              'Сумма расхода уже корректна, можно ориентироваться по ней и по динамике по дням.',
+              'Если метрики так и не появляются — проверь, что у токена есть доступ к статистике продвижения.'] },
+    no_spend: { title: 'Нет трат за период', tone: 'neutral',
+      sub: 'Кампания подключена, но за выбранный период по ней не было расхода.',
+      steps: ['Если кампания должна работать — проверь бюджет и не на паузе ли она.',
+              'Возможно, закончились остатки и показы остановились автоматически.',
+              'Расширь период (14/30 дней), чтобы увидеть прошлую активность.'] },
+    watch: { title: 'Наблюдать', tone: 'neutral',
+      sub: 'Кампания в серой зоне: не критично, но и не образцово. Просто держи в поле зрения.',
+      steps: ['Смотри тренд ДРР и корзины за несколько дней, а не один день.',
+              'Реагируй быстро только на критичное: бюджет 0, остатки 0, резкий рост ДРР.',
+              'Если метрики поползут к красному — открой соответствующий плейбук.'] },
+    ym_cabinet: { title: 'Кабинет Яндекс Маркета', tone: 'neutral',
+      sub: 'Это витрина-кабинет ЯМ. Если включён Буст продаж — здесь будет расход и ДРР, иначе только факт подключения.',
+      steps: ['Чтобы появились цифры — включи Буст продаж и назначь ставки на товары в кабинете ЯМ.',
+              'На ЯМ особенно важны цена с учётом скидки, доставка, регион и рейтинг магазина.',
+              'Проверяй конкурентные офферы рядом — даже при хорошей ставке покупатель уходит к более сильному предложению.'] }
+  };
+
+  // ════════════════════════════════════════════════════════════
+  // СОСТОЯНИЕ И РЕНДЕР
+  // ════════════════════════════════════════════════════════════
+  var STATE = {
+    all: [], days: {}, period: 7, plat: 'all', view: 'all', status: 'active', search: '',
+    ozonStub: true,
+    sort: { key: 'spend', dir: 'desc' },
+    colf: { name: '', plat: '', spend: '', drr: '', ctr: '', cart: '', tone: '' }
+  };
+
+  var PLAT_ORDER = ['wb', 'ozon', 'ym'];
+  var PLAT_NAME = { wb: 'Wildberries', ozon: 'Ozon', ym: 'Яндекс Маркет' };
+
+  // Агрегат по набору кампаний (для подытогов).
+  function aggregate(rows) {
+    var a = { spend: 0, revenue: 0, views: 0, clicks: 0, atbs: 0, orders: 0, count: rows.length };
+    rows.forEach(function (c) {
+      a.spend += c.spend || 0; a.revenue += c.revenue || 0;
+      a.views += c.views || 0; a.clicks += c.clicks || 0;
+      a.atbs += c.atbs || 0; a.orders += c.orders || 0;
+    });
+    a.drr = a.revenue > 0 ? a.spend / a.revenue * 100 : (a.spend > 0 ? Infinity : 0);
+    a.ctr = a.views > 0 ? a.clicks / a.views * 100 : 0;
+    a.cart = a.clicks > 0 ? a.atbs / a.clicks * 100 : 0;
+    return a;
+  }
+
+  function $(id) { return document.getElementById(id); }
+  function banner(type, html) {
+    var b = $('banner');
+    if (!html) { b.className = 'banner'; b.innerHTML = ''; return; }
+    b.className = 'banner show ' + type; b.innerHTML = html;
+  }
+
+  function filtered() {
+    var arr = STATE.all.slice();
+    if (STATE.plat !== 'all') arr = arr.filter(function (c) { return c.platform === STATE.plat; });
+    if (STATE.status === 'active') arr = arr.filter(function (c) { return c.active; });
+    else if (STATE.status === 'paused') arr = arr.filter(function (c) { return !c.active; });
+    if (STATE.search) {
+      var q = STATE.search.toLowerCase();
+      arr = arr.filter(function (c) { return (c.name + ' ' + c.id + ' ' + c.platform).toLowerCase().includes(q); });
+    }
+    switch (STATE.view) {
+      case 'spending': arr = arr.filter(function (c) { return c.hasSpend; }); break;
+      case 'attention': arr = arr.filter(function (c) { return c.risk; }); break;
+      case 'scale': arr = arr.filter(function (c) { return c.tone === 'good'; }); break;
+      case 'lowcart': arr = arr.filter(function (c) { return c.cart > 0 && c.cart < TH.cartRed; }); break;
+      case 'highdrr': arr = arr.filter(function (c) { return c.drr === Infinity || c.drr > TH.drrYellow; }); break;
+    }
+    // Фильтры по колонкам
+    var f = STATE.colf;
+    if (f.name) { var q = f.name.toLowerCase(); arr = arr.filter(function (c) { return c.name.toLowerCase().includes(q); }); }
+    if (f.plat) arr = arr.filter(function (c) { return c.platform === f.plat; });
+    if (f.tone) arr = arr.filter(function (c) { return c.tone === f.tone; });
+    if (f.spend !== '') arr = arr.filter(function (c) { return (c.spend || 0) >= Number(f.spend); });
+    if (f.drr !== '') arr = arr.filter(function (c) { return isFinite(c.drr) && c.revenue > 0 && c.drr <= Number(f.drr); });
+    if (f.ctr !== '') arr = arr.filter(function (c) { return c.views > 0 && (c.ctr || 0) >= Number(f.ctr); });
+    if (f.cart !== '') arr = arr.filter(function (c) { return c.clicks > 0 && (c.cart || 0) >= Number(f.cart); });
+    return arr;
+  }
+
+  function sortRows(rows) {
+    var k = STATE.sort.key, dir = STATE.sort.dir === 'asc' ? 1 : -1;
+    function val(c) {
+      switch (k) {
+        case 'name': return c.name.toLowerCase();
+        case 'platform': return PLAT_NAME[c.platform] || c.platform;
+        case 'spend': return c.spend || 0;
+        case 'drr': return isFinite(c.drr) ? c.drr : (c.spend > 0 ? 1e12 : -1);
+        case 'ctr': return c.ctr || 0;
+        case 'cart': return c.cart || 0;
+      }
+      return 0;
+    }
+    return rows.slice().sort(function (a, b) {
+      var va = val(a), vb = val(b);
+      if (typeof va === 'string') return va.localeCompare(vb, 'ru') * dir;
+      return (va - vb) * dir;
+    });
+  }
+
+  function platLabel(p) { return p === 'wb' ? 'WB' : p === 'ozon' ? 'Ozon' : 'ЯМ'; }
+  function platPill(p) { return p === 'wb' ? 'good' : p === 'ozon' ? 'ozon' : 'ym'; }
+
+  function render() {
+    var all = STATE.all;
+    var withStats = all.filter(function (c) { return !c.noStats; });
+
+    // ── Сводка ──
+    var totalSpend = all.reduce(function (s, c) { return s + (c.spend || 0); }, 0); // весь расход (вкл. ЯМ буст)
+    var totalRev = all.reduce(function (s, c) { return s + (c.revenue || 0); }, 0);
+    var totalViews = withStats.reduce(function (s, c) { return s + (c.views || 0); }, 0);
+    var totalClicks = withStats.reduce(function (s, c) { return s + (c.clicks || 0); }, 0);
+    var totalCart = withStats.reduce(function (s, c) { return s + (c.atbs || 0); }, 0);
+    var totalOrders = withStats.reduce(function (s, c) { return s + (c.orders || 0); }, 0);
+    // Средний ДРР — только по кампаниям, где есть выручка (иначе ∞ искажает).
+    var drrPool = all.filter(function (c) { return c.revenue > 0; });
+    var drrSpend = drrPool.reduce(function (s, c) { return s + (c.spend || 0); }, 0);
+    var drrRev = drrPool.reduce(function (s, c) { return s + (c.revenue || 0); }, 0);
+    var avgDrr = drrRev > 0 ? drrSpend / drrRev * 100 : null;
+    var avgCtr = totalViews > 0 ? totalClicks / totalViews * 100 : null;
+    var cartConv = totalClicks > 0 ? totalCart / totalClicks * 100 : null;
+    var risks = all.filter(function (c) { return c.risk; }).length;
+
+    $('sumDrr').textContent = avgDrr == null ? '—' : pct(avgDrr);
+    $('sumRevenue').textContent = totalRev > 0 ? Math.round(totalRev).toLocaleString('ru-RU') + ' ₽' : '—';
+    $('sumSignals').textContent = risks;
+    ['sumDrr', 'sumRevenue', 'sumSignals'].forEach(function (id) { $(id).classList.remove('skeleton'); });
+
+    // ── Карточки-метрики ──
+    $('mSpend').textContent = fmtMoney(totalSpend);
+    $('mSpendNote').textContent = withStats.length + ' кампаний с тратами · выручка ' + fmtMoney(totalRev);
+    $('mCart').textContent = cartConv == null ? '—' : pct(cartConv);
+    $('mCartNote').textContent = cartConv == null ? 'Нет данных по корзине за период.' :
+      (cartConv < TH.cartRed ? 'Низко: сначала проверь товар, цену, остатки, не только РК.' : 'Если падает, сначала проверяем товар, не только РК.');
+    $('mCtr').textContent = avgCtr == null ? '—' : pct(avgCtr, 2);
+    $('mCtrNote').textContent = avgCtr == null ? 'Нет показов за период.' : 'Показов ' + fmtShort(totalViews) + ' · кликов ' + fmtShort(totalClicks) + '.';
+    $('mRisks').textContent = risks;
+    var scaleable = all.filter(function (c) { return c.tone === 'good'; }).length;
+    $('mRisksNote').textContent = scaleable + ' можно растить · ' + risks + ' под проверку.';
+    ['mSpend', 'mCart', 'mCtr', 'mRisks'].forEach(function (id) { $(id).classList.remove('skeleton'); });
+
+    // ── График по дням ──
+    renderChart();
+
+    // ── Авторазбор ──
+    renderInsights(withStats);
+
+    // ── Воронка ──
+    renderFunnel(totalViews, totalClicks, totalCart, totalOrders);
+
+    // ── Счётчики фильтров ──
+    var byPlat = function (p) { return all.filter(function (c) { return c.platform === p; }).length; };
+    $('cnt-all').textContent = all.length;
+    $('cnt-wb').textContent = byPlat('wb');
+    $('cnt-ozon').textContent = byPlat('ozon');
+    $('cnt-ym').textContent = byPlat('ym');
+    $('cnt-spending').textContent = all.filter(function (c) { return c.hasSpend; }).length;
+    $('cnt-attention').textContent = all.filter(function (c) { return c.risk; }).length;
+    $('cnt-scale').textContent = scaleable;
+    $('cnt-lowcart').textContent = all.filter(function (c) { return c.cart > 0 && c.cart < TH.cartRed; }).length;
+    $('cnt-highdrr').textContent = all.filter(function (c) { return c.drr === Infinity || c.drr > TH.drrYellow; }).length;
+    $('cnt-allc').textContent = all.length;
+
+    // ── Таблица ──
+    renderTable();
+
+    // ── Статус ──
+    var now = new Date().toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    $('statusLine').innerHTML = 'обновлено сегодня, ' + now + '<br>период: ' + STATE.period + ' дн · источник: WB / Ozon / ЯМ';
+  }
+
+  function renderChart() {
+    var el = $('chart');
+    var keys = Object.keys(STATE.days).sort();
+    var last = keys.slice(-7);
+    if (!last.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;margin:auto">нет дневных данных</div>'; $('chartMeta').textContent = '—'; return; }
+    var max = Math.max.apply(null, last.map(function (k) { return STATE.days[k].spend; })) || 1;
+    el.innerHTML = last.map(function (k) {
+      var v = STATE.days[k].spend;
+      var h = Math.max(6, Math.round(v / max * 100));
+      var dd = k.slice(8, 10) + '.' + k.slice(5, 7);
+      return '<div class="bar" style="height:' + h + '%"><span>' + fmtShort(v) + '</span><small>' + dd + '</small></div>';
+    }).join('');
+    $('chartMeta').textContent = 'расход, посл. ' + last.length + ' дн (WB)';
+  }
+
+  function renderInsights(withStats) {
+    var el = $('insights');
+    var risky = withStats.filter(function (c) { return c.risk; })
+      .sort(function (a, b) { return b.spend - a.spend; }).slice(0, 3);
+    if (!risky.length) {
+      var good = withStats.filter(function (c) { return c.tone === 'good'; }).slice(0, 2);
+      if (!good.length) { el.innerHTML = '<article class="insight"><h3 class="insight-title">Пока тихо</h3><p class="insight-copy">Критичных сигналов за период нет. Следи за трендом ДРР и корзины.</p></article>'; return; }
+      el.innerHTML = good.map(function (c) {
+        return '<article class="insight" data-tone="good"><h3 class="insight-title">' + esc(platLabel(c.platform)) + ': ' + esc(c.name) + ' можно растить</h3>' +
+          '<p class="insight-copy">ДРР ' + (c.drr === Infinity ? '∞' : pct(c.drr)) + ', корзина ' + pct(c.cart) + '. Перед ростом бюджета проверь остатки в Сове.</p></article>';
+      }).join('');
+      return;
+    }
+    el.innerHTML = risky.map(function (c) {
+      var why;
+      if (c.spend > 0 && c.orders === 0) why = 'Клики есть, заказов нет. Открой карточку как покупатель: фото, цена, комплектация, отзывы. Ставка это не лечит.';
+      else if (c.cart > 0 && c.cart < TH.cartRed) why = 'Корзина ' + pct(c.cart) + '. Проверь остатки, цену относительно топ-3 конкурентов, первый экран карточки и доставку.';
+      else why = 'ДРР ' + (c.drr === Infinity ? '∞' : pct(c.drr)) + '. Посмотри запросы и группы, где клики есть, а корзин мало — часть трафика нерелевантна.';
+      return '<article class="insight" data-tone="bad"><h3 class="insight-title">' + esc(platLabel(c.platform)) + ': ' + esc(c.name) + '</h3><p class="insight-copy">' + why + '</p></article>';
+    }).join('');
+  }
+
+  function renderFunnel(views, clicks, cart, orders) {
+    var max = views || 1;
+    function set(fl, fv, val) {
+      $(fl).style.width = Math.max(2, Math.round((val || 0) / max * 100)) + '%';
+      $(fv).textContent = fmtShort(val);
+    }
+    set('fl-views', 'fv-views', views);
+    set('fl-clicks', 'fv-clicks', clicks);
+    set('fl-cart', 'fv-cart', cart);
+    set('fl-orders', 'fv-orders', orders);
+  }
+
+  function rowHTML(c) {
+    var isYM = c.platform === 'ym';
+    var drrTxt = (c.noStats || c.revenue === 0) ? '—' : (c.drr === Infinity ? '∞' : pct(c.drr));
+    var ctrTxt = c.views > 0 ? pct(c.ctr, 2) : (isYM ? 'н/д' : '—');
+    var cartTxt = isYM ? 'н/д' : ((c.noStats || c.clicks === 0) ? '—' : pct(c.cart));
+    var spendTxt = c.spend > 0 ? fmtMoney(c.spend) : '—';
+    return '<div class="camp-row" data-id="' + esc(c.id) + '" data-plat="' + c.platform + '">' +
+      '<div class="camp-name"><strong>' + esc(c.name) + '</strong><span>' + esc(c.typeLabel) + ' · ' + esc(c.statusLabel) + '</span></div>' +
+      '<div><span class="pill ' + platPill(c.platform) + '">' + platLabel(c.platform) + '</span></div>' +
+      '<div class="r">' + spendTxt + '</div>' +
+      '<div class="r">' + drrTxt + '</div>' +
+      '<div class="r">' + ctrTxt + '</div>' +
+      '<div class="r">' + cartTxt + '</div>' +
+      '<div><span class="pill ' + c.tone + ' act">' + esc(c.action) + '</span></div>' +
+      '</div>';
+  }
+
+  function groupHTML(p, ag) {
+    var spendTxt = ag.spend > 0 ? fmtMoney(ag.spend) : '—';
+    var drrTxt = ag.revenue > 0 ? pct(ag.drr) : (ag.spend > 0 ? '∞' : '—');
+    var ctrTxt = ag.views > 0 ? pct(ag.ctr, 2) : (p === 'ym' ? 'н/д' : '—');
+    var cartTxt = ag.atbs > 0 ? pct(ag.cart) : (p === 'ym' ? 'н/д' : '—');
+    return '<div class="camp-group">' +
+      '<div class="gname" style="grid-column:span 2"><span class="pill ' + platPill(p) + '">' + platLabel(p) + '</span> ' + esc(PLAT_NAME[p]) +
+        ' <small>· ' + ag.count + ' кампаний · выручка ' + (ag.revenue > 0 ? fmtMoney(ag.revenue) : '—') + '</small></div>' +
+      '<div class="r">' + spendTxt + '</div>' +
+      '<div class="r">' + drrTxt + '</div>' +
+      '<div class="r">' + ctrTxt + '</div>' +
+      '<div class="r">' + cartTxt + '</div>' +
+      '<div></div>' +
+      '</div>';
+  }
+
+  function updateSortArrows() {
+    var head = document.getElementById('campHead');
+    if (!head) return;
+    head.querySelectorAll('div[data-sort]').forEach(function (d) {
+      var k = d.getAttribute('data-sort');
+      var ar = d.querySelector('.arrow');
+      if (k === STATE.sort.key) { d.classList.add('sorted'); if (ar) ar.textContent = STATE.sort.dir === 'asc' ? '▲' : '▼'; }
+      else { d.classList.remove('sorted'); if (ar) ar.textContent = ''; }
+    });
+  }
+
+  function renderTable() {
+    var rows = filtered();
+    var fallback = '';
+    // Если под фильтром пусто, но площадка выбрана — показать все её кампании.
+    if (!rows.length && STATE.plat !== 'all') {
+      rows = STATE.all.filter(function (c) { return c.platform === STATE.plat; });
+      fallback = ' · все кампании площадки (нет трат за период)';
+    }
+    rows = sortRows(rows);
+    var tb = $('campRows');
+    var meta = 'показано ' + rows.length + (STATE.wbTotal ? ' · подключено WB ' + STATE.wbTotal + ' · с расходом ' + (STATE.wbSpending || 0) : '');
+    if (!rows.length) {
+      tb.innerHTML = '<div class="camp-empty">Нет кампаний под этот фильтр.</div>';
+      $('campMeta').textContent = meta;
+      updateSortArrows();
+      return;
+    }
+    // группировка по площадкам, группы — по убыванию расхода
+    var groups = [];
+    PLAT_ORDER.forEach(function (p) {
+      var g = rows.filter(function (c) { return c.platform === p; });
+      if (g.length) groups.push({ p: p, rows: g, ag: aggregate(g) });
+    });
+    groups.sort(function (a, b) { return b.ag.spend - a.ag.spend; });
+
+    var cap = 250, shown = 0, html = '';
+    groups.forEach(function (gr) {
+      html += groupHTML(gr.p, gr.ag);
+      for (var i = 0; i < gr.rows.length && shown < cap; i++) { html += rowHTML(gr.rows[i]); shown++; }
+    });
+    tb.innerHTML = html;
+    updateSortArrows();
+    $('campMeta').textContent = meta + fallback + (rows.length > cap ? ' · показаны первые ' + cap : '');
+  }
+
+  // ── Модалка объяснения диагноза ─────────────────────────────
+  function openModal(c) {
+    if (!c) return;
+    var e = EXPLAIN[c.reason] || EXPLAIN.watch;
+    var chips = ['Площадка: ' + platLabel(c.platform), 'Статус: ' + c.statusLabel];
+    if (c.spend > 0) chips.push('Расход: ' + fmtMoney(c.spend));
+    if (c.revenue > 0 && isFinite(c.drr)) chips.push('ДРР: ' + pct(c.drr));
+    if (c.views > 0) chips.push('CTR: ' + pct(c.ctr, 2));
+    if (c.clicks > 0) chips.push('Корзина: ' + pct(c.cart));
+    $('modalBody').innerHTML =
+      '<div class="modal-kicker">' + esc(c.action) + '</div>' +
+      '<h2>' + esc(e.title) + '</h2>' +
+      '<p class="modal-sub"><b>' + esc(c.name) + '</b> — ' + esc(e.sub) + '</p>' +
+      '<div class="modal-stat">' + chips.map(function (x) { return '<span class="chip">' + esc(x) + '</span>'; }).join('') + '</div>' +
+      '<ol class="modal-steps">' + e.steps.map(function (s, i) { return '<li><span class="num">' + (i + 1) + '</span><span>' + esc(s) + '</span></li>'; }).join('') + '</ol>';
+    $('modal').style.display = 'flex';
+  }
+  function closeModal() { $('modal').style.display = 'none'; }
+
+  // ── Скелетоны на время загрузки ─────────────────────────────
+  function setLoading() {
+    ['sumDrr', 'sumRevenue', 'sumSignals', 'mSpend', 'mCart', 'mCtr', 'mRisks'].forEach(function (id) {
+      $(id).textContent = '...'; $(id).classList.add('skeleton');
+    });
+    $('campRows').innerHTML = '<div class="camp-empty">загрузка кампаний…</div>';
+    $('statusLine').innerHTML = 'загрузка…<br>источник: WB / Ozon / ЯМ через прокси';
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // ЗАГРУЗКА ВСЕХ ПЛОЩАДОК
+  // ════════════════════════════════════════════════════════════
+  var _loading = false;
+  async function loadAll() {
+    if (_loading) return;
+    _loading = true;
+    $('btnRefresh').classList.add('spinning');
+    banner('', '');
+    RAWLOG = [];
+    var dbgOutEl = document.getElementById('dbgOut'); if (dbgOutEl) dbgOutEl.textContent = '';
+    setLoading();
+
+    var errors = [];
+    var all = [];
+    var dayAgg = {};
+
+    var results = await Promise.allSettled([loadWB(STATE.period), loadOzon(STATE.period), loadYM(STATE.period)]);
+
+    // WB
+    var wbStatsErr = null, wbNote = null;
+    if (results[0].status === 'fulfilled') {
+      all = all.concat(results[0].value.campaigns || []);
+      dayAgg = results[0].value.days || {};
+      wbStatsErr = results[0].value.statsErr || null;
+      wbNote = results[0].value.note || null;
+      STATE.wbTotal = results[0].value.total || 0;
+      STATE.wbSpending = results[0].value.spending || 0;
+    } else { errors.push('WB: ' + (results[0].reason && results[0].reason.message || results[0].reason)); }
+
+    // Ozon
+    var ozStatsMissing = false;
+    if (results[1].status === 'fulfilled') {
+      STATE.ozonStub = !!results[1].value.stub;
+      all = all.concat(results[1].value.campaigns || []);
+      if (results[1].value.error) errors.push('Ozon: ' + results[1].value.error);
+      ozStatsMissing = !STATE.ozonStub && (results[1].value.campaigns || []).length > 0 && !results[1].value.statsOk;
+    } else { errors.push('Ozon: ' + (results[1].reason && results[1].reason.message || results[1].reason)); }
+
+    // YM
+    if (results[2].status === 'fulfilled') {
+      all = all.concat(results[2].value.campaigns || []);
+    } else { errors.push('ЯМ: ' + (results[2].reason && results[2].reason.message || results[2].reason)); }
+
+    // Лог упавших платформ (когда сам workerFetch не дошёл)
+    if (results[0].status === 'rejected') rawlog('WB — запрос упал', String(results[0].reason && results[0].reason.message || results[0].reason));
+    if (results[1].status === 'rejected') rawlog('Ozon — запрос упал', String(results[1].reason && results[1].reason.message || results[1].reason));
+    if (results[2].status === 'rejected') rawlog('ЯМ — запрос упал', String(results[2].reason && results[2].reason.message || results[2].reason));
+
+    STATE.all = all;
+    STATE.days = dayAgg;
+    render();
+
+    // Показать диагностику, если пусто или были проблемы
+    if (!all.length || errors.length) {
+      var card = document.getElementById('dbgCard');
+      if (card) card.style.display = '';
+    }
+
+    // Сообщения
+    var msgs = [];
+    if (STATE.ozonStub) {
+      msgs.push('<b>Ozon-реклама не подключена.</b> Нужны отдельные Performance-доступы: seller.ozon.ru → Настройки → API-ключи → Performance API → создать аккаунт → добавить ключ. Затем кнопка «Ключи» в шапке → вставь Client ID и Secret.');
+    } else if (ozStatsMissing) {
+      msgs.push('<b>Ozon: кампании подключены, но дневная статистика не отдалась</b> этим эндпоинтом. Названия и статусы видны; цифры (расход/ДРР) подтянем отчётом, если Ozon не отдаёт daily/json для этого кабинета.');
+    }
+    if (wbStatsErr) {
+      msgs.push('<b>WB: список кампаний загружен, но статистика (fullstats) не пришла:</b> ' + esc(String(wbStatsErr)) + '. У WB лимит ~1 запрос/мин на этот эндпоинт — нажми ↻ через минуту.');
+    }
+    if (wbNote) { msgs.push(esc(wbNote)); }
+    if (errors.length) {
+      banner('error', '<b>Часть данных не загрузилась.</b><br>' + errors.map(esc).join('<br>') + (msgs.length ? '<br><br>' + msgs.join('<br>') : ''));
+    } else if (msgs.length) {
+      banner('info', msgs.join('<br>'));
+    }
+    if (!all.length && !errors.length) {
+      banner('info', 'Кампаний за период не найдено. Проверь токен WB и период.');
+    }
+
+    $('btnRefresh').classList.remove('spinning');
+    _loading = false;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // СОБЫТИЯ UI
+  // ════════════════════════════════════════════════════════════
+  document.querySelectorAll('.period').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.period').forEach(function (x) { x.classList.remove('active'); });
+      b.classList.add('active');
+      STATE.period = Number(b.dataset.days);
+      loadAll();
+    });
+  });
+  $('platformFilter').addEventListener('click', function (e) {
+    var b = e.target.closest('.segment'); if (!b) return;
+    this.querySelectorAll('.segment').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active'); STATE.plat = b.dataset.plat; renderTable();
+  });
+  $('viewFilter').addEventListener('click', function (e) {
+    var b = e.target.closest('.segment'); if (!b) return;
+    this.querySelectorAll('.segment').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active'); STATE.view = b.dataset.view; renderTable();
+  });
+  $('statusFilter').addEventListener('click', function (e) {
+    var b = e.target.closest('.segment'); if (!b) return;
+    this.querySelectorAll('.segment').forEach(function (x) { x.classList.remove('active'); });
+    b.classList.add('active'); STATE.status = b.dataset.status; renderTable();
+  });
+  $('search').addEventListener('input', function () { STATE.search = this.value.trim(); renderTable(); });
+
+  // Сортировка по клику на заголовок
+  $('campHead').addEventListener('click', function (e) {
+    var d = e.target.closest('div[data-sort]'); if (!d) return;
+    var k = d.getAttribute('data-sort');
+    if (STATE.sort.key === k) STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+    else { STATE.sort.key = k; STATE.sort.dir = (k === 'name' || k === 'platform') ? 'asc' : 'desc'; }
+    renderTable();
+  });
+
+  // Фильтры по колонкам
+  function bindColFilter(id, key) {
+    var el = document.getElementById(id); if (!el) return;
+    el.addEventListener('input', function () { STATE.colf[key] = this.value.trim(); renderTable(); });
+    el.addEventListener('change', function () { STATE.colf[key] = this.value.trim(); renderTable(); });
+  }
+  bindColFilter('fName', 'name'); bindColFilter('fPlat', 'plat'); bindColFilter('fSpend', 'spend');
+  bindColFilter('fDrr', 'drr'); bindColFilter('fCtr', 'ctr'); bindColFilter('fCart', 'cart'); bindColFilter('fTone', 'tone');
+
+  // Клик по статусу-пилюле → модалка с объяснением
+  $('campRows').addEventListener('click', function (e) {
+    var pill = e.target.closest('.act'); if (!pill) return;
+    var row = e.target.closest('.camp-row'); if (!row) return;
+    var id = row.getAttribute('data-id'), plat = row.getAttribute('data-plat');
+    var c = STATE.all.filter(function (x) { return String(x.id) === id && x.platform === plat; })[0];
+    openModal(c);
+  });
+  $('modalClose').addEventListener('click', closeModal);
+  $('modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+  $('btnRefresh').addEventListener('click', loadAll);
+  $('btnDbg').addEventListener('click', function () {
+    var card = document.getElementById('dbgCard');
+    if (!card) return;
+    var show = card.style.display === 'none' || !card.style.display;
+    card.style.display = show ? '' : 'none';
+    if (show) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  // Конфиг-панель
+  $('btnConfig').addEventListener('click', function () {
+    var d = $('cfgDrawer');
+    $('cfgWb').value = CFG.wb || '';
+    $('cfgOzId').value = CFG.ozId || '';
+    $('cfgOzSecret').value = CFG.ozSecret || '';
+    $('cfgYm').value = CFG.ym || '';
+    d.classList.toggle('show');
+  });
+  $('cfgSave').addEventListener('click', function () {
+    CFG = {
+      wb: $('cfgWb').value.trim(),
+      ozId: $('cfgOzId').value.trim(),
+      ozSecret: $('cfgOzSecret').value.trim(),
+      ym: $('cfgYm').value.trim()
+    };
+    try { localStorage.setItem('sowy_ads_cfg', JSON.stringify(CFG)); } catch (e) {}
+    $('cfgDrawer').classList.remove('show');
+    loadAll();
+  });
+
+  // ════════════════════════════════════════════════════════════
+  // ЛОГИН (как у Совы) — сессия в sessionStorage
+  // ════════════════════════════════════════════════════════════
+  var LOGIN = "Singlecup", PASSWORD = "Coffeepod";
+  var _loadedOnce = false;
+  function enterApp() {
+    document.getElementById('loginOverlay').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    if (!_loadedOnce) { _loadedOnce = true; loadAll(); }
+  }
+  function doLogin() {
+    var l = document.getElementById('loginInput').value.trim();
+    var p = document.getElementById('passwordInput').value.trim();
+    var err = document.getElementById('loginError');
+    if (l === LOGIN && p === PASSWORD) {
+      try { sessionStorage.setItem('sowy_ads_auth', '1'); } catch (e) {}
+      err.textContent = '';
+      enterApp();
+    } else {
+      err.textContent = 'Неверный логин или пароль';
+    }
+  }
+  function doLogout() {
+    try { sessionStorage.removeItem('sowy_ads_auth'); } catch (e) {}
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginOverlay').style.display = 'flex';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('loginInput').focus();
+  }
+  document.getElementById('loginBtn').addEventListener('click', doLogin);
+  document.getElementById('btnLogout').addEventListener('click', doLogout);
+
+  // Старт: если уже авторизованы в этой вкладке — сразу в дашборд
+  var _authed = false;
+  try { _authed = sessionStorage.getItem('sowy_ads_auth') === '1'; } catch (e) {}
+  if (_authed) enterApp();
+  else document.getElementById('loginInput').focus();
+  </script>
+</body>
+</html>
