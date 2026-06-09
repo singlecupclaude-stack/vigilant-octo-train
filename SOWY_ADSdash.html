@@ -138,28 +138,28 @@
 
     .hero {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(360px, 620px);
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 560px);
       align-items: end;
-      gap: 30px;
-      padding: 34px 0 22px;
+      gap: 28px;
+      padding: 18px 0 18px;
     }
 
     h1 {
-      max-width: 830px;
+      max-width: 620px;
       margin: 0;
       font-family: Prata, Georgia, serif;
-      font-size: clamp(42px, 5.2vw, 78px);
-      line-height: .96;
+      font-size: clamp(28px, 3vw, 46px);
+      line-height: 1.02;
       font-weight: 400;
       color: var(--ink);
     }
 
     .hero-copy {
-      max-width: 640px;
-      margin: 16px 0 0;
+      max-width: 560px;
+      margin: 12px 0 0;
       color: #5f513f;
-      font-size: 14px;
-      line-height: 1.65;
+      font-size: 13px;
+      line-height: 1.6;
     }
 
     .summary {
@@ -188,6 +188,7 @@
       text-transform: uppercase;
       letter-spacing: .08em;
     }
+    .summary-sub { display: block; margin-top: 6px; color: var(--champagne); font-size: 11px; font-weight: 700; line-height: 1.35; }
 
     /* ── Баннер статуса/ошибки ───────────────────────────────── */
     .banner {
@@ -410,6 +411,8 @@
       color: var(--muted); font-size: 9px; font-weight: 800;
       white-space: nowrap;
     }
+    .bar.dense span { font-size: 7.5px; }
+    .bar.dense small { font-size: 7.5px; top: calc(100% + 4px); }
 
     .table { width: 100%; border-collapse: collapse; font-size: 12.5px; table-layout: fixed; min-width: 820px; }
     th, td { padding: 8px 10px; border-bottom: 1px solid rgba(43,26,19,.08); text-align: left; vertical-align: middle; }
@@ -441,9 +444,24 @@
     .camp-head .r, .camp-row .r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .camp-row { border-bottom: 1px solid rgba(43,26,19,.07); font-size: 12.5px; }
     .camp-row:hover { background: rgba(216,169,93,.08); }
-    .camp-name { min-width: 0; }
+    .camp-name { min-width: 0; display: flex; align-items: center; gap: 7px; }
+    .camp-name .cn { min-width: 0; flex: 1; }
     .camp-name strong { display: block; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .camp-name span { display: block; font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+    .camp-name .cn > span { display: block; font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+    .rchev { display: inline-block; width: 12px; color: var(--muted); font-size: 10px; flex-shrink: 0; }
+    .camp-row { cursor: pointer; }
+    .camp-row.exp { background: rgba(216,169,93,.10); }
+
+    /* детализация кампании (товары + запросы) */
+    .camp-detail { padding: 10px 16px 14px 42px; background: rgba(43,26,19,.035); border-bottom: 1px solid rgba(43,26,19,.08); }
+    .cd-loading { color: var(--muted); font-size: 12px; padding: 8px 0; }
+    .cd-note { color: var(--muted); font-size: 11.5px; padding: 4px 0; line-height: 1.45; }
+    .cd-h { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 10px 0 5px; }
+    .cd-h:first-child { margin-top: 0; }
+    .cd-tbl { width: 100%; border-collapse: collapse; }
+    .cd-tbl th, .cd-tbl td { padding: 5px 8px; border-bottom: 1px solid rgba(43,26,19,.06); font-size: 11.5px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .cd-tbl th { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+    .cd-tbl th:first-child, .cd-tbl td:first-child { text-align: left; white-space: normal; }
     .camp-empty { padding: 26px; text-align: center; color: var(--muted); font-size: 13px; }
     .toggle-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
     .toggle-row .segment { justify-content: center; height: 34px; font-size: 12px; }
@@ -480,11 +498,37 @@
       border-bottom: 1px solid rgba(43,26,19,.1);
       border-top: 1px solid rgba(43,26,19,.1);
     }
+    .camp-group { cursor: pointer; }
+    .camp-group:hover { background: rgba(43,26,19,.085); }
     .camp-group .gname { font-weight: 900; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+    .gchev { display: inline-block; width: 12px; color: var(--muted); font-size: 9px; flex-shrink: 0; }
     .camp-group .gname small { font-weight: 700; color: var(--muted); font-size: 11px; }
     .camp-group .r { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; font-size: 12px; white-space: nowrap; }
     .camp-row .act { cursor: pointer; }
     .camp-row .act::after { content: " ›"; opacity: .55; }
+
+    /* светофор по ДРР */
+    .tl { display: inline-block; min-width: 42px; text-align: center; padding: 2px 7px; border-radius: 7px; font-weight: 800; }
+    .tl-red { background: rgba(200,111,97,.20); color: #9b3f35; }
+    .tl-yellow { background: rgba(216,169,93,.26); color: #87560f; }
+    .tl-green { background: rgba(125,160,72,.22); color: #4d7029; }
+    .camp-group .tl { font-weight: 900; }
+
+    /* легенда-лесенка светофора */
+    .tl-legend {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      padding: 10px 16px; border-bottom: 1px solid var(--line);
+      font-size: 11.5px; color: var(--muted); background: rgba(255,248,239,.5);
+    }
+    .tl-legend b { color: #3a2416; font-weight: 900; }
+    .tl-legend .seg { display: inline-flex; align-items: center; gap: 6px; }
+    .tl-edit { border: 1px solid var(--line); background: rgba(255,248,239,.8); color: #6c4a2c; font-size: 11px; font-weight: 800; border-radius: 6px; padding: 4px 9px; cursor: pointer; }
+    .tl-edit:hover { border-color: rgba(201,131,43,.4); background: rgba(216,169,93,.14); }
+    .tl-form { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; font-size: 11.5px; color: #5d4e3c; }
+    .tl-form input { width: 50px; height: 26px; padding: 0 6px; font-size: 12px; border: 1px solid rgba(43,26,19,.18); border-radius: 6px; background: #fff; text-align: center; }
+    .tl-form #tlSave { border: none; background: var(--espresso); color: var(--paper-2); font-weight: 900; font-size: 11px; border-radius: 6px; padding: 5px 11px; cursor: pointer; }
+    .tl-form .tl-reset { border: none; background: transparent; color: var(--muted); font-size: 11px; text-decoration: underline; cursor: pointer; }
+    .tl-form .tl-err { color: #9b433b; font-size: 11px; font-weight: 700; }
 
     /* ссылки обучения */
     .learn-links { display: grid; gap: 4px; margin-top: 4px; }
@@ -521,6 +565,11 @@
     .modal-steps { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; }
     .modal-steps li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; color: #4a3a2a; font-size: 13px; line-height: 1.5; }
     .modal-steps .num { width: 24px; height: 24px; }
+    .modal-why { background: rgba(43,26,19,.05); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 0 0 16px; }
+    .modal-why-h { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 7px; }
+    .modal-why p { margin: 0 0 7px; font-size: 12.5px; line-height: 1.5; color: #4a3a2a; }
+    .modal-why p:last-child { margin-bottom: 0; }
+    .modal-why b { font-weight: 900; color: #3a2416; }
 
     /* ── Логин ───────────────────────────────────────────────── */
     .login-overlay {
@@ -880,6 +929,7 @@
         <div class="summary-item">
           <span class="summary-number" id="sumRevenue">—</span>
           <span class="summary-label">рекламная выручка</span>
+          <span class="summary-sub" id="sumShare"></span>
         </div>
         <div class="summary-item">
           <span class="summary-number" id="sumSignals">—</span>
@@ -1005,6 +1055,21 @@
             <div class="deep-title">Кампании</div>
             <div class="deep-meta" id="campMeta">WB, Ozon и ЯМ в одной таблице</div>
           </div>
+          <div class="tl-legend" id="tlLegend">
+            <b>Светофор ДРР:</b>
+            <span class="seg"><span class="tl tl-green" id="tlGreenLbl">4–6%</span> норма</span>
+            <span class="seg"><span class="tl tl-yellow" id="tlYellowLbl">3–4 · 6–8%</span> под наблюдением</span>
+            <span class="seg"><span class="tl tl-red" id="tlRedLbl">&lt;3 · &gt;8%</span> мало рекламы / дорого</span>
+            <button class="tl-edit" id="tlEdit" type="button">✎ изменить</button>
+            <span class="tl-form" id="tlForm" style="display:none">
+              🔴 ниже <input id="tlRedLow" type="number" min="0" step="0.5">% ·
+              🟢 от <input id="tlGreenLow" type="number" min="0" step="0.5">% до <input id="tlGreenHigh" type="number" min="0" step="0.5">% ·
+              🔴 выше <input id="tlRedHigh" type="number" min="0" step="0.5">%
+              <button id="tlSave" type="button">Сохранить</button>
+              <button id="tlReset" type="button" class="tl-reset">сброс</button>
+              <span class="tl-err" id="tlErr"></span>
+            </span>
+          </div>
           <div class="camp-wrap">
             <div class="camp-head" id="campHead">
               <div data-sort="name">Кампания <span class="arrow"></span></div>
@@ -1097,7 +1162,8 @@
                     <li><span class="num">1</span><span>Проверь маржинальность: один и тот же ДРР может быть нормой или катастрофой.</span></li>
                     <li><span class="num">2</span><span>Раздели кампании: где есть клики без корзин, где есть корзины без заказов.</span></li>
                     <li><span class="num">3</span><span>Урежь мусорные фразы, товары без остатков и дорогие группы.</span></li>
-                    <li><span class="num">4</span><span>Оставь бюджет там, где ДРР и корзина одновременно здоровые.</span></li>
+                    <li><span class="num">4</span><span>Вариант — отдать часть товаров в акцию/промо: со скидкой они продаются органически, ставки можно снизить, а оборот сохранить.</span></li>
+                    <li><span class="num">5</span><span>Оставь полный бюджет там, где ДРР и корзина одновременно здоровые.</span></li>
                   </ol>
                 </article>
                 <article class="playbook">
@@ -1239,9 +1305,9 @@
                 <p>Хорошая кампания должна иметь приемлемый ДРР, нормальную корзину и достаточные остатки. Иначе рост бюджета усилит проблему.</p>
               </article>
               <article class="slide">
-                <div class="slide-kicker">04 / ЯМ</div>
-                <h3>Маркет особенно чувствителен к офферу.</h3>
-                <p>На ЯМ реклама может быть нормальной, но покупатель уйдёт из-за доставки, цены, рейтинга магазина или более сильного предложения рядом.</p>
+                <div class="slide-kicker">04 / оффер</div>
+                <h3>Оффер решает больше, чем ставка.</h3>
+                <p>Цена, скидка, доставка, рейтинг и фото влияют на продажи сильнее размера ставки. Слабый оффер ломает любую рекламу — на WB, Ozon и Маркете одинаково.</p>
               </article>
               <article class="slide">
                 <div class="slide-kicker">05 / команда</div>
@@ -1307,6 +1373,8 @@
     wb: 'eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwMjYwMzAydjEiLCJ0eXAiOiJKV1QifQ.eyJhY2MiOjMsImVudCI6MSwiZXhwIjoxNzk0OTU5NjU2LCJmb3IiOiJzZWxmIiwiaWQiOiIwMTllNDAxNi0yZmVjLTcxNTItOWE3Yy0xMDc3NTJlNGJlMTUiLCJpaWQiOjM3MTI4NzgxLCJvaWQiOjEzODgzLCJzIjo4MTY2Miwic2lkIjoiNTUxZDc5NjItZTg5MC01YjU4LTg0MTEtOTYxZjhhZmRlNDAzIiwidCI6ZmFsc2UsInVpZCI6MzcxMjg3ODF9.yeI2zsr3kYse_tXTWVqK665xmcdmT_xCylwOWz3ACyv_NcPyrcYIXmTmyoh-U5Oct9E0O5WxejTEVixaifm8lQ',
     ozId: '95508644-1780989376761@advertising.performance.ozon.ru',       // Ozon Performance Client ID
     ozSecret: 'lMSm28JdYVBz15jonOAme6YrvXhRi_Xxi9R3LfncflyAWQ8AXrBJ6_KKRajfvEHdBwAwjbYFNGcyvC0DvA',   // Ozon Performance Client Secret
+    ozSellerId: '28416',                                       // Ozon Seller Client-Id (для общей выручки)
+    ozSellerKey: '8960b558-d6cc-4fe6-a1fb-edf32a4f106c',       // Ozon Seller Api-Key
     ym: 'ACMA:jH1sUGjF7WzheJwgT1WlVqEGvKvyx8YdskBji0hB:4e009b36'
   };
   var YM_CAMPAIGNS = ['21577916', '93482655']; // FBY · Single cup coffee + ИП Тимашков
@@ -1323,11 +1391,22 @@
 
   // ── Пороги светофора (рекламные) ────────────────────────────
   var TH = {
-    drrGreen: 12,   // ДРР ≤ 12% — здорово
-    drrYellow: 20,  // 12–20% — наблюдать; > 20% — дорого
     cartGreen: 8,   // конверсия в корзину ≥ 8% — хорошо
     cartRed: 4      // < 4% — плохо
   };
+
+  // Светофор по ДРР (под кофе-капсулы): <redLow и >redHigh — красный,
+  // greenLow–greenHigh — зелёный, между — жёлтый. Редактируется в легенде.
+  var TL_DRR_DEFAULT = { redLow: 3, greenLow: 4, greenHigh: 6, redHigh: 8 };
+  var TL_DRR = Object.assign({}, TL_DRR_DEFAULT);
+  try { var _tlSaved = JSON.parse(localStorage.getItem('sowy_ads_tl_drr') || 'null'); if (_tlSaved) Object.assign(TL_DRR, _tlSaved); } catch (e) {}
+  function drrLight(c) {
+    if (!c || c.noStats || c.spend <= 0 || c.revenue <= 0 || !isFinite(c.drr)) return '';
+    var d = c.drr;
+    if (d > TL_DRR.redHigh || d < TL_DRR.redLow) return 'red';
+    if (d >= TL_DRR.greenLow && d <= TL_DRR.greenHigh) return 'green';
+    return 'yellow';
+  }
 
   // ════════════════════════════════════════════════════════════
   // workerFetch — точная копия проверенной реализации Совы.
@@ -1430,6 +1509,20 @@
   function daysAgo(n) { var d = new Date(); d.setDate(d.getDate() - n); return d; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
   function asArr(x) { return Array.isArray(x) ? x : []; }
+  // Глубокий поиск числа по шаблону имени поля (ловит поля под любым именем/вложенностью).
+  function deepNum(obj, patt) {
+    if (obj == null || typeof obj !== 'object') return 0;
+    var best = 0;
+    for (var k in obj) {
+      var v = obj[k], kl = k.toLowerCase();
+      if (v != null && typeof v === 'object') { var n2 = deepNum(v, patt); if (n2 > best) best = n2; }
+      else if (patt.test(kl) && (typeof v === 'number' || (typeof v === 'string' && /^[\d.,\s]+$/.test(v) && v.trim() !== ''))) {
+        var n = Number(String(v).replace(/\s/g, '').replace(',', '.'));
+        if (isFinite(n) && n > best) best = n;
+      }
+    }
+    return best;
+  }
   function dbg() { try { console.log.apply(console, ['[SOWY ADS]'].concat([].slice.call(arguments))); } catch (e) {} }
 
   // Сбор сырых ответов для встроенной диагностической панели.
@@ -1449,6 +1542,7 @@
   // WB — Promotion API (advert-api.wildberries.ru)
   // ════════════════════════════════════════════════════════════
   var WB_ADV = 'https://advert-api.wildberries.ru';
+  var WB_FS_RAW = {};   // сырые fullstats из основной загрузки (для раскрытия без повторного запроса)
   var WB_STATUS = { '-1': 'удаляется', '4': 'готова', '7': 'завершена', '8': 'отказался', '9': 'активна', '11': 'пауза' };
   var WB_TYPE = { '4': 'каталог', '5': 'карточка', '6': 'поиск', '7': 'поиск+каталог', '8': 'авто', '9': 'аукцион' };
 
@@ -1475,6 +1569,7 @@
 
   async function loadWB(days) {
     if (!CFG.wb) return { campaigns: [], days: {}, error: 'нет WB токена' };
+    WB_FS_RAW = {};
     var from = ymd(daysAgo(days)), to = ymd(new Date());
 
     // 1) Все подключённые кампании
@@ -1492,13 +1587,17 @@
 
     // 2) Расход по кампаниям за период — один лёгкий запрос (/adv/v1/upd).
     //    Отсюда же берём имя/тип/статус кампании (campName/advertType/advertStatus).
-    var spendBy = {}, metaBy = {};
+    var spendBy = {}, metaBy = {}, dayAgg = {};
     try {
       var upd = await wbAdv('/adv/v1/upd?from=' + from + '&to=' + to, 'GET', null);
       rawlog('WB /adv/v1/upd (расход за период)', upd);
       asArr(upd).forEach(function (u) {
         var id = u && u.advertId; if (id == null) return;
-        spendBy[id] = (spendBy[id] || 0) + (u.updSum || u.sum || 0);
+        var sum = Number(u.updSum || u.sum || 0);
+        spendBy[id] = (spendBy[id] || 0) + sum;
+        // расход по дням для графика (надёжно, без лимита fullstats)
+        var day = String(u.updTime || u.updDate || '').slice(0, 10);
+        if (day) { if (!dayAgg[day]) dayAgg[day] = { spend: 0, orders: 0 }; dayAgg[day].spend += sum; }
         if (!metaBy[id]) metaBy[id] = {
           name: u.campName || u.name || '',
           type: (u.advertType != null ? u.advertType : u.type),
@@ -1509,6 +1608,14 @@
     var spendIds = Object.keys(spendBy).map(Number).filter(function (id) { return spendBy[id] > 0; });
     dbg('WB кампаний с расходом за период:', spendIds.length);
 
+    // Общая выручка WB за период (все заказы) — для доли рекламы.
+    var wbTotalRev = 0;
+    try {
+      var wbOrders = await workerFetch('https://statistics-api.wildberries.ru/api/v1/supplier/orders?dateFrom=' + from + '&flag=0', 'GET', { 'Authorization': CFG.wb }, null);
+      asArr(wbOrders).forEach(function (o) { if (!o.isCancel) wbTotalRev += Number(o.priceWithDisc || o.finishedPrice || o.totalPrice || 0); });
+      dbg('WB общая выручка (заказы):', Math.round(wbTotalRev), 'из', asArr(wbOrders).length, 'заказов');
+    } catch (e) { dbg('WB orders ошибка:', e.message); }
+
     // 3) Имя/тип/статус берём из upd (см. metaBy). Эндпоинт /adv/v1/promotion/adverts
     //    в новом шлюзе WB отдаёт 404 — поэтому его не дёргаем.
     var orderIds = spendIds.concat(ids.filter(function (id) { return !(spendBy[id] > 0); }));
@@ -1516,39 +1623,57 @@
 
     // 4) Детальная статистика по тратившим — GET /adv/v3/fullstats
     //    (v2 отключён WB с 23.10.2025). ids через запятую, beginDate/endDate, ≤31 дня.
-    var statsById = {}, dayAgg = {}, statsErr = null;
-    var statIds = spendIds.slice(0, 300);
-    for (var si = 0; si < statIds.length; si += 50) {
-      var idsChunk = statIds.slice(si, si + 50);
-      var fsUrl = '/adv/v3/fullstats?ids=' + idsChunk.join(',') + '&beginDate=' + from + '&endDate=' + to;
-      try {
-        var stats = await wbAdv(fsUrl, 'GET', null);
-        if (si === 0) rawlog('WB /adv/v3/fullstats (1й чанк)', stats);
-        var statArr = asArr(stats);
-        if (!statArr.length && stats && !Array.isArray(stats)) {
-          statsErr = (stats.errorText || stats.error || stats.detail || stats.title) || statsErr;
-        }
-        statArr.forEach(function (s) {
-          var sid = (s.advertId != null ? s.advertId : s.id);
-          statsById[sid] = s;
-          asArr(s.days).forEach(function (d) {
-            var key = (d.date || '').slice(0, 10);
-            if (!key) return;
-            if (!dayAgg[key]) dayAgg[key] = { spend: 0, orders: 0 };
-            dayAgg[key].spend += (d.sum || 0);
-            dayAgg[key].orders += (d.orders || 0);
+    // Кэш WB-статистики (эндпоинт лимитирован ~1 запрос/мин).
+    // Свежий кэш (< 3 мин) используем сразу, не дёргая API при каждом обновлении.
+    var fsCacheKey = 'sowy_ads_wb_fs_' + days;
+    var totById = {}, statsErr = null;
+    var fsCache = null;
+    try { fsCache = JSON.parse(localStorage.getItem(fsCacheKey) || 'null'); } catch (e) {}
+    var fsFresh = fsCache && fsCache.tot && (Date.now() - fsCache.ts < 180000);
+
+    if (fsFresh) {
+      totById = fsCache.tot;
+      dbg('WB fullstats: использую свежий кэш (' + Math.round((Date.now() - fsCache.ts) / 1000) + 'с)');
+    } else {
+      var statIds = spendIds.slice(0, 300);
+      for (var si = 0; si < statIds.length; si += 100) {
+        var idsChunk = statIds.slice(si, si + 100);
+        var fsUrl = '/adv/v3/fullstats?ids=' + idsChunk.join(',') + '&beginDate=' + from + '&endDate=' + to;
+        try {
+          var stats = await wbAdv(fsUrl, 'GET', null);
+          if (si === 0) rawlog('WB /adv/v3/fullstats (1й чанк)', stats);
+          var statArr = asArr(stats);
+          if (!statArr.length && stats && !Array.isArray(stats)) {
+            statsErr = (stats.errorText || stats.error || stats.detail || stats.title) || statsErr;
+          }
+          statArr.forEach(function (s) {
+            var sid = (s.advertId != null ? s.advertId : s.id);
+            totById[sid] = wbTotals(s);            // компактные итоги (для кэша)
+            WB_FS_RAW[String(sid)] = s;            // сырой объект — для раскрытия товаров/позиций
+            asArr(s.days).forEach(function (d) {
+              var key = (d.date || '').slice(0, 10);
+              if (!key) return;
+              if (!dayAgg[key]) dayAgg[key] = { spend: 0, orders: 0 };
+              dayAgg[key].orders += (d.orders || 0);  // расход по дням берём из upd, тут только заказы
+            });
           });
-        });
-      } catch (e) { statsErr = e.message; dbg('WB fullstats ошибка:', e.message); }
-      if (si + 50 < statIds.length) await new Promise(function (r) { setTimeout(r, 350); });
+        } catch (e) { statsErr = e.message; dbg('WB fullstats ошибка:', e.message); }
+        if (si + 100 < statIds.length) await new Promise(function (r) { setTimeout(r, 1500); });
+      }
+      if (Object.keys(totById).length) {
+        try { localStorage.setItem(fsCacheKey, JSON.stringify({ ts: Date.now(), tot: totById })); } catch (e) {}
+      } else if (statsErr && fsCache && fsCache.tot && Object.keys(fsCache.tot).length) {
+        totById = fsCache.tot;
+        var ageMin = Math.max(1, Math.round((Date.now() - fsCache.ts) / 60000));
+        statsErr = 'fullstats лимитирован — статистика из кэша (' + ageMin + ' мин назад). Нажми ↻ через минуту для свежей.';
+      }
     }
 
     // 5) Сборка. Расход берём из upd (надёжно), остальные метрики — из fullstats где есть.
     var campaigns = orderIds.map(function (id) {
       var d = details[id] || {};
       var m = metaBy[id] || {};
-      var s = statsById[id] || null;
-      var t = wbTotals(s);
+      var t = totById[id] || null;
       var updSpend = spendBy[id] || 0;
       var spend = t ? (t.sum || updSpend) : updSpend;
       var revenue = t ? t.sum_price : 0;
@@ -1563,14 +1688,14 @@
         active: statusNum === 9,
         typeLabel: WB_TYPE[String(typeNum)] || (typeNum != null ? 'тип ' + typeNum : 'WB'),
         spend: spend, revenue: revenue, views: views, clicks: clicks, atbs: atbs, orders: orders,
-        ctr: views > 0 ? clicks / views * 100 : (s && s.ctr || 0),
-        cpc: clicks > 0 ? spend / clicks : (s && s.cpc || 0),
+        ctr: views > 0 ? clicks / views * 100 : 0,
+        cpc: clicks > 0 ? spend / clicks : 0,
         hasSpend: updSpend > 0 || spend > 0,
-        noStats: !s
+        noStats: !t
       });
     });
     dbg('WB готово. всего:', campaigns.length, '· с расходом:', spendIds.length, '· statsErr:', statsErr);
-    return { campaigns: campaigns, days: dayAgg, statsErr: statsErr, total: ids.length, spending: spendIds.length };
+    return { campaigns: campaigns, days: dayAgg, statsErr: statsErr, total: ids.length, spending: spendIds.length, totalRevenue: wbTotalRev };
   }
 
   // ════════════════════════════════════════════════════════════
@@ -1604,6 +1729,7 @@
     // Дробим по 40 (длина URL) и берём активные кампании.
     var statById = {};
     var statsOk = false;
+    var ozSampleKeys = '';
     var dateFrom = ymd(daysAgo(days)), dateTo = ymd(new Date());
     var runIds = list.filter(function (c) { return /RUNNING|ACTIVE/i.test(String(c.state || c.status || '')); })
                      .map(function (c) { return String(c.id); }).filter(Boolean);
@@ -1620,15 +1746,17 @@
         if (!rows.length) rows = asArr(st && st.result);
         if (!rows.length && Array.isArray(st)) rows = st;
         if (rows.length) statsOk = true;
+        if (oi === 0 && rows.length) { rawlog('Ozon daily — образец строки', rows[0]); ozSampleKeys = Object.keys(rows[0]).join(', '); }
         rows.forEach(function (rw) {
           var id = String(rw.id || rw.campaignId || rw.campaign_id);
           if (!statById[id]) statById[id] = { spend: 0, views: 0, clicks: 0, orders: 0, revenue: 0 };
           var a = statById[id];
-          a.spend += Number(rw.moneySpent || rw.money_spent || rw.spent || 0);
-          a.views += Number(rw.views || 0);
-          a.clicks += Number(rw.clicks || 0);
-          a.orders += Number(rw.orders || 0);
-          a.revenue += Number(rw.ordersMoney || rw.orders_money || rw.revenue || 0);
+          // расход/выручка — глубоким поиском по имени поля (имя у Ozon может отличаться)
+          a.spend += deepNum(rw, /spent|expens|cost|расход/);
+          a.views += Number(rw.views || rw.shows || 0) || deepNum(rw, /views|shows|показ/);
+          a.clicks += Number(rw.clicks || 0) || deepNum(rw, /clicks|клик/);
+          a.orders += Number(rw.orders || rw.ordersCount || rw.orders_count || 0);
+          a.revenue += Number(rw.ordersMoney || rw.orders_money || rw.revenue || rw.ordersSum || rw.gmv || 0) || deepNum(rw, /ordersmoney|revenue|gmv|выручк/);
         });
       } catch (e) { dbg('Ozon daily чанк ошибка:', e.message); }
     }
@@ -1650,7 +1778,20 @@
         noStats: !statsOk
       });
     });
-    return { campaigns: campaigns, stub: false, statsOk: statsOk };
+    // Общая выручка Ozon за период — Seller-аналитика (отдельный Seller-ключ).
+    var ozTotalRev = 0;
+    if (CFG.ozSellerId && CFG.ozSellerKey) {
+      try {
+        var sa = await workerFetch('https://api-seller.ozon.ru/v1/analytics/data', 'POST',
+          { 'Client-Id': CFG.ozSellerId, 'Api-Key': CFG.ozSellerKey, 'Content-Type': 'application/json' },
+          { date_from: dateFrom, date_to: dateTo, dimension: ['day'], metrics: ['revenue'], limit: 1000, offset: 0 });
+        rawlog('Ozon Seller /analytics/data (общая выручка)', sa);
+        var sd = (sa && sa.result && sa.result.data) || [];
+        asArr(sd).forEach(function (r) { ozTotalRev += Number((r.metrics && r.metrics[0]) || 0); });
+      } catch (e) { dbg('Ozon analytics ошибка:', e.message); }
+    }
+    var ozSpend = campaigns.reduce(function (s, c) { return s + (c.spend || 0); }, 0);
+    return { campaigns: campaigns, stub: false, statsOk: statsOk, ozSpend: ozSpend, ozSampleKeys: ozSampleKeys, totalRevenue: ozTotalRev };
   }
   function ozStateLabel(s) {
     if (/RUNNING|ACTIVE/i.test(s)) return 'активна';
@@ -1669,23 +1810,39 @@
   // ЯНДЕКС МАРКЕТ — список кампаний (магазинов). Рекламная
   // статистика в Partner API ограничена, показываем кабинеты.
   // ════════════════════════════════════════════════════════════
-  // Сумма буст-комиссии по заказу (order- и item-level).
+  // Комиссия буста по заказу: берём ЛИБО уровень заказа, ЛИБО сумму позиций
+  // (чтобы не задвоить, если bidFee есть и там, и там).
   function ymBidFee(o) {
-    var bf = Number(o.bidFee || o.fee || 0);
-    asArr(o.items).forEach(function (it) { bf += Number(it.bidFee || it.fee || 0); });
-    return bf;
+    var ob = Number(o.bidFee || o.fee || 0);
+    if (ob > 0) return ob;
+    return asArr(o.items).reduce(function (s, it) { return s + Number(it.bidFee || it.fee || 0); }, 0);
   }
-  // Выручка по заказу — перебираем известные поля, иначе считаем по позициям.
+  // Цена позиции из prices (берём тип BUYER — что заплатил покупатель).
+  function ymPriceFromPrices(pr, count) {
+    count = Number(count || 1);
+    if (Array.isArray(pr)) {
+      var buyer = pr.filter(function (p) { return /BUYER/i.test(p.type || p.priceType || ''); })[0] || pr[0];
+      if (buyer) {
+        var bt = Number(buyer.total || 0); if (bt > 0) return bt;
+        var cpi = Number(buyer.costPerItem || buyer.price || buyer.value || 0); if (cpi > 0) return cpi * count;
+      }
+    } else if (pr && typeof pr === 'object') {
+      var t = Number(pr.total || 0); if (t > 0) return t;
+      var c = Number(pr.costPerItem || pr.price || pr.value || 0); if (c > 0) return c * count;
+    }
+    return 0;
+  }
+  // Выручка по заказу — поля заказа, иначе сумма по позициям (цена BUYER × количество).
   function ymOrderRevenue(o) {
-    var cand = [o.total, o.itemsTotal, o.buyerItemsTotal, o.buyerTotal, o.paymentTotal, o.priceTotal];
+    var cand = [o.total, o.itemsTotal, o.buyerItemsTotal, o.buyerTotal];
     for (var i = 0; i < cand.length; i++) { var v = Number(cand[i]); if (v > 0) return v; }
     var sum = 0;
     asArr(o.items).forEach(function (it) {
       var lineTotal = Number(it.total || it.sum || 0);
       if (lineTotal > 0) { sum += lineTotal; return; }
-      var price = Number(it.price || it.buyerPrice ||
-        (it.prices && it.prices[0] && (it.prices[0].costPerItem || it.prices[0].total || it.prices[0].price)) || 0);
-      var cnt = Number(it.count || it.quantity || 1);
+      var pRev = ymPriceFromPrices(it.prices, it.count || it.quantity);
+      if (pRev > 0) { sum += pRev; return; }
+      var price = Number(it.price || it.buyerPrice || 0), cnt = Number(it.count || it.quantity || 1);
       if (price > 0) sum += price * cnt;
     });
     return sum;
@@ -1706,11 +1863,16 @@
     } catch (e) { dbg('ЯМ campaigns ошибка:', e.message); }
     if (!camps.length) camps = YM_CAMPAIGNS.map(function (id) { return { id: id, domain: 'Магазин ' + id }; });
 
-    // По каждому магазину: расход на Буст продаж = сумма bidFee в заказах.
+    // По каждому магазину раскладываем Буст продаж ПО ТОВАРАМ:
+    // из заказов берём bidFee и выручку на уровне позиции (SKU).
     var out = [];
+    var ymSample = '';
+    var ymTotalRev = 0;
     for (var ci = 0; ci < camps.length; ci++) {
       var c = camps[ci], id = c.id;
-      var boost = 0, revenue = 0, boostOrders = 0;
+      var cabName = c.domain || ('Магазин ' + id);
+      var prod = {};                 // ключ товара -> {name, spend, revenue, orders}
+      var cabBoost = 0, cabRev = 0, cabOrders = 0;
       try {
         var page = 1, pages = 1;
         do {
@@ -1720,10 +1882,40 @@
           if (ci === 0 && page === 1) rawlog('ЯМ stats/orders (1й магазин)', od);
           var res = (od && od.result) || od;
           var ords = asArr(res && res.orders);
-          if (ci === 0 && page === 1 && ords.length) rawlog('ЯМ заказ — образец полей', ords[0]);
+          if (ci === 0 && page === 1 && ords.length) {
+            rawlog('ЯМ заказ — образец полей', ords[0]);
+            var o0 = ords[0], it0 = asArr(o0.items)[0] || {};
+            ymSample = 'выручка=' + Math.round(ymOrderRevenue(o0)) + ' · bidFee(итог)=' + ymBidFee(o0) +
+              ' · позиция: count=' + it0.count + ' bidFee=' + it0.bidFee + ' prices=' + JSON.stringify(it0.prices) +
+              ' · commissions=' + JSON.stringify(o0.commissions || []).slice(0, 200);
+          }
           ords.forEach(function (o) {
-            var bf = ymBidFee(o);
-            if (bf > 0) { boost += bf; revenue += ymOrderRevenue(o); boostOrders++; }
+            ymTotalRev += ymOrderRevenue(o);   // общая выручка магазина (все заказы)
+            var items = asArr(o.items);
+            var orderBoost = 0, orderBoostRev = 0;
+            items.forEach(function (it) {
+              // bidFee — ставка буста в сотых процента (600 = 6.00%).
+              // Реальный расход = ставка% × выручка позиции (BUYER).
+              var bidBp = Number(it.bidFee || 0);
+              if (bidBp <= 0) return;
+              var iRev = ymPriceFromPrices(it.prices, it.count || it.quantity) ||
+                         Number(it.total || it.sum || (Number(it.price || it.buyerPrice || 0) * Number(it.count || it.quantity || 1)) || 0);
+              var iBoost = bidBp / 10000 * iRev;
+              orderBoost += iBoost; orderBoostRev += iRev;
+              var key = it.shopSku || it.offerId || it.marketSku || it.offerName || 'прочее';
+              if (!prod[key]) prod[key] = { name: it.offerName || it.shopSku || String(key), spend: 0, revenue: 0, orders: 0 };
+              prod[key].spend += iBoost; prod[key].revenue += iRev; prod[key].orders += 1;
+            });
+            // запасной вариант: ставка на уровне заказа
+            if (orderBoost === 0) {
+              var obp = Number(o.bidFee || o.fee || 0);
+              if (obp > 0) {
+                var orev2 = ymOrderRevenue(o); orderBoost = obp / 10000 * orev2; orderBoostRev = orev2;
+                if (!prod._order) prod._order = { name: 'Заказы (буст на уровне заказа)', spend: 0, revenue: 0, orders: 0 };
+                prod._order.spend += orderBoost; prod._order.revenue += orev2; prod._order.orders += 1;
+              }
+            }
+            if (orderBoost > 0) { cabBoost += orderBoost; cabRev += orderBoostRev; cabOrders++; }
           });
           var paging = res && res.paging;
           pages = (paging && (paging.pagesCount || paging.totalPageCount)) || 1;
@@ -1731,34 +1923,34 @@
         } while (page <= pages && page <= 8);
       } catch (e) { dbg('ЯМ stats/orders ошибка:', e.message); }
 
-      // Попытка вытащить показы/клики (отчёт «клики и показы»). Для FBY-буста
-      // часто пусто — тогда CTR останется «н/д». Полностью защищённо.
-      var ymViews = 0, ymClicks = 0;
-      try {
-        var ms = await workerFetch(
-          'https://api.partner.market.yandex.ru/campaigns/' + id + '/stats/main-daily?fromDate=' + from + '&toDate=' + to,
-          'GET', hdrGet, null);
-        if (ci === 0) rawlog('ЯМ stats/main-daily', ms);
-        var mres = (ms && ms.result) || ms;
-        asArr(mres && (mres.mainStats || mres.stats || mres.rows || (Array.isArray(mres) ? mres : []))).forEach(function (d) {
-          ymViews += Number(d.shows || d.showsCount || d.views || 0);
-          ymClicks += Number(d.clicks || d.clicksCount || 0);
+      var keys = Object.keys(prod);
+      if (cabBoost > 0 && keys.length) {
+        // Строки по товарам
+        keys.forEach(function (k) {
+          var pr = prod[k];
+          if (pr.spend <= 0 && pr.revenue <= 0) return;
+          out.push(buildCampaign({
+            platform: 'ym', id: String(id) + '::' + k,
+            name: pr.name,
+            statusLabel: 'буст · ' + cabName,
+            active: true, typeLabel: 'буст · товар',
+            spend: pr.spend, revenue: pr.revenue, views: 0, clicks: 0, atbs: 0, orders: pr.orders,
+            ctr: 0, cpc: 0, hasSpend: pr.spend > 0, noStats: false
+          }));
         });
-      } catch (e) { dbg('ЯМ main-daily ошибка:', e.message); }
-
-      var hasBoost = boost > 0;
-      out.push(buildCampaign({
-        platform: 'ym', id: id,
-        name: (c.domain || ('Магазин ' + id)) + (c.placementType ? ' · ' + c.placementType : ''),
-        statusLabel: hasBoost ? 'буст активен' : 'подключён',
-        active: true,
-        typeLabel: hasBoost ? 'буст продаж' : 'кабинет',
-        spend: boost, revenue: revenue, views: ymViews, clicks: ymClicks, atbs: 0, orders: boostOrders,
-        ctr: ymViews > 0 ? ymClicks / ymViews * 100 : 0, cpc: ymClicks > 0 ? boost / ymClicks : 0,
-        hasSpend: hasBoost, noStats: !hasBoost
-      }));
+      } else {
+        // нет буста или нет детализации — показываем кабинет как есть
+        out.push(buildCampaign({
+          platform: 'ym', id: id,
+          name: cabName + (c.placementType ? ' · ' + c.placementType : ''),
+          statusLabel: cabBoost > 0 ? 'буст активен' : 'подключён',
+          active: true, typeLabel: cabBoost > 0 ? 'буст продаж' : 'кабинет',
+          spend: cabBoost, revenue: cabRev, views: 0, clicks: 0, atbs: 0, orders: cabOrders,
+          ctr: 0, cpc: 0, hasSpend: cabBoost > 0, noStats: cabBoost <= 0
+        }));
+      }
     }
-    return { campaigns: out };
+    return { campaigns: out, ymSample: ymSample, totalRevenue: ymTotalRev };
   }
 
   // ── Сборка унифицированной кампании + диагноз ───────────────
@@ -1775,9 +1967,10 @@
 
   // Авто-диагноз: tone (good/warn/bad/neutral), action (текст), risk(bool)
   function diagnose(c) {
-    if (c.noStats || (c.spend === 0 && c.views === 0)) {
+    if (c.noStats || c.spend === 0) {
       c.risk = false; c.tone = 'neutral';
       if (c.platform === 'ym') { c.action = 'кабинет подключён'; c.reason = 'ym_cabinet'; }
+      else if (c.views > 0 || c.clicks > 0) { c.action = 'нет данных о расходе'; c.reason = 'no_stats'; }
       else if (c.hasSpend) { c.action = 'есть расход, нет детальной статистики'; c.reason = 'no_stats'; }
       else { c.action = c.active ? 'активна, без трат' : 'нет трат за период'; c.reason = 'no_spend'; }
       return;
@@ -1788,10 +1981,14 @@
     if (c.cart > 0 && c.cart < TH.cartRed) {
       c.tone = 'bad'; c.action = 'низкая корзина — проверь товар'; c.risk = true; c.reason = 'low_cart'; return;
     }
-    if (c.drr === Infinity || c.drr > TH.drrYellow) {
-      c.tone = 'warn'; c.action = 'высокий ДРР — урезать мусор'; c.risk = true; c.reason = 'high_drr'; return;
+    // ДРР-светофор
+    if (c.drr === Infinity || c.drr > TL_DRR.redHigh) {
+      c.tone = 'bad'; c.action = 'высокий ДРР — урезать или в акцию'; c.risk = true; c.reason = 'high_drr'; return;
     }
-    if (c.drr <= TH.drrGreen && c.cart >= TH.cartGreen && c.active) {
+    if (isFinite(c.drr) && c.revenue > 0 && c.drr < TL_DRR.redLow) {
+      c.tone = 'warn'; c.action = 'очень низкий ДРР — можно усилить'; c.risk = true; c.reason = 'low_drr'; return;
+    }
+    if (isFinite(c.drr) && c.drr >= TL_DRR.greenLow && c.drr <= TL_DRR.greenHigh && c.active) {
       c.tone = 'good'; c.action = 'здорова, можно растить'; c.risk = false; c.reason = 'healthy'; return;
     }
     c.tone = 'neutral'; c.action = 'наблюдать'; c.risk = false; c.reason = 'watch';
@@ -1805,12 +2002,19 @@
               'Сравни цену с топ-3 конкурентами, проверь не пропала ли скидка/акция.',
               'Открой карточку глазами клиента: первое фото, рейтинг, отзывы, понятно ли сколько капсул и под какую систему.',
               'И только после этого меняй ставки или отключай группу.'] },
-    high_drr: { title: 'Высокий ДРР', tone: 'warn',
-      sub: 'Реклама дороговата относительно выручки, которую приносит. Для кофе-капсул с тонкой маржой это съедает прибыль.',
+    high_drr: { title: 'Высокий ДРР', tone: 'bad',
+      sub: 'Реклама дороговата относительно выручки, которую приносит. Для кофе-капсул с тонкой маржой это съедает прибыль. Ниже видно, на каком шаге воронки теряются деньги.',
       steps: ['Проверь маржинальность товара: один и тот же ДРР для разных SKU — норма или катастрофа.',
-              'Раздели кампанию: где клики без корзин, где корзины без заказов.',
+              'Раздели кампанию: где клики без корзин, где корзины без заказов — режь именно слабое звено.',
               'Урежь мусорные фразы, товары без остатков и дорогие группы.',
-              'Оставь бюджет там, где ДРР и корзина одновременно здоровые.'] },
+              'Как вариант — отдай часть товаров из этой кампании в АКЦИЮ/промо: со скидкой они продаются органически и в рекомендациях, ставки можно снизить, а оборот сохранить. Часто это дешевле, чем выкупать клики дорогой рекламой.',
+              'Оставь полный бюджет там, где ДРР и корзина одновременно здоровые.'] },
+    low_drr: { title: 'Очень низкий ДРР', tone: 'warn',
+      sub: 'Реклама почти ничего не тратит относительно выручки. Это либо отлично (товар сам продаётся), либо упущенная возможность — реклама недокручена и можно забрать больше показов.',
+      steps: ['Проверь, не уперлась ли кампания в дневной бюджет или низкую ставку — возможно, показов меньше, чем могло бы быть.',
+              'Если товар прибыльный и в наличии — аккуратно подними ставку/бюджет: при низком ДРР есть запас, чтобы расти.',
+              'Убедись, что низкий ДРР не из-за разовой крупной покупки — посмотри тренд за несколько дней.',
+              'Зафиксируй изменение и сравни ДРР и заказы через 2-3 дня.'] },
     no_sales: { title: 'Клики есть, продаж нет', tone: 'bad',
       sub: 'Реклама приводит человека, но товар не убеждает купить. Ставка это не лечит — она лишь меняет скорость траты денег.',
       steps: ['Открой карточку как покупатель: понятно ли, что это, кому подходит и почему купить сейчас.',
@@ -1851,6 +2055,9 @@
   var STATE = {
     all: [], days: {}, period: 7, plat: 'all', view: 'all', status: 'active', search: '',
     ozonStub: true,
+    platTotalRev: { wb: 0, ozon: 0, ym: 0 },
+    collapsed: {},
+    expanded: {}, detail: {},
     sort: { key: 'spend', dir: 'desc' },
     colf: { name: '', plat: '', spend: '', drr: '', ctr: '', cart: '', tone: '' }
   };
@@ -1893,7 +2100,7 @@
       case 'attention': arr = arr.filter(function (c) { return c.risk; }); break;
       case 'scale': arr = arr.filter(function (c) { return c.tone === 'good'; }); break;
       case 'lowcart': arr = arr.filter(function (c) { return c.cart > 0 && c.cart < TH.cartRed; }); break;
-      case 'highdrr': arr = arr.filter(function (c) { return c.drr === Infinity || c.drr > TH.drrYellow; }); break;
+      case 'highdrr': arr = arr.filter(function (c) { return c.drr === Infinity || c.drr > TL_DRR.redHigh; }); break;
     }
     // Фильтры по колонкам
     var f = STATE.colf;
@@ -1952,6 +2159,10 @@
 
     $('sumDrr').textContent = avgDrr == null ? '—' : pct(avgDrr);
     $('sumRevenue').textContent = totalRev > 0 ? Math.round(totalRev).toLocaleString('ru-RU') + ' ₽' : '—';
+    var storeRev = (STATE.platTotalRev.wb || 0) + (STATE.platTotalRev.ozon || 0) + (STATE.platTotalRev.ym || 0);
+    $('sumShare').textContent = (storeRev > 0 && totalRev > 0)
+      ? 'доля рекламы ' + pct(totalRev / storeRev * 100) + ' · общая ' + Math.round(storeRev).toLocaleString('ru-RU') + ' ₽'
+      : '';
     $('sumSignals').textContent = risks;
     ['sumDrr', 'sumRevenue', 'sumSignals'].forEach(function (id) { $(id).classList.remove('skeleton'); });
 
@@ -1987,7 +2198,7 @@
     $('cnt-attention').textContent = all.filter(function (c) { return c.risk; }).length;
     $('cnt-scale').textContent = scaleable;
     $('cnt-lowcart').textContent = all.filter(function (c) { return c.cart > 0 && c.cart < TH.cartRed; }).length;
-    $('cnt-highdrr').textContent = all.filter(function (c) { return c.drr === Infinity || c.drr > TH.drrYellow; }).length;
+    $('cnt-highdrr').textContent = all.filter(function (c) { return c.drr === Infinity || c.drr > TL_DRR.redHigh; }).length;
     $('cnt-allc').textContent = all.length;
 
     // ── Таблица ──
@@ -2001,14 +2212,18 @@
   function renderChart() {
     var el = $('chart');
     var keys = Object.keys(STATE.days).sort();
-    var last = keys.slice(-7);
+    var last = keys.slice(-STATE.period);
     if (!last.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;margin:auto">нет дневных данных</div>'; $('chartMeta').textContent = '—'; return; }
     var max = Math.max.apply(null, last.map(function (k) { return STATE.days[k].spend; })) || 1;
+    var dense = last.length > 16;
     el.innerHTML = last.map(function (k) {
       var v = STATE.days[k].spend;
       var h = Math.max(6, Math.round(v / max * 100));
-      var dd = k.slice(8, 10) + '.' + k.slice(5, 7);
-      return '<div class="bar" style="height:' + h + '%"><span>' + fmtShort(v) + '</span><small>' + dd + '</small></div>';
+      var dd = k.slice(8, 10);
+      var ddmm = k.slice(8, 10) + '.' + k.slice(5, 7);
+      return '<div class="bar' + (dense ? ' dense' : '') + '" style="height:' + h + '%" title="' + ddmm + ': ' + fmtMoney(v) + '">' +
+        '<span>' + fmtShort(v) + '</span>' +
+        '<small>' + (dense ? dd : ddmm) + '</small></div>';
     }).join('');
     $('chartMeta').textContent = 'расход, посл. ' + last.length + ' дн (WB)';
   }
@@ -2049,29 +2264,283 @@
 
   function rowHTML(c) {
     var isYM = c.platform === 'ym';
-    var drrTxt = (c.noStats || c.revenue === 0) ? '—' : (c.drr === Infinity ? '∞' : pct(c.drr));
+    var drrTxt = (c.noStats || c.spend === 0 || c.revenue === 0) ? '—' : (c.drr === Infinity ? '∞' : pct(c.drr));
     var ctrTxt = c.views > 0 ? pct(c.ctr, 2) : (isYM ? 'н/д' : '—');
     var cartTxt = isYM ? 'н/д' : ((c.noStats || c.clicks === 0) ? '—' : pct(c.cart));
     var spendTxt = c.spend > 0 ? fmtMoney(c.spend) : '—';
-    return '<div class="camp-row" data-id="' + esc(c.id) + '" data-plat="' + c.platform + '">' +
-      '<div class="camp-name"><strong>' + esc(c.name) + '</strong><span>' + esc(c.typeLabel) + ' · ' + esc(c.statusLabel) + '</span></div>' +
+    var light = drrLight(c);
+    var drrCell = light ? '<span class="tl tl-' + light + '">' + drrTxt + '</span>' : drrTxt;
+    var key = c.platform + ':' + c.id;
+    var exp = !!STATE.expanded[key];
+    return '<div class="camp-row' + (exp ? ' exp' : '') + '" data-id="' + esc(c.id) + '" data-plat="' + c.platform + '" data-key="' + esc(key) + '">' +
+      '<div class="camp-name"><span class="rchev">' + (exp ? '▾' : '▸') + '</span><div class="cn"><strong>' + esc(c.name) + '</strong><span>' + esc(c.typeLabel) + ' · ' + esc(c.statusLabel) + '</span></div></div>' +
       '<div><span class="pill ' + platPill(c.platform) + '">' + platLabel(c.platform) + '</span></div>' +
       '<div class="r">' + spendTxt + '</div>' +
-      '<div class="r">' + drrTxt + '</div>' +
+      '<div class="r">' + drrCell + '</div>' +
       '<div class="r">' + ctrTxt + '</div>' +
       '<div class="r">' + cartTxt + '</div>' +
       '<div><span class="pill ' + c.tone + ' act">' + esc(c.action) + '</span></div>' +
-      '</div>';
+      '</div>' +
+      (exp ? detailRowHTML(key) : '');
+  }
+
+  function detailRowHTML(key) {
+    var d = STATE.detail[key];
+    if (!d || d.status === 'loading') return '<div class="camp-detail"><div class="cd-loading">загружаю позиции…</div></div>';
+    return '<div class="camp-detail">' + (d.html || '<div class="cd-note">нет данных</div>') + '</div>';
+  }
+
+  // ── Детализация кампании: товары + поисковые запросы ────────
+  // Кэш остатков (на сессию загрузки), чтобы не дёргать на каждое раскрытие.
+  var WB_STOCKS = null, OZ_STOCKS = null;
+  async function ensureWbStocks() {
+    if (WB_STOCKS) return;
+    WB_STOCKS = {};
+    try {
+      var st = await workerFetch('https://statistics-api.wildberries.ru/api/v1/supplier/stocks?dateFrom=2020-01-01', 'GET', { 'Authorization': CFG.wb }, null);
+      asArr(st).forEach(function (it) { var k = String(it.nmId || it.nmID || ''); if (!k) return; WB_STOCKS[k] = (WB_STOCKS[k] || 0) + (+it.quantity || 0); });
+    } catch (e) { dbg('WB stocks ошибка:', e.message); }
+  }
+  async function ensureOzStocks() {
+    if (OZ_STOCKS) return;
+    OZ_STOCKS = {};
+    if (!CFG.ozSellerId || !CFG.ozSellerKey) return;
+    try {
+      var st = await workerFetch('https://api-seller.ozon.ru/v2/analytics/stock_on_warehouses', 'POST',
+        { 'Client-Id': CFG.ozSellerId, 'Api-Key': CFG.ozSellerKey, 'Content-Type': 'application/json' },
+        { limit: 1000, offset: 0, warehouse_type: 'ALL' });
+      var rows = (st && st.result && st.result.rows) || [];
+      asArr(rows).forEach(function (r) { var k = String(r.sku || ''); if (!k) return; OZ_STOCKS[k] = (OZ_STOCKS[k] || 0) + (+r.free_to_sell_amount || 0); });
+    } catch (e) { dbg('Ozon stocks ошибка:', e.message); }
+  }
+
+  // Богатая таблица товаров WB: расход, CPM, позиция, воронка, остаток, ДРР.
+  function cdRichTable(map) {
+    var rows = Object.keys(map).map(function (k) { return map[k]; })
+      .filter(function (r) { return r.sum > 0 || r.clicks > 0 || r.orders > 0 || r.openCard > 0; })
+      .sort(function (a, b) { return b.sum - a.sum; });
+    if (!rows.length) return '<div class="cd-note">Разбивка по товарам не пришла.</div>';
+    return '<div class="cd-h">Товары в кампании (' + rows.length + ')</div>' +
+      '<table class="cd-tbl"><thead><tr><th>Товар</th><th>Расход</th><th>CPM</th><th>Поз.</th><th>Карточка</th><th>Корзины</th><th>Заказы</th><th>Остаток</th><th>ДРР</th></tr></thead><tbody>' +
+      rows.slice(0, 50).map(function (r) {
+        var cpm = r.views > 0 ? fmtMoney(r.sum / r.views * 1000) : '—';
+        var pos = r.posN > 0 ? (r.posSum / r.posN).toFixed(1) : '—';
+        var drr = r.sum_price > 0 ? pct(r.sum / r.sum_price * 100) : '—';
+        return '<tr><td>' + esc(r.name) + '</td><td>' + fmtMoney(r.sum) + '</td><td>' + cpm + '</td><td>' + pos + '</td><td>' +
+          (r.openCard ? fmtShort(r.openCard) : '—') + '</td><td>' + (r.cart ? fmtShort(r.cart) : '—') + '</td><td>' +
+          fmtShort(r.orders || r.ordersOrg) + '</td><td>' + (r.stock != null ? fmtShort(r.stock) : '—') + '</td><td>' + drr + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  // Богатая таблица товаров Ozon: ставка, показы/корзины/заказы/выручка, остаток.
+  function cdOzTable(map) {
+    var rows = Object.keys(map).map(function (k) { return map[k]; }).sort(function (a, b) { return (b.revenue - a.revenue) || (b.views - a.views); });
+    if (!rows.length) return '<div class="cd-note">Список товаров кампании пуст.</div>';
+    return '<div class="cd-h">Товары в кампании (' + rows.length + ')</div>' +
+      '<table class="cd-tbl"><thead><tr><th>Товар / SKU</th><th>Ставка</th><th>Показы</th><th>Корзины</th><th>Заказы</th><th>Выручка</th><th>Остаток</th></tr></thead><tbody>' +
+      rows.slice(0, 80).map(function (r) {
+        return '<tr><td>' + esc(r.name) + '</td><td>' + (r.bid > 0 ? fmtMoney(r.bid) : '—') + '</td><td>' +
+          (r.views ? fmtShort(r.views) : '—') + '</td><td>' + (r.cart ? fmtShort(r.cart) : '—') + '</td><td>' +
+          (r.orders ? fmtShort(r.orders) : '—') + '</td><td>' + (r.revenue ? fmtMoney(r.revenue) : '—') + '</td><td>' +
+          (r.stock != null ? fmtShort(r.stock) : '—') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  function cdWordsTable(w) {
+    var src = (w && (w.stat || (w.words && w.words.stat) || w.keywords || w.clusters || (w.words && w.words.keywords))) || [];
+    var arr = [];
+    asArr(src).forEach(function (k) {
+      arr.push({ phrase: k.keyword || k.cluster || k.name || k.phrase || '—', views: +k.views || 0, clicks: +k.clicks || 0, sum: +k.sum || 0, orders: +k.orders || 0 });
+    });
+    arr = arr.filter(function (x) { return x.clicks > 0 || x.sum > 0; }).sort(function (a, b) { return (b.sum - a.sum) || (b.clicks - a.clicks); });
+    if (!arr.length) return '<div class="cd-note">Поисковые запросы не пришли (тип кампании может их не отдавать).</div>';
+    return '<div class="cd-h">Поисковые запросы (' + arr.length + ')</div>' +
+      '<table class="cd-tbl"><thead><tr><th>Фраза</th><th>Показы</th><th>Клики</th><th>Расход</th></tr></thead><tbody>' +
+      arr.slice(0, 30).map(function (x) {
+        return '<tr><td>' + esc(x.phrase) + '</td><td>' + fmtShort(x.views) + '</td><td>' + fmtShort(x.clicks) + '</td><td>' + (x.sum > 0 ? fmtMoney(x.sum) : '—') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  function cdNm_(map, k) {
+    k = String(k);
+    if (!map[k]) map[k] = { nmId: k, name: 'арт ' + k, views: 0, clicks: 0, sum: 0, atbs: 0, orders: 0, sum_price: 0, posSum: 0, posN: 0, openCard: 0, cart: 0, ordersOrg: 0, stock: null };
+    return map[k];
+  }
+  async function loadDetailWB(c) {
+    var from = ymd(daysAgo(STATE.period)), to = ymd(new Date());
+    var parts = [];
+    var nmMap = {};
+    var sRaw = null;
+    // 1) Реклама по товарам + позиция. Сначала берём сырой объект из основной
+    //    загрузки (без повторного fullstats), иначе — один запрос.
+    try {
+      var s = WB_FS_RAW[String(c.id)];
+      if (!s) {
+        var fs = await wbAdv('/adv/v3/fullstats?ids=' + c.id + '&beginDate=' + from + '&endDate=' + to, 'GET', null);
+        s = asArr(fs)[0];
+      }
+      sRaw = s || null;
+      rawlog('WB drill fullstats ' + c.id, s || '(нет данных fullstats)');
+      function addNm(nm) {
+        if (!nm) return; var k = nm.nmId || nm.nmID || nm.nm; if (k == null) return;
+        var x = cdNm_(nmMap, k);
+        x.views += +nm.views || 0; x.clicks += +nm.clicks || 0; x.sum += +nm.sum || 0;
+        x.atbs += +nm.atbs || 0; x.orders += +nm.orders || 0; x.sum_price += +nm.sum_price || 0;
+        if (nm.name && /^арт /.test(x.name)) x.name = nm.name;
+      }
+      if (s) {
+        // в v3 товары лежат в day.apps[].nms (поле nms)
+        asArr(s.nm).concat(asArr(s.nms)).forEach(addNm);
+        asArr(s.days).forEach(function (d) {
+          asArr(d.nm).concat(asArr(d.nms)).forEach(addNm);
+          asArr(d.apps || d.platforms).forEach(function (ap) {
+            asArr(ap.nm).concat(asArr(ap.nms)).forEach(addNm);
+          });
+        });
+        // позиция (если когда-то вернётся в boosterStats)
+        asArr(s.boosterStats).forEach(function (b) {
+          var k = b.nm || b.nmId; var pos = +b.avg_position || +b.position || 0;
+          if (k != null && pos > 0) { var x = cdNm_(nmMap, k); x.posSum += pos; x.posN++; }
+        });
+      }
+    } catch (e) { parts.push('<div class="cd-note">реклама по товарам не пришла: ' + esc(e.message) + '</div>'); }
+
+    var nmIds = Object.keys(nmMap);
+    var repDump = '';
+    // 2) Органическая воронка по этим товарам (nm-report)
+    if (nmIds.length) {
+      try {
+        var rep = await workerFetch('https://seller-analytics-api.wildberries.ru/api/v2/nm-report/detail', 'POST',
+          { 'Authorization': CFG.wb, 'Content-Type': 'application/json' },
+          { nmIDs: nmIds.map(Number), period: { begin: from, end: to }, page: 1 });
+        rawlog('WB drill nm-report ' + c.id, rep);
+        var cards = asArr(rep && rep.data && rep.data.cards);
+        if (!cards.length && rep && rep.data) cards = asArr(rep.data); // иногда data — сразу массив
+        var repHit = 0;
+        cards.forEach(function (cd) {
+          var k = String(cd.nmID || cd.nmId); if (!nmMap[k]) return;
+          repHit++;
+          var st = cd.statistics || cd.stats || cd;
+          var sp = (st && (st.selectedPeriod || st.period)) || st || {};
+          nmMap[k].openCard = +sp.openCardCount || +sp.openCard || 0;
+          nmMap[k].cart = +sp.addToCartCount || +sp.addToCart || 0;
+          nmMap[k].ordersOrg = +sp.ordersCount || +sp.orders || 0;
+          if (cd.vendorCode && /^арт /.test(nmMap[k].name)) nmMap[k].name = cd.vendorCode;
+        });
+        var anyFunnel = nmIds.some(function (k) { return nmMap[k].openCard > 0 || nmMap[k].cart > 0 || nmMap[k].ordersOrg > 0; });
+        if (!repHit && rep && typeof rep === 'object') {
+          repDump = 'nm-report ключи: ' + Object.keys(rep).join(', ') +
+            (rep.data ? ' || data: ' + Object.keys(rep.data).join(', ') : '') +
+            (rep.detail || rep.title ? ' || ' + esc(String(rep.detail || rep.title)) : '');
+        } else if (repHit && !anyFunnel && cards[0]) {
+          // карточки нашлись, но значения 0 — покажу имена полей статистики
+          var c0 = cards[0]; var st0 = c0.statistics || c0.stats || c0;
+          var sp0 = (st0 && (st0.selectedPeriod || st0.period)) || st0 || {};
+          repDump = 'nm-report: карта-ключи ' + Object.keys(c0).join(',') +
+            ' || статистика ' + Object.keys(st0 || {}).join(',') +
+            ' || период ' + Object.keys(sp0 || {}).join(',');
+        }
+      } catch (e) { repDump = 'nm-report: ' + e.message; }
+      // 3) Остатки
+      await ensureWbStocks();
+      nmIds.forEach(function (k) { if (WB_STOCKS && WB_STOCKS[k] != null) nmMap[k].stock = WB_STOCKS[k]; });
+    }
+    if (nmIds.length) {
+      parts.unshift(cdRichTable(nmMap));
+    } else if (sRaw) {
+      // товары не распознаны — показываем структуру ответа, чтобы подвязать поля
+      var dump = 'ключи: ' + Object.keys(sRaw).join(', ');
+      var d0 = asArr(sRaw.days)[0];
+      if (d0) {
+        dump += '  ||  day: ' + Object.keys(d0).join(', ');
+        var sub0 = asArr(d0.apps || d0.platforms || d0.nm)[0];
+        if (sub0) dump += '  ||  sub: ' + Object.keys(sub0).join(', ');
+      }
+      parts.unshift('<div class="cd-note"><b>Разбивка по товарам не распознана.</b> Структура ответа WB (скинь мне это): ' + esc(dump) + '</div>');
+    } else {
+      parts.unshift('<div class="cd-note">WB-статистика по этой кампании не пришла (лимит 1/мин). Подожди минуту, нажми ↻ вверху и раскрой снова.</div>');
+    }
+
+    if (repDump) parts.push('<div class="cd-note">Воронка (карточка/корзины) не подвязалась. ' + esc(repDump) + '</div>');
+
+    // 4) Поисковые запросы
+    try {
+      var isAuto = /авто/i.test(c.typeLabel);
+      var w = await wbAdv((isAuto ? '/adv/v2/auto/stat-words?id=' : '/adv/v1/stat/words?id=') + c.id, 'GET', null);
+      rawlog('WB drill words ' + c.id, w);
+      var wt = cdWordsTable(w);
+      if (/не пришли/.test(wt) && w && typeof w === 'object' && !Array.isArray(w)) {
+        var is404 = /not found|404/i.test(String(w.title || w.detail || '')) || w.status === 404;
+        wt = is404
+          ? '<div class="cd-note">Поисковые запросы: WB убрал этот метод из нового API (404). По аукционным кампаниям публичного эндпоинта фраз сейчас нет.</div>'
+          : '<div class="cd-note"><b>Запросы не распознаны.</b> Структура ответа (скинь мне это): ключи ' + esc(Object.keys(w).join(', ')) + '</div>';
+      }
+      parts.push(wt);
+    } catch (e) { parts.push('<div class="cd-note">запросы недоступны для этого типа кампании (' + esc(e.message) + ').</div>'); }
+    return parts.join('');
+  }
+
+  async function loadDetailOzon(c) {
+    var token = await ozonToken(); if (!token) return '<div class="cd-note">нет токена Ozon Performance.</div>';
+    var auth = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+    var prodMap = {};
+    // 1) Товары кампании + ставки
+    try {
+      var r = await workerFetch(OZON_PERF + '/api/client/campaign/' + c.id + '/v2/products', 'GET', auth, null);
+      rawlog('Ozon drill products ' + c.id, r);
+      var list = asArr(r && (r.list || r.products || r.result));
+      if (!list.length && Array.isArray(r)) list = r;
+      asArr(list).forEach(function (p) {
+        var k = String(p.sku || p.id || ''); if (!k) return;
+        var bid = Number(p.bid || p.bidPrice || 0); if (bid > 100000) bid = bid / 1000000;
+        prodMap[k] = { sku: k, name: p.title || p.name || ('SKU ' + k), bid: bid, views: 0, cart: 0, orders: 0, revenue: 0, stock: null };
+      });
+    } catch (e) { return '<div class="cd-note">Товары Ozon: ' + esc(e.message) + '</div>'; }
+    var skus = Object.keys(prodMap);
+    if (!skus.length) return '<div class="cd-note">Список товаров кампании пуст. Поля смотри в диагностике (Ozon drill products), подвяжу.</div>';
+
+    // 2) Воронка по SKU (Seller-аналитика) + 3) остатки
+    if (CFG.ozSellerId && CFG.ozSellerKey) {
+      try {
+        var sa = await workerFetch('https://api-seller.ozon.ru/v1/analytics/data', 'POST',
+          { 'Client-Id': CFG.ozSellerId, 'Api-Key': CFG.ozSellerKey, 'Content-Type': 'application/json' },
+          { date_from: ymd(daysAgo(STATE.period)), date_to: ymd(new Date()), dimension: ['sku'], metrics: ['hits_view', 'hits_tocart', 'ordered_units', 'revenue'], limit: 1000, offset: 0 });
+        rawlog('Ozon drill SKU-аналитика', sa);
+        asArr(sa && sa.result && sa.result.data).forEach(function (row) {
+          var k = String((row.dimensions && row.dimensions[0] && row.dimensions[0].id) || '');
+          if (!prodMap[k]) return;
+          var m = row.metrics || [];
+          prodMap[k].views = +m[0] || 0; prodMap[k].cart = +m[1] || 0; prodMap[k].orders = +m[2] || 0; prodMap[k].revenue = +m[3] || 0;
+        });
+      } catch (e) { dbg('Ozon SKU-аналитика ошибка:', e.message); }
+      await ensureOzStocks();
+      skus.forEach(function (k) { if (OZ_STOCKS && OZ_STOCKS[k] != null) prodMap[k].stock = OZ_STOCKS[k]; });
+    }
+    return cdOzTable(prodMap) +
+      '<div class="cd-note">Показы/корзины/заказы — из Seller-аналитики по SKU за период; ставка — из кампании; остаток — со складов.</div>';
+  }
+
+  async function loadDetail(c) {
+    if (!c) return '<div class="cd-note">нет данных</div>';
+    if (c.platform === 'wb') return loadDetailWB(c);
+    if (c.platform === 'ozon') return loadDetailOzon(c);
+    if (c.platform === 'ym') return '<div class="cd-note">Это уже отдельный товар внутри Буста продаж ЯМ. Заказов с буста: <b>' + fmtShort(c.orders) + '</b>, выручка <b>' + fmtMoney(c.revenue) + '</b>, расход <b>' + fmtMoney(c.spend) + '</b>.</div>';
+    return '<div class="cd-note">Нет детализации.</div>';
   }
 
   function groupHTML(p, ag) {
     var spendTxt = ag.spend > 0 ? fmtMoney(ag.spend) : '—';
-    var drrTxt = ag.revenue > 0 ? pct(ag.drr) : (ag.spend > 0 ? '∞' : '—');
+    var glight = drrLight({ noStats: false, revenue: ag.revenue, drr: ag.drr });
+    var drrRaw = ag.revenue > 0 ? pct(ag.drr) : (ag.spend > 0 ? '∞' : '—');
+    var drrTxt = glight ? '<span class="tl tl-' + glight + '">' + drrRaw + '</span>' : drrRaw;
     var ctrTxt = ag.views > 0 ? pct(ag.ctr, 2) : (p === 'ym' ? 'н/д' : '—');
     var cartTxt = ag.atbs > 0 ? pct(ag.cart) : (p === 'ym' ? 'н/д' : '—');
-    return '<div class="camp-group">' +
-      '<div class="gname" style="grid-column:span 2"><span class="pill ' + platPill(p) + '">' + platLabel(p) + '</span> ' + esc(PLAT_NAME[p]) +
-        ' <small>· ' + ag.count + ' кампаний · выручка ' + (ag.revenue > 0 ? fmtMoney(ag.revenue) : '—') + '</small></div>' +
+    var storeRevP = (STATE.platTotalRev && STATE.platTotalRev[p]) || 0;
+    var shareP = (storeRevP > 0 && ag.revenue > 0) ? ' · доля рекламы ' + pct(ag.revenue / storeRevP * 100) : '';
+    var storeTxt = storeRevP > 0 ? ' · общая ' + fmtMoney(storeRevP) : '';
+    var collapsed = !!STATE.collapsed[p];
+    return '<div class="camp-group" data-group="' + p + '" title="Свернуть/развернуть площадку">' +
+      '<div class="gname" style="grid-column:span 2"><span class="gchev">' + (collapsed ? '▶' : '▼') + '</span><span class="pill ' + platPill(p) + '">' + platLabel(p) + '</span> ' + esc(PLAT_NAME[p]) +
+        ' <small>· ' + ag.count + ' кампаний · реклама ' + (ag.revenue > 0 ? fmtMoney(ag.revenue) : '—') + storeTxt + shareP + '</small></div>' +
       '<div class="r">' + spendTxt + '</div>' +
       '<div class="r">' + drrTxt + '</div>' +
       '<div class="r">' + ctrTxt + '</div>' +
@@ -2114,11 +2583,16 @@
       var g = rows.filter(function (c) { return c.platform === p; });
       if (g.length) groups.push({ p: p, rows: g, ag: aggregate(g) });
     });
-    groups.sort(function (a, b) { return b.ag.spend - a.ag.spend; });
+    groups.sort(function (a, b) {
+      var ay = a.p === 'ym' ? 1 : 0, by = b.p === 'ym' ? 1 : 0;
+      if (ay !== by) return ay - by;            // Яндекс Маркет всегда внизу
+      return b.ag.spend - a.ag.spend;            // остальные — по убыванию расхода
+    });
 
     var cap = 250, shown = 0, html = '';
     groups.forEach(function (gr) {
       html += groupHTML(gr.p, gr.ag);
+      if (STATE.collapsed[gr.p]) return;   // группа свёрнута — строки не рисуем
       for (var i = 0; i < gr.rows.length && shown < cap; i++) { html += rowHTML(gr.rows[i]); shown++; }
     });
     tb.innerHTML = html;
@@ -2127,6 +2601,26 @@
   }
 
   // ── Модалка объяснения диагноза ─────────────────────────────
+  // «Что в цифрах» — где именно ломается воронка у этой кампании.
+  function whyInsights(c) {
+    var out = [];
+    if (!c || c.noStats || c.platform === 'ym') return out;
+    if (c.reason === 'high_drr' || c.reason === 'no_sales' || c.reason === 'low_cart') {
+      if (c.clicks > 0) {
+        var clickToCart = c.cart;                       // atbs/clicks
+        var cartToOrder = c.atbs > 0 ? (c.orders / c.atbs * 100) : 0;
+        if (clickToCart > 0 && clickToCart < TH.cartGreen)
+          out.push('Узкое место — <b>клик → корзина</b>: из кликов в корзину доходит лишь ' + pct(clickToCart) + '. Клики идут, но товар/оффер не убеждает — трафик может быть нерелевантным или карточка слабая.');
+        else if (c.atbs > 0 && cartToOrder < 50)
+          out.push('Узкое место — <b>корзина → заказ</b>: в корзину кладут (' + pct(clickToCart) + '), а выкупают только ' + pct(cartToOrder) + '. Смотри финальную цену, доставку, отзывы и конкурентов.');
+        else
+          out.push('Воронка ровная — дело в <b>стоимости трафика</b>: клик дорогой относительно выручки с заказа, поэтому ДРР высокий.');
+      }
+      if (c.cpc > 0) out.push('Цена клика (CPC): <b>' + fmtMoney(c.cpc) + '</b> · кликов ' + fmtShort(c.clicks) + ' · заказов ' + fmtShort(c.orders) + ' · выручка ' + fmtMoney(c.revenue) + '.');
+    }
+    return out;
+  }
+
   function openModal(c) {
     if (!c) return;
     var e = EXPLAIN[c.reason] || EXPLAIN.watch;
@@ -2135,11 +2629,16 @@
     if (c.revenue > 0 && isFinite(c.drr)) chips.push('ДРР: ' + pct(c.drr));
     if (c.views > 0) chips.push('CTR: ' + pct(c.ctr, 2));
     if (c.clicks > 0) chips.push('Корзина: ' + pct(c.cart));
+    var why = whyInsights(c);
+    var whyHtml = why.length
+      ? '<div class="modal-why"><div class="modal-why-h">Что в цифрах</div>' + why.map(function (w) { return '<p>' + w + '</p>'; }).join('') + '</div>'
+      : '';
     $('modalBody').innerHTML =
       '<div class="modal-kicker">' + esc(c.action) + '</div>' +
       '<h2>' + esc(e.title) + '</h2>' +
       '<p class="modal-sub"><b>' + esc(c.name) + '</b> — ' + esc(e.sub) + '</p>' +
       '<div class="modal-stat">' + chips.map(function (x) { return '<span class="chip">' + esc(x) + '</span>'; }).join('') + '</div>' +
+      whyHtml +
       '<ol class="modal-steps">' + e.steps.map(function (s, i) { return '<li><span class="num">' + (i + 1) + '</span><span>' + esc(s) + '</span></li>'; }).join('') + '</ol>';
     $('modal').style.display = 'flex';
   }
@@ -2185,18 +2684,30 @@
     } else { errors.push('WB: ' + (results[0].reason && results[0].reason.message || results[0].reason)); }
 
     // Ozon
-    var ozStatsMissing = false;
+    var ozStatsMissing = false, ozNoSpend = false, ozSampleKeys = '';
     if (results[1].status === 'fulfilled') {
-      STATE.ozonStub = !!results[1].value.stub;
-      all = all.concat(results[1].value.campaigns || []);
-      if (results[1].value.error) errors.push('Ozon: ' + results[1].value.error);
-      ozStatsMissing = !STATE.ozonStub && (results[1].value.campaigns || []).length > 0 && !results[1].value.statsOk;
+      var ozv = results[1].value;
+      STATE.ozonStub = !!ozv.stub;
+      all = all.concat(ozv.campaigns || []);
+      if (ozv.error) errors.push('Ozon: ' + ozv.error);
+      ozStatsMissing = !STATE.ozonStub && (ozv.campaigns || []).length > 0 && !ozv.statsOk;
+      ozNoSpend = !STATE.ozonStub && ozv.statsOk && !(ozv.ozSpend > 0);
+      ozSampleKeys = ozv.ozSampleKeys || '';
     } else { errors.push('Ozon: ' + (results[1].reason && results[1].reason.message || results[1].reason)); }
 
     // YM
+    var ymSample = '';
     if (results[2].status === 'fulfilled') {
       all = all.concat(results[2].value.campaigns || []);
+      ymSample = results[2].value.ymSample || '';
     } else { errors.push('ЯМ: ' + (results[2].reason && results[2].reason.message || results[2].reason)); }
+
+    // Общая выручка по площадкам (для доли рекламы)
+    STATE.platTotalRev = {
+      wb: (results[0].status === 'fulfilled' && results[0].value.totalRevenue) || 0,
+      ozon: (results[1].status === 'fulfilled' && results[1].value.totalRevenue) || 0,
+      ym: (results[2].status === 'fulfilled' && results[2].value.totalRevenue) || 0
+    };
 
     // Лог упавших платформ (когда сам workerFetch не дошёл)
     if (results[0].status === 'rejected') rawlog('WB — запрос упал', String(results[0].reason && results[0].reason.message || results[0].reason));
@@ -2217,13 +2728,17 @@
     var msgs = [];
     if (STATE.ozonStub) {
       msgs.push('<b>Ozon-реклама не подключена.</b> Нужны отдельные Performance-доступы: seller.ozon.ru → Настройки → API-ключи → Performance API → создать аккаунт → добавить ключ. Затем кнопка «Ключи» в шапке → вставь Client ID и Secret.');
+    } else if (ozNoSpend) {
+      msgs.push('<b>Ozon: расход не распознан.</b> Показы/клики пришли, а рубли расхода — нет. Поля строки статистики Ozon: <code style="font-size:11px">' + esc(ozSampleKeys || '(пусто)') + '</code> — пришли мне этот список, и я подвяжу поле расхода (или переключу на асинхронный отчёт).');
     } else if (ozStatsMissing) {
-      msgs.push('<b>Ozon: кампании подключены, но дневная статистика не отдалась</b> этим эндпоинтом. Названия и статусы видны; цифры (расход/ДРР) подтянем отчётом, если Ozon не отдаёт daily/json для этого кабинета.');
+      msgs.push('<b>Ozon: кампании подключены, но дневная статистика не отдалась.</b> Названия и статусы видны; расход/ДРР подтянем отчётом.');
     }
     if (wbStatsErr) {
-      msgs.push('<b>WB: список кампаний загружен, но статистика (fullstats) не пришла:</b> ' + esc(String(wbStatsErr)) + '. У WB лимит ~1 запрос/мин на этот эндпоинт — нажми ↻ через минуту.');
+      var wbCache = /кэш/i.test(String(wbStatsErr));
+      msgs.push('<b>WB-статистика:</b> ' + esc(String(wbStatsErr)) + (wbCache ? '' : ' (лимит WB ~1 запрос/мин — нажми ↻ через минуту).'));
     }
     if (wbNote) { msgs.push(esc(wbNote)); }
+    if (ymSample) { msgs.push('<b>ЯМ диагностика (для проверки ДРР):</b> <code style="font-size:11px">' + esc(ymSample) + '</code>'); }
     if (errors.length) {
       banner('error', '<b>Часть данных не загрузилась.</b><br>' + errors.map(esc).join('<br>') + (msgs.length ? '<br><br>' + msgs.join('<br>') : ''));
     } else if (msgs.length) {
@@ -2284,16 +2799,70 @@
   bindColFilter('fDrr', 'drr'); bindColFilter('fCtr', 'ctr'); bindColFilter('fCart', 'cart'); bindColFilter('fTone', 'tone');
 
   // Клик по статусу-пилюле → модалка с объяснением
-  $('campRows').addEventListener('click', function (e) {
-    var pill = e.target.closest('.act'); if (!pill) return;
+  $('campRows').addEventListener('click', async function (e) {
+    var grp = e.target.closest('.camp-group');
+    if (grp) { var gp = grp.getAttribute('data-group'); STATE.collapsed[gp] = !STATE.collapsed[gp]; renderTable(); return; }
+    if (e.target.closest('.camp-detail')) return;   // клики внутри детализации не трогаем
     var row = e.target.closest('.camp-row'); if (!row) return;
-    var id = row.getAttribute('data-id'), plat = row.getAttribute('data-plat');
-    var c = STATE.all.filter(function (x) { return String(x.id) === id && x.platform === plat; })[0];
-    openModal(c);
+    // клик по статусу-пилюле → модалка с разбором
+    if (e.target.closest('.act')) {
+      var id = row.getAttribute('data-id'), plat = row.getAttribute('data-plat');
+      openModal(STATE.all.filter(function (x) { return String(x.id) === id && x.platform === plat; })[0]);
+      return;
+    }
+    // иначе — раскрыть/свернуть позиции внутри кампании
+    var key = row.getAttribute('data-key');
+    if (STATE.expanded[key]) { delete STATE.expanded[key]; renderTable(); return; }
+    STATE.expanded[key] = true;
+    if (!STATE.detail[key] || STATE.detail[key].status !== 'done') {
+      STATE.detail[key] = { status: 'loading' };
+      renderTable();
+      var c = STATE.all.filter(function (x) { return (x.platform + ':' + x.id) === key; })[0];
+      try { var html = await loadDetail(c); STATE.detail[key] = { status: 'done', html: html }; }
+      catch (err) { STATE.detail[key] = { status: 'done', html: '<div class="cd-note">Ошибка: ' + esc(err.message) + '</div>' }; }
+      if (STATE.expanded[key]) renderTable();
+    } else {
+      renderTable();
+    }
   });
   $('modalClose').addEventListener('click', closeModal);
   $('modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+
+  // ── Редактор порогов светофора ДРР ──────────────────────────
+  function tlNum(n) { return (Math.round(n * 100) / 100).toString().replace('.', ','); }
+  function renderTLLegend() {
+    var g = $('tlGreenLbl'); if (g) g.textContent = tlNum(TL_DRR.greenLow) + '–' + tlNum(TL_DRR.greenHigh) + '%';
+    var y = $('tlYellowLbl'); if (y) y.textContent = tlNum(TL_DRR.redLow) + '–' + tlNum(TL_DRR.greenLow) + ' · ' + tlNum(TL_DRR.greenHigh) + '–' + tlNum(TL_DRR.redHigh) + '%';
+    var r = $('tlRedLbl'); if (r) r.innerHTML = '&lt;' + tlNum(TL_DRR.redLow) + ' · &gt;' + tlNum(TL_DRR.redHigh) + '%';
+  }
+  function applyTL(next) {
+    TL_DRR = next;
+    try { localStorage.setItem('sowy_ads_tl_drr', JSON.stringify(TL_DRR)); } catch (e) {}
+    STATE.all.forEach(diagnose);   // пересчёт диагнозов под новые пороги
+    renderTLLegend();
+    render();
+    $('tlForm').style.display = 'none';
+  }
+  $('tlEdit').addEventListener('click', function () {
+    var f = $('tlForm');
+    $('tlRedLow').value = TL_DRR.redLow; $('tlGreenLow').value = TL_DRR.greenLow;
+    $('tlGreenHigh').value = TL_DRR.greenHigh; $('tlRedHigh').value = TL_DRR.redHigh;
+    $('tlErr').textContent = '';
+    f.style.display = (f.style.display === 'none' || !f.style.display) ? 'inline-flex' : 'none';
+  });
+  $('tlSave').addEventListener('click', function () {
+    var rl = parseFloat($('tlRedLow').value), gl = parseFloat($('tlGreenLow').value),
+        gh = parseFloat($('tlGreenHigh').value), rh = parseFloat($('tlRedHigh').value);
+    if ([rl, gl, gh, rh].some(function (x) { return isNaN(x) || x < 0; })) { $('tlErr').textContent = 'Только числа ≥ 0'; return; }
+    if (!(rl <= gl && gl <= gh && gh <= rh)) { $('tlErr').textContent = 'Нужно: красный-низ ≤ зелёный-от ≤ зелёный-до ≤ красный-верх'; return; }
+    applyTL({ redLow: rl, greenLow: gl, greenHigh: gh, redHigh: rh });
+  });
+  $('tlReset').addEventListener('click', function () {
+    try { localStorage.removeItem('sowy_ads_tl_drr'); } catch (e) {}
+    applyTL(Object.assign({}, TL_DRR_DEFAULT));
+  });
+  renderTLLegend();
   $('btnRefresh').addEventListener('click', loadAll);
   $('btnDbg').addEventListener('click', function () {
     var card = document.getElementById('dbgCard');
