@@ -216,7 +216,11 @@
       border-radius: 8px;
     }
 
-    .panel { position: sticky; top: 24px; padding: 18px; }
+    .panel { position: sticky; top: 24px; padding: 18px; max-height: calc(100vh - 48px); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: rgba(43,26,19,.22) transparent; }
+    .panel::-webkit-scrollbar { width: 6px; }
+    .panel::-webkit-scrollbar-track { background: transparent; }
+    .panel::-webkit-scrollbar-thumb { background: rgba(43,26,19,.18); border-radius: 6px; }
+    .panel::-webkit-scrollbar-thumb:hover { background: rgba(43,26,19,.3); }
 
     .filter-title {
       margin: 18px 0 9px;
@@ -472,8 +476,8 @@
     .cd-meta { font-size: 8.5px; color: var(--muted); margin-top: 2px; line-height: 1.3; font-variant-numeric: tabular-nums; }
     .cd-tot { font-size: 8.5px; color: var(--muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
     .camp-empty { padding: 26px; text-align: center; color: var(--muted); font-size: 13px; }
-    .toggle-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
-    .toggle-row .segment { justify-content: center; height: 34px; font-size: 12px; }
+    .toggle-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+    .toggle-row .segment { justify-content: center; height: 34px; font-size: 11px; padding: 0 4px; letter-spacing: -.2px; white-space: nowrap; overflow: hidden; }
 
     /* сортируемые заголовки */
     .camp-head > div[data-sort] { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 4px; }
@@ -1454,10 +1458,12 @@
 
   // ── Ставки юнит-экономики (редактируемые, localStorage) ──
   //   comm — комиссия МП, %; logi — логистика+хранение, ₽/шт; tax — налог, %.
+  // acq — эквайринг, % (приём оплаты). По образцу калькуляторов — 1,5% на всех площадках.
+  // На Ozon он частично входит в sales_percent_fbo; при желании поставь 0 в ставках, чтобы не дублировать.
   var UNIT_DEFAULT = {
-    wb:   { comm: 20, logi: 60, tax: 7 },
-    ozon: { comm: 20, logi: 60, tax: 7 },
-    ym:   { comm: 15, logi: 50, tax: 7 }
+    wb:   { comm: 20, logi: 60, tax: 7, acq: 1.5 },
+    ozon: { comm: 20, logi: 60, tax: 7, acq: 1.5 },
+    ym:   { comm: 15, logi: 50, tax: 7, acq: 1.5 }
   };
   var UNIT = JSON.parse(JSON.stringify(UNIT_DEFAULT));
   try { var _us = JSON.parse(localStorage.getItem('sowy_ads_unit') || 'null'); if (_us) { ['wb', 'ozon', 'ym'].forEach(function (p) { if (_us[p]) UNIT[p] = Object.assign({}, UNIT[p], _us[p]); }); } } catch (e) {}
@@ -1962,6 +1968,7 @@
     var ymTotalRev = 0;
     YM_BY_BC = {}; YM_BY_C1 = {};
     var _ymC1cache = {};   // offerName -> code1c (чтобы не матчить одно имя много раз)
+    var _ymDiag = {};      // shopSku -> {name, есть ли штрихкод в БД, найден ли код 1С по имени}
     for (var ci = 0; ci < camps.length; ci++) {
       var c = camps[ci], id = c.id;
       var cabName = c.domain || ('Магазин ' + id);
@@ -2002,6 +2009,10 @@
                 var _c1 = _ymC1cache[_onm];
                 if (_c1 === undefined) { var _mm = (typeof sovaMatchByName === 'function') ? sovaMatchByName(_onm) : null; _c1 = (_mm && _mm.info && _mm.info.code1c) ? _mm.info.code1c : ''; _ymC1cache[_onm] = _c1; }
                 if (_c1) { if (!YM_BY_C1[_c1]) YM_BY_C1[_c1] = { revenue: 0, orders: 0, spend: 0 }; YM_BY_C1[_c1].revenue += iRev; YM_BY_C1[_c1].orders += iCnt; YM_BY_C1[_c1].spend += iBoost0; }
+                // Диагностика: почему ЯМ может не подтянуться к товару — по каждому shopSku фиксируем,
+                // есть ли его штрихкод в БД и нашёлся ли код 1С по имени.
+                var _dk = _ybc || ('offer:' + _onm.slice(0, 40));
+                if (!_ymDiag[_dk]) _ymDiag[_dk] = { name: _onm.slice(0, 60), shopSku: _ybc, bcInDb: !!(_ybc && SOVA_MAP[_ybc]), code1cByName: _c1 || '—' };
               }
               // bidFee — ставка буста в сотых процента (600 = 6.00%).
               // Реальный расход = ставка% × выручка позиции (BUYER).
@@ -2057,6 +2068,7 @@
         }));
       }
     }
+    rawlog('ЯМ матч с БД (shopSku → есть в БД? / код 1С по имени)', _ymDiag);
     return { campaigns: out, ymSample: ymSample, totalRevenue: ymTotalRev };
   }
 
@@ -2341,11 +2353,16 @@
     $('statusLine').innerHTML = 'обновлено сегодня, ' + now + '<br>период: ' + STATE.period + ' дн · источник: WB / Ozon / ЯМ';
   }
 
+  function _ddmm(d) { return d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4); }
   function renderChart() {
     var el = $('chart');
     var keys = Object.keys(STATE.days).sort();
     var last = keys.slice(-STATE.period);
-    if (!last.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;margin:auto">нет дневных данных</div>'; $('chartMeta').textContent = '—'; return; }
+    // Период цифрами над графиком: фактический диапазон данных, иначе — выбранный период.
+    var fromTxt = last.length ? _ddmm(last[0]) : _ddmm(ymd(daysAgo(STATE.period)));
+    var toTxt = last.length ? _ddmm(last[last.length - 1]) : _ddmm(ymd(new Date()));
+    $('chartMeta').textContent = fromTxt + ' — ' + toTxt + ' · ' + STATE.period + ' дн';
+    if (!last.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;margin:auto">нет дневных данных за период</div>'; return; }
     var max = Math.max.apply(null, last.map(function (k) { return STATE.days[k].spend; })) || 1;
     var dense = last.length > 16;
     el.innerHTML = last.map(function (k) {
@@ -2357,7 +2374,7 @@
         '<span>' + fmtShort(v) + '</span>' +
         '<small>' + (dense ? dd : ddmm) + '</small></div>';
     }).join('');
-    $('chartMeta').textContent = 'расход, посл. ' + last.length + ' дн (WB)';
+    $('chartMeta').textContent = fromTxt + ' — ' + toTxt + ' · ' + last.length + ' дн · расход WB';
   }
 
   function renderInsights(withStats) {
@@ -2584,16 +2601,16 @@
     if (!have.length) return '<div class="cd-note">Юнитка: нет цены/заказов по позициям за период.</div>';
     var costMissing = have.some(function (r) { return !(r.cost > 0); });
     var calc = have.map(function (r) {
-      var comm = r.price * u.comm / 100, tax = r.price * u.tax / 100;
-      var profit = r.price - (r.cost || 0) - comm - u.logi - (r.ads || 0) - tax;
-      return { name: r.name, price: r.price, cost: r.cost || 0, comm: comm, logi: u.logi, ads: r.ads || 0, tax: tax, profit: profit, margin: r.price > 0 ? profit / r.price * 100 : 0 };
+      var comm = r.price * u.comm / 100, tax = r.price * u.tax / 100, acq = r.price * ((u.acq) || 0) / 100;
+      var profit = r.price - (r.cost || 0) - comm - u.logi - acq - (r.ads || 0) - tax;
+      return { name: r.name, price: r.price, cost: r.cost || 0, comm: comm, logi: u.logi, acq: acq, ads: r.ads || 0, tax: tax, profit: profit, margin: r.price > 0 ? profit / r.price * 100 : 0 };
     }).sort(function (a, b) { return b.profit - a.profit; });
-    var html = '<div class="cd-h">Юнит-экономика на единицу · комиссия ' + u.comm + '% · логистика ' + u.logi + ' ₽ · налог ' + u.tax + '%</div>' +
-      '<div class="cd-scroll"><table class="cd-tbl"><thead><tr><th>Товар</th><th>Цена</th><th>Себест.</th><th>Комис.</th><th>Логист.</th><th>Реклама</th><th>Налог</th><th>Прибыль</th><th>Маржа</th></tr></thead><tbody>' +
+    var html = '<div class="cd-h">Юнит-экономика на единицу · комиссия ' + u.comm + '% · логистика ' + u.logi + ' ₽ · эквайринг ' + ((u.acq) || 0) + '% · налог ' + u.tax + '%</div>' +
+      '<div class="cd-scroll"><table class="cd-tbl"><thead><tr><th>Товар</th><th>Цена</th><th>Себест.</th><th>Комис.</th><th>Логист.</th><th>Эквайр.</th><th>Реклама</th><th>Налог</th><th>Прибыль</th><th>Маржа</th></tr></thead><tbody>' +
       calc.map(function (r) {
         var mc = r.margin >= 15 ? 'tl-green' : (r.margin >= 0 ? 'tl-yellow' : 'tl-red');
         return '<tr><td>' + esc(r.name) + '</td><td>' + fmtMoney(r.price) + '</td><td>' + (r.cost > 0 ? fmtMoney(r.cost) : '—') +
-          '</td><td>' + fmtMoney(r.comm) + '</td><td>' + fmtMoney(r.logi) + '</td><td>' + (r.ads > 0 ? fmtMoney(r.ads) : '—') +
+          '</td><td>' + fmtMoney(r.comm) + '</td><td>' + fmtMoney(r.logi) + '</td><td>' + fmtMoney(r.acq) + '</td><td>' + (r.ads > 0 ? fmtMoney(r.ads) : '—') +
           '</td><td>' + fmtMoney(r.tax) + '</td><td><b>' + fmtMoney(r.profit) + '</b></td><td><span class="tl ' + mc + '">' + pct(r.margin) + '</span></td></tr>';
       }).join('') + '</tbody></table></div>' +
       (costMissing ? '<div class="cd-note">Для части позиций нет себестоимости (нет штрихкода в данных Совы / Сова не открывалась на этом домене).</div>' : '');
@@ -2845,7 +2862,7 @@
         }
         if (om) ozF = { views: om.hits_view, cart: om.hits_tocart, orders: om.ordered_units, revenue: om.revenue, pos: om.position_category, delivered: om.delivered_units };
       }
-      if (ozPrice > 0) res.ozon = { price: ozPrice, cost: cost, comm: ozPrice * ozCommPct / 100, logi: ozLogi, store: 0, f: ozF, ad: (plat === 'ozon' ? (base.ads || 0) : 0) };
+      if (ozPrice > 0) res.ozon = { price: ozPrice, cost: cost, comm: ozPrice * ozCommPct / 100, logi: ozLogi, store: null, acq: ozPrice * ((UNIT.ozon && UNIT.ozon.acq) || 0) / 100, f: ozF, ad: (plat === 'ozon' ? (base.ads || 0) : 0) };
     } catch (e) { dbg('econ ozon', e.message); }
     // ── WB ──
     try {
@@ -2866,7 +2883,7 @@
       if (wbPrice > 0) {
         var wvol = wbNm ? (WB_VOL[wbNm] || WB_VOL[Number(wbNm)] || 0) : 0;
         var wlv = wbLogiByFormula(wvol, wbPrice);
-        res.wb = { price: wbPrice, cost: cost, comm: wbPrice * (WB_CFG.commission || 0) / 100, logi: wlv != null ? wlv : 0, store: wbStoreByFormula(wvol), f: wbF, ad: (plat === 'wb' ? (base.ads || 0) : (wbStats && wbStats.orders > 0 ? wbStats.sum / wbStats.orders : 0)) };
+        res.wb = { price: wbPrice, cost: cost, comm: wbPrice * (WB_CFG.commission || 0) / 100, logi: wlv != null ? wlv : 0, store: wbStoreByFormula(wvol), acq: wbPrice * ((UNIT.wb && UNIT.wb.acq) || 0) / 100, f: wbF, ad: (plat === 'wb' ? (base.ads || 0) : (wbStats && wbStats.orders > 0 ? wbStats.sum / wbStats.orders : 0)) };
       }
     } catch (e) { dbg('econ wb', e.message); }
     // ── ЯМ ──
@@ -2875,11 +2892,11 @@
       var ymPrice = 0, ymF = null;
       if (plat === 'ym') { ymPrice = base.price; ymF = { views: base.views, cart: base.cart, orders: base.orders, revenue: base.revenue }; }
       else { var yb = (YM_BY_BC && YM_BY_BC[bc]) || (base.code1c && YM_BY_C1 ? YM_BY_C1[base.code1c] : null); if (yb && yb.orders > 0) { ymPrice = yb.revenue / yb.orders; ymF = { views: null, cart: null, orders: yb.orders, revenue: yb.revenue }; } }
-      if (ymPrice > 0) res.ym = { price: ymPrice, cost: cost, comm: ymPrice * (yu.comm || 0) / 100, logi: yu.logi || 0, store: 0, f: ymF, ad: (plat === 'ym' ? (base.ads || 0) : (yb && yb.orders > 0 ? yb.spend / yb.orders : 0)) };
+      if (ymPrice > 0) res.ym = { price: ymPrice, cost: cost, comm: ymPrice * (yu.comm || 0) / 100, logi: yu.logi || 0, store: null, acq: ymPrice * ((yu.acq) || 0) / 100, f: ymF, ad: (plat === 'ym' ? (base.ads || 0) : (yb && yb.orders > 0 ? yb.spend / yb.orders : 0)) };
     } catch (e) { dbg('econ ym', e.message); }
     ['ozon', 'wb', 'ym'].forEach(function (k) {
       var r = res[k]; if (!r) return;
-      r.profit = r.price - r.cost - r.comm - r.logi - (r.store || 0);       // валовая до рекламы
+      r.profit = r.price - r.cost - r.comm - r.logi - (r.store || 0) - (r.acq || 0);   // валовая до рекламы (вкл. эквайринг)
       r.margin = r.price > 0 ? r.profit / r.price * 100 : 0;
       r.ad = r.ad || 0;
       r.net = r.profit - r.ad;                                              // чистая прибыль с учётом рекламы
@@ -2961,6 +2978,7 @@
         row('Комиссия', 'comm') +
         row('Логистика', 'logi') +
         row('Хранение', 'store') +
+        row('Эквайринг', 'acq') +
         '<tr><td style="padding:7px 10px;border-top:1px solid rgba(168,93,54,.3);font-weight:700">Прибыль / ед</td>' +
         cabs.map(function (k) { var r = ce[k]; var hl = (k === best) ? ';color:var(--green-dark,#2e6b33)' : ''; return '<td style="padding:7px 10px;border-top:1px solid rgba(168,93,54,.3);text-align:right;font-weight:700' + hl + '">' + (r ? fmtMoney(r.profit) : '—') + '</td>'; }).join('') + '</tr>' +
         row('Маржа (до рекл.)', null, true) +
@@ -2970,7 +2988,7 @@
         '<tr><td style="padding:6px 10px;' + bd + ';color:var(--muted)">ROMI (на ₽ рекламы)</td>' +
         cabs.map(function (k) { var r = ce[k]; var v = (r && r.romi != null) ? (r.romi.toFixed(2) + '×') : '—'; var c = (r && r.romi != null) ? (r.romi >= 1 ? 'var(--green-dark,#2e6b33)' : 'var(--crit,#a8452f)') : ''; return '<td style="padding:6px 10px;' + bd + ';text-align:right;font-weight:600' + (c ? ';color:' + c : '') + '">' + v + '</td>'; }).join('') + '</tr>' +
         '</tbody></table>' +
-        '<p class="cfg-hint" style="margin-top:6px">★ — выгоднее по марже до рекламы. <b>Чистая прибыль</b> = валовая − реклама. <b>ROMI</b> = валовая ÷ расход рекламы (≥1× — реклама окупается). Цена и расход рекламы — из реальных данных каждого кабинета; комиссия/логистика — по правилам кабинета.</p>';
+        '<p class="cfg-hint" style="margin-top:6px">★ — выгоднее по марже до рекламы. <b>Чистая прибыль</b> = валовая − реклама. <b>ROMI</b> = валовая ÷ расход рекламы (≥1× — реклама окупается). Цена и расход рекламы — из реальных данных каждого кабинета; комиссия/логистика/эквайринг — по правилам кабинета (эквайринг по умолчанию 1,5%, меняется в «Себестоимость и ставки»). Хранение считается только для WB; на Ozon/ЯМ отдельной подушной строки нет — стоит «—».</p>';
     } else {
       econ = '<div class="cd-note">Юнит-экономика по кабинетам недоступна: нет данных продаж товара. Раскрой кампанию с продажами или загрузи БД.</div>';
     }
@@ -3144,12 +3162,18 @@
     return String(s || '').toLowerCase().replace(/[^a-zа-я0-9]+/gi, ' ').split(' ')
       .filter(function (t) { return /^\d+$/.test(t) ? t.length >= 2 : (t.length >= 3 && !_NAME_STOP[t]); });
   }
+  function _numTokens(toks) { return toks.filter(function (t) { return /^\d+$/.test(t); }); }
   function sovaMatchByName(name) {
     var wt = _nameTokens(name); if (wt.length < 2) return null;
     var wset = {}; wt.forEach(function (t) { wset[t] = 1; });
+    var wNums = _numTokens(wt);
     var best = null, bestN = 0;
     Object.keys(SOVA_MAP).forEach(function (bc) {
       var info = SOVA_MAP[bc]; var dt = _nameTokens(info.shortName); if (dt.length < 2) return;
+      // Анти-пересортица: если у обоих имён есть числа-размеры (50/60/250 г и т.п.),
+      // требуем хотя бы одно общее число — иначе это другой размер/объём, не матчим.
+      var dNums = _numTokens(dt);
+      if (dNums.length && wNums.length && !dNums.some(function (n) { return wset[n]; })) return;
       var inter = 0; dt.forEach(function (t) { if (wset[t]) inter++; });
       if (inter >= 2 && inter >= Math.ceil(dt.length * 0.6) && inter > bestN) { bestN = inter; best = { bc: bc, info: info }; }
     });
@@ -3871,6 +3895,13 @@
     if (results[2].status === 'rejected') rawlog('ЯМ — запрос упал', String(results[2].reason && results[2].reason.message || results[2].reason));
 
     STATE.all = all;
+    // Кэш дневного расхода по периоду: если свежий ответ WB пуст (лимит /adv/v1/upd ~1 запрос/мин),
+    // берём последний удачный из кэша — чтобы график появлялся сразу и не пропадал при перещёлкивании.
+    try {
+      var _dk = 'sowy_ads_days_' + STATE.period;
+      if (dayAgg && Object.keys(dayAgg).length >= 1) localStorage.setItem(_dk, JSON.stringify(dayAgg));
+      else { var _cd = JSON.parse(localStorage.getItem(_dk) || 'null'); if (_cd && Object.keys(_cd).length) dayAgg = _cd; }
+    } catch (e) {}
     STATE.days = dayAgg;
     render();
 
@@ -3916,6 +3947,8 @@
       document.querySelectorAll('.period').forEach(function (x) { x.classList.remove('active'); });
       b.classList.add('active');
       STATE.period = Number(b.dataset.days);
+      // Мгновенно показать график за этот период из кэша (до завершения загрузки).
+      try { var _c = JSON.parse(localStorage.getItem('sowy_ads_days_' + STATE.period) || 'null'); if (_c && Object.keys(_c).length) { STATE.days = _c; renderChart(); } } catch (e) {}
       loadAll();
     });
   });
