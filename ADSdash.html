@@ -476,8 +476,8 @@
     .cd-meta { font-size: 8.5px; color: var(--muted); margin-top: 2px; line-height: 1.3; font-variant-numeric: tabular-nums; }
     .cd-tot { font-size: 8.5px; color: var(--muted); margin-top: 1px; font-variant-numeric: tabular-nums; }
     .camp-empty { padding: 26px; text-align: center; color: var(--muted); font-size: 13px; }
-    .toggle-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-    .toggle-row .segment { justify-content: center; height: 34px; font-size: 11px; padding: 0 4px; letter-spacing: -.2px; white-space: nowrap; overflow: hidden; }
+    .toggle-row { display: flex; gap: 5px; justify-content: space-between; }
+    .toggle-row .segment { flex: 0 1 auto; width: auto; justify-content: center; height: 32px; font-size: 11px; padding: 0 9px; letter-spacing: -.1px; white-space: nowrap; }
 
     /* сортируемые заголовки */
     .camp-head > div[data-sort] { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 4px; }
@@ -3841,9 +3841,9 @@
   // ════════════════════════════════════════════════════════════
   // ЗАГРУЗКА ВСЕХ ПЛОЩАДОК
   // ════════════════════════════════════════════════════════════
-  var _loading = false;
+  var _loading = false, _pendingReload = false;
   async function loadAll() {
-    if (_loading) return;
+    if (_loading) { _pendingReload = true; return; }
     _loading = true;
     $('btnRefresh').classList.add('spinning');
     banner('', '');
@@ -3942,6 +3942,7 @@
 
     $('btnRefresh').classList.remove('spinning');
     _loading = false;
+    if (_pendingReload) { _pendingReload = false; loadAll(); }
   }
 
   // ════════════════════════════════════════════════════════════
