@@ -1398,6 +1398,7 @@
   var YM_CAMPAIGNS = ['21577916', '93482655']; // FBY · Single cup coffee + ИП Тимашков
   var YM_BY_BC = null;   // продажи ЯМ по штрихкоду (shopSku): {revenue, orders} — для сравнения юнитки по кабинетам
   var YM_BY_C1 = null;   // продажи ЯМ по коду 1С (через матч по имени) — резерв, если штрихкод не совпал
+  var YM_RATES = {};     // ставки ЯМ из tariffs/calculate: shopSku или 'c1:'+код1с -> {commPct, acqPct, logiRub}
   var WB_CODE1C_NM = null;   // код 1С -> nmId WB (надёжный ключ между кабинетами)
 
   function loadCfg() {
@@ -1734,6 +1735,7 @@
     if (fsFresh) {
       totById = fsCache.tot;
       fsDaySpend = fsCache.dayspend || {};
+      WB_NM_STATS = fsCache.nmstats || null;
       dbg('WB fullstats: использую свежий кэш (' + Math.round((Date.now() - fsCache.ts) / 1000) + 'с)');
     } else {
       var statIds = spendIds.slice(0, 300);
@@ -1763,10 +1765,13 @@
         if (si + 100 < statIds.length) await new Promise(function (r) { setTimeout(r, 1500); });
       }
       if (Object.keys(totById).length) {
-        try { localStorage.setItem(fsCacheKey, JSON.stringify({ ts: Date.now(), tot: totById, dayspend: fsDaySpend })); } catch (e) {}
+        WB_NM_STATS = null; var _nmst = buildWbNmStats();   // агрегат по nmId из свежего WB_FS_RAW
+        try { localStorage.setItem(fsCacheKey, JSON.stringify({ ts: Date.now(), tot: totById, dayspend: fsDaySpend, nmstats: _nmst })); } catch (e) {}
+        rawlog('WB агрегат по товарам', { товаров: Object.keys(_nmst || {}).length });
       } else if (statsErr && fsCache && fsCache.tot && Object.keys(fsCache.tot).length) {
         totById = fsCache.tot;
         fsDaySpend = fsCache.dayspend || fsDaySpend;
+        WB_NM_STATS = fsCache.nmstats || WB_NM_STATS;
         var ageMin = Math.max(1, Math.round((Date.now() - fsCache.ts) / 60000));
         statsErr = 'fullstats лимитирован — статистика из кэша (' + ageMin + ' мин назад). Нажми ↻ через минуту для свежей.';
       }
@@ -1879,7 +1884,7 @@
         active: /RUNNING|ACTIVE/i.test(stateRaw),
         typeLabel: ozTypeLabel(c.advObjectType || c.placement || ''),
         spend: a.spend, revenue: a.revenue, views: a.views, clicks: a.clicks,
-        atbs: 0, orders: a.orders,
+        atbs: null, orders: a.orders,
         ctr: a.views > 0 ? a.clicks / a.views * 100 : 0,
         cpc: a.clicks > 0 ? a.spend / a.clicks : 0,
         hasSpend: a.spend > 0,
@@ -1897,6 +1902,37 @@
         var sd = (sa && sa.result && sa.result.data) || [];
         asArr(sd).forEach(function (r) { ozTotalRev += Number((r.metrics && r.metrics[0]) || 0); });
       } catch (e) { dbg('Ozon analytics ошибка:', e.message); }
+    }
+    // ── Корзина по кампаниям Ozon (показ→корзина): мэппинг товаров кэш 24ч, аналитика общая (кэш), запросы мягко ──
+    if (CFG.ozSellerId && CFG.ozSellerKey) {
+      try {
+        var _ozf = await ozSkuFunnel();
+        if (Object.keys(_ozf).length) {
+          var _mapKey = 'sowy_ads_oz_campskus';
+          var _map = {};
+          try { var _mc = JSON.parse(localStorage.getItem(_mapKey) || 'null'); if (_mc && Date.now() - _mc.ts < 86400000) _map = _mc.data || {}; } catch (e) {}
+          var _spend = campaigns.filter(function (c) { return c.spend > 0; });
+          var _need = _spend.filter(function (c) { return !_map[c.id]; }).slice(0, 80);
+          for (var _qi = 0; _qi < _need.length; _qi += 3) {
+            await Promise.all(_need.slice(_qi, _qi + 3).map(async function (cc) {
+              try {
+                var _pr = await workerFetch(OZON_PERF + '/api/client/campaign/' + cc.id + '/v2/products', 'GET', auth, null);
+                var _pl = asArr(_pr && (_pr.products || _pr.list || _pr.result));
+                _map[cc.id] = _pl.map(function (p) { return String(p.sku || p.id || ''); }).filter(Boolean);
+              } catch (e) {}
+            }));
+            await new Promise(function (r) { setTimeout(r, 250); });
+          }
+          try { localStorage.setItem(_mapKey, JSON.stringify({ ts: Date.now(), data: _map })); } catch (e) {}
+          _spend.forEach(function (cc) {
+            var sk = _map[cc.id]; if (!sk || !sk.length) return;
+            var vv = 0, ca = 0;
+            sk.forEach(function (k) { var f = _ozf[k]; if (f) { vv += f.views; ca += f.cart; } });
+            if (vv > 0) { cc.cart = ca / vv * 100; cc.cartAbs = ca; cc.viewAbs = vv; cc.ozCartViews = true; }
+          });
+          rawlog('Ozon корзина по кампаниям', { всего: _spend.length, догружено: _need.length, изКэша: _spend.length - _need.length });
+        }
+      } catch (e) { dbg('Ozon корзина enrich ошибка:', e.message); }
     }
     var ozSpend = campaigns.reduce(function (s, c) { return s + (c.spend || 0); }, 0);
     return { campaigns: campaigns, stub: false, statsOk: statsOk, ozSpend: ozSpend, ozSampleKeys: ozSampleKeys, totalRevenue: ozTotalRev };
@@ -1956,6 +1992,54 @@
     return sum;
   }
 
+  // Реальные ставки ЯМ (комиссия/эквайринг/логистика) из калькулятора тарифов Маркета.
+  // Категория и габариты — из offer-mappings, затем /tariffs/calculate. Если не вышло — остаются ручные ставки.
+  async function loadYmTariffs(bizId, offers, program) {
+    if (!CFG.ym || !bizId || !offers || !offers.length) return;
+    program = program || 'FBS';
+    rawlog('ЯМ tariffs: программа размещения', program);
+    var hdrPost = { 'Api-Key': CFG.ym, 'Content-Type': 'application/json' };
+    offers = offers.filter(function (o) { return o && o.shopSku; }).slice(0, 200);
+    if (!offers.length) return;
+    var dims = {};
+    try {
+      var mp = await workerFetch('https://api.partner.market.yandex.ru/businesses/' + bizId + '/offer-mappings', 'POST', hdrPost, { offerIds: offers.map(function (o) { return String(o.shopSku); }) });
+      var mres = (mp && mp.result) || mp;
+      var maps = asArr(mres && (mres.offerMappings || mres.mappings));
+      rawlog('ЯМ offer-mappings (образец)', maps[0] || mp);
+      maps.forEach(function (m) {
+        var of = m.offer || m || {};
+        var sk = String(of.offerId || of.shopSku || (m.mapping && m.mapping.offerId) || '');
+        var wd = of.weightDimensions || of.dimensions || {};
+        var cat = of.marketCategoryId || of.categoryId || (m.mapping && (m.mapping.marketCategoryId || m.mapping.categoryId)) || 0;
+        if (sk) dims[sk] = { categoryId: cat, length: +wd.length || 0, width: +wd.width || 0, height: +wd.height || 0, weight: +wd.weight || 0 };
+      });
+    } catch (e) { dbg('ЯМ offer-mappings ошибка:', e.message); }
+    var withDims = offers.filter(function (o) { var d = dims[String(o.shopSku)]; return d && d.categoryId; });
+    if (!withDims.length) { rawlog('ЯМ tariffs: нет категории/габаритов', { офферов: offers.length }); return; }
+    try {
+      var reqOffers = withDims.map(function (o) { var d = dims[String(o.shopSku)]; return { categoryId: d.categoryId, price: Math.round(o.price || 0), length: d.length, width: d.width, height: d.height, weight: d.weight, quantity: 1 }; });
+      var tr = await workerFetch('https://api.partner.market.yandex.ru/tariffs/calculate', 'POST', hdrPost, { parameters: { sellingProgram: program, frequency: 'MONTHLY' }, offers: reqOffers });
+      var tres = (tr && tr.result) || tr;
+      var tofs = asArr(tres && tres.offers);
+      rawlog('ЯМ tariffs/calculate (образец)', tofs[0] || tr);
+      tofs.forEach(function (ofr, i) {
+        var src = withDims[i]; if (!src) return;
+        var price = src.price || 0, fee = 0, acq = 0, logi = 0;
+        asArr(ofr.tariffs).forEach(function (t) {
+          var amt = +t.amount || 0, pct = +t.percent || 0, ty = String(t.type || '');
+          if (ty === 'FEE') fee += pct || (price > 0 ? amt / price * 100 : 0);
+          else if (ty === 'PAYMENT_TRANSFER' || ty === 'AGENCY_COMMISSION') acq += pct || (price > 0 ? amt / price * 100 : 0);
+          else if (/DELIVERY|SORTING|MIDDLE_MILE|INTAKE|EXPRESS/.test(ty)) logi += amt;
+        });
+        var rate = { commPct: Math.round(fee * 100) / 100, acqPct: Math.round(acq * 100) / 100, logiRub: Math.round(logi * 100) / 100 };
+        if (src.shopSku) YM_RATES[String(src.shopSku)] = rate;
+        if (src.code1c) YM_RATES['c1:' + src.code1c] = rate;
+      });
+      rawlog('ЯМ ставки посчитаны', { товаров: Object.keys(YM_RATES).length, образец: YM_RATES[Object.keys(YM_RATES)[0]] || null });
+    } catch (e) { dbg('ЯМ tariffs/calculate ошибка:', e.message); }
+  }
+
   async function loadYM(days) {
     if (!CFG.ym) return { campaigns: [] };
     var hdrGet = { 'Api-Key': CFG.ym };
@@ -1976,9 +2060,13 @@
     var out = [];
     var ymSample = '';
     var ymTotalRev = 0;
-    YM_BY_BC = {}; YM_BY_C1 = {};
+    YM_BY_BC = {}; YM_BY_C1 = {}; YM_RATES = {};
     var _ymC1cache = {};   // offerName -> code1c (чтобы не матчить одно имя много раз)
     var _ymDiag = {};      // shopSku -> {name, есть ли штрихкод в БД, найден ли код 1С по имени}
+    var _ymOffers = {};    // shopSku -> {shopSku, price, code1c} для tariffs/calculate
+    var _ymBizId = '';
+    camps.forEach(function (cc) { if (!_ymBizId && cc && cc.business && cc.business.id) _ymBizId = cc.business.id; });
+    var _ymProgram = (camps[0] && camps[0].placementType) || 'FBS';
     for (var ci = 0; ci < camps.length; ci++) {
       var c = camps[ci], id = c.id;
       var cabName = c.domain || ('Магазин ' + id);
@@ -2012,13 +2100,13 @@
               var _ybc = String(it.shopSku || '').trim();
               var bidBp0 = Number(it.bidFee || 0);
               var iBoost0 = bidBp0 > 0 ? bidBp0 / 10000 * iRev : 0;
-              if (_ybc && iRev > 0) { if (!YM_BY_BC[_ybc]) YM_BY_BC[_ybc] = { revenue: 0, orders: 0, spend: 0 }; YM_BY_BC[_ybc].revenue += iRev; YM_BY_BC[_ybc].orders += iCnt; YM_BY_BC[_ybc].spend += iBoost0; }
+              if (_ybc && iRev > 0) { if (!YM_BY_BC[_ybc]) YM_BY_BC[_ybc] = { revenue: 0, orders: 0, spend: 0 }; YM_BY_BC[_ybc].revenue += iRev; YM_BY_BC[_ybc].orders += iCnt; YM_BY_BC[_ybc].spend += iBoost0; if (!_ymOffers[_ybc]) _ymOffers[_ybc] = { shopSku: _ybc, price: (iCnt > 0 ? iRev / iCnt : iRev), code1c: '' }; }
               // резерв: по коду 1С через матч имени (если штрихкод ЯМ не совпадает с БД)
               if (iRev > 0 && it.offerName) {
                 var _onm = String(it.offerName);
                 var _c1 = _ymC1cache[_onm];
                 if (_c1 === undefined) { var _mm = (typeof sovaMatchByName === 'function') ? sovaMatchByName(_onm) : null; _c1 = (_mm && _mm.info && _mm.info.code1c) ? _mm.info.code1c : ''; _ymC1cache[_onm] = _c1; }
-                if (_c1) { if (!YM_BY_C1[_c1]) YM_BY_C1[_c1] = { revenue: 0, orders: 0, spend: 0 }; YM_BY_C1[_c1].revenue += iRev; YM_BY_C1[_c1].orders += iCnt; YM_BY_C1[_c1].spend += iBoost0; }
+                if (_c1) { if (!YM_BY_C1[_c1]) YM_BY_C1[_c1] = { revenue: 0, orders: 0, spend: 0 }; YM_BY_C1[_c1].revenue += iRev; YM_BY_C1[_c1].orders += iCnt; YM_BY_C1[_c1].spend += iBoost0; if (_ybc && _ymOffers[_ybc] && !_ymOffers[_ybc].code1c) _ymOffers[_ybc].code1c = _c1; }
                 // Диагностика: почему ЯМ может не подтянуться к товару — по каждому shopSku фиксируем,
                 // есть ли его штрихкод в БД и нашёлся ли код 1С по имени.
                 var _dk = _ybc || ('offer:' + _onm.slice(0, 40));
@@ -2041,6 +2129,12 @@
                 var orev2 = ymOrderRevenue(o); orderBoost = obp / 10000 * orev2; orderBoostRev = orev2;
                 if (!prod._order) prod._order = { name: 'Заказы (буст на уровне заказа)', spend: 0, revenue: 0, orders: 0 };
                 prod._order.spend += orderBoost; prod._order.revenue += orev2; prod._order.orders += 1;
+                if (items.length === 1) {
+                  var _sk1 = String(items[0].shopSku || '').trim();
+                  if (_sk1 && YM_BY_BC[_sk1]) YM_BY_BC[_sk1].spend += orderBoost;
+                  var _c1o = (_sk1 && _ymOffers[_sk1]) ? _ymOffers[_sk1].code1c : '';
+                  if (_c1o && YM_BY_C1[_c1o]) YM_BY_C1[_c1o].spend += orderBoost;
+                }
               }
             }
             if (orderBoost > 0) { cabBoost += orderBoost; cabRev += orderBoostRev; cabOrders++; }
@@ -2079,13 +2173,15 @@
       }
     }
     rawlog('ЯМ матч с БД (shopSku → есть в БД? / код 1С по имени)', _ymDiag);
+    rawlog('ЯМ буст по товарам (shopSku → выручка/заказы/расход)', YM_BY_BC);
+    try { await loadYmTariffs(_ymBizId, Object.keys(_ymOffers).map(function (k) { return _ymOffers[k]; }), _ymProgram); } catch (e) { dbg('ЯМ tariffs обёртка', e.message); }
     return { campaigns: out, ymSample: ymSample, totalRevenue: ymTotalRev };
   }
 
   // ── Сборка унифицированной кампании + диагноз ───────────────
   function buildCampaign(o) {
     var drr = o.revenue > 0 ? o.spend / o.revenue * 100 : (o.spend > 0 ? Infinity : 0);
-    var cart = o.clicks > 0 ? o.atbs / o.clicks * 100 : 0;
+    var cart = (o.atbs == null) ? null : (o.clicks > 0 ? o.atbs / o.clicks * 100 : 0);
     var roas = o.spend > 0 ? o.revenue / o.spend : 0;
     var c = Object.assign({
       drr: drr, cart: cart, roas: roas, noStats: false
@@ -2107,7 +2203,7 @@
     if (c.spend > 0 && c.orders === 0 && c.clicks > 0) {
       c.tone = 'bad'; c.action = 'клики есть, продаж нет — карточка'; c.risk = true; c.reason = 'no_sales'; return;
     }
-    if (c.cart > 0 && c.cart < TH.cartRed) {
+    if (c.cart > 0 && c.cart < TH.cartRed && !c.ozCartViews) {
       c.tone = 'bad'; c.action = 'низкая корзина — проверь товар'; c.risk = true; c.reason = 'low_cart'; return;
     }
     // ДРР-светофор
@@ -2198,14 +2294,17 @@
   // Агрегат по набору кампаний (для подытогов).
   function aggregate(rows) {
     var a = { spend: 0, revenue: 0, views: 0, clicks: 0, atbs: 0, orders: 0, count: rows.length };
+    var _ozC = 0, _ozV = 0, _ozAny = false;
     rows.forEach(function (c) {
       a.spend += c.spend || 0; a.revenue += c.revenue || 0;
       a.views += c.views || 0; a.clicks += c.clicks || 0;
       a.atbs += c.atbs || 0; a.orders += c.orders || 0;
+      if (c.ozCartViews) { _ozAny = true; _ozC += c.cartAbs || 0; _ozV += c.viewAbs || 0; }
     });
     a.drr = a.revenue > 0 ? a.spend / a.revenue * 100 : (a.spend > 0 ? Infinity : 0);
     a.ctr = a.views > 0 ? a.clicks / a.views * 100 : 0;
     a.cart = a.clicks > 0 ? a.atbs / a.clicks * 100 : 0;
+    if (_ozAny && _ozV > 0) { a.cart = _ozC / _ozV * 100; a.ozCartViews = true; }
     return a;
   }
 
@@ -2351,7 +2450,7 @@
     $('cnt-spending').textContent = all.filter(function (c) { return c.hasSpend; }).length;
     $('cnt-attention').textContent = all.filter(function (c) { return c.risk; }).length;
     $('cnt-scale').textContent = scaleable;
-    $('cnt-lowcart').textContent = all.filter(function (c) { return c.cart > 0 && c.cart < TH.cartRed; }).length;
+    $('cnt-lowcart').textContent = all.filter(function (c) { return c.cart > 0 && c.cart < TH.cartRed && !c.ozCartViews; }).length;
     $('cnt-highdrr').textContent = all.filter(function (c) { return c.drr === Infinity || c.drr > TL_DRR.redHigh; }).length;
     $('cnt-allc').textContent = all.length;
 
@@ -2396,14 +2495,14 @@
       if (!good.length) { el.innerHTML = '<article class="insight"><h3 class="insight-title">Пока тихо</h3><p class="insight-copy">Критичных сигналов за период нет. Следи за трендом ДРР и корзины.</p></article>'; return; }
       el.innerHTML = good.map(function (c) {
         return '<article class="insight" data-tone="good"><h3 class="insight-title">' + esc(platLabel(c.platform)) + ': ' + esc(c.name) + ' можно растить</h3>' +
-          '<p class="insight-copy">ДРР ' + (c.drr === Infinity ? '∞' : pct(c.drr)) + ', корзина ' + pct(c.cart) + '. Перед ростом бюджета проверь остатки в Сове.</p></article>';
+          '<p class="insight-copy">ДРР ' + (c.drr === Infinity ? '∞' : pct(c.drr)) + ', корзина ' + (c.cart == null ? 'н/д' : pct(c.cart)) + '. Перед ростом бюджета проверь остатки в Сове.</p></article>';
       }).join('');
       return;
     }
     el.innerHTML = risky.map(function (c) {
       var why;
       if (c.spend > 0 && c.orders === 0) why = 'Клики есть, заказов нет. Открой карточку как покупатель: фото, цена, комплектация, отзывы. Ставка это не лечит.';
-      else if (c.cart > 0 && c.cart < TH.cartRed) why = 'Корзина ' + pct(c.cart) + '. Проверь остатки, цену относительно топ-3 конкурентов, первый экран карточки и доставку.';
+      else if (c.cart > 0 && c.cart < TH.cartRed && !c.ozCartViews) why = 'Корзина ' + pct(c.cart) + '. Проверь остатки, цену относительно топ-3 конкурентов, первый экран карточки и доставку.';
       else why = 'ДРР ' + (c.drr === Infinity ? '∞' : pct(c.drr)) + '. Посмотри запросы и группы, где клики есть, а корзин мало — часть трафика нерелевантна.';
       return '<article class="insight" data-tone="bad"><h3 class="insight-title">' + esc(platLabel(c.platform)) + ': ' + esc(c.name) + '</h3><p class="insight-copy">' + why + '</p></article>';
     }).join('');
@@ -2425,7 +2524,7 @@
     var isYM = c.platform === 'ym';
     var drrTxt = (c.noStats || c.spend === 0 || c.revenue === 0) ? '—' : (c.drr === Infinity ? '∞' : pct(c.drr));
     var ctrTxt = c.views > 0 ? pct(c.ctr, 2) : (isYM ? 'н/д' : '—');
-    var cartTxt = isYM ? 'н/д' : ((c.noStats || c.clicks === 0) ? '—' : pct(c.cart));
+    var cartTxt = isYM ? 'н/д' : ((c.noStats || c.clicks === 0 || c.cart == null) ? '—' : pct(c.cart));
     var spendTxt = c.spend > 0 ? fmtMoney(c.spend) : '—';
     var light = drrLight(c);
     var drrCell = light ? '<span class="tl tl-' + light + '">' + drrTxt + '</span>' : drrTxt;
@@ -2795,17 +2894,36 @@
   function buildWbNmStats() {
     if (WB_NM_STATS) return WB_NM_STATS;
     WB_NM_STATS = {};
-    function add(nm) {
-      if (!nm) return; var k = nm.nmId || nm.nmID || nm.nm; if (k == null) return; k = String(k);
-      var x = WB_NM_STATS[k] || (WB_NM_STATS[k] = { views: 0, clicks: 0, atbs: 0, orders: 0, sum_price: 0, sum: 0 });
-      x.views += +nm.views || 0; x.clicks += +nm.clicks || 0; x.atbs += +nm.atbs || 0; x.orders += +nm.orders || 0; x.sum_price += +nm.sum_price || 0; x.sum += +nm.sum || 0;
-    }
+    function ensure(k) { return WB_NM_STATS[k] || (WB_NM_STATS[k] = { views: 0, clicks: 0, atbs: 0, orders: 0, sum_price: 0, sum: 0 }); }
     Object.keys(WB_FS_RAW || {}).forEach(function (cid) {
       var s = WB_FS_RAW[cid]; if (!s) return;
-      asArr(s.nm).concat(asArr(s.nms)).forEach(add);
+      // Агрегируем метрики nm В РАМКАХ кампании (поле расхода в nm обычно не приходит).
+      var nmList = {};
+      function collect(nm) {
+        if (!nm) return; var k = nm.nmId || nm.nmID || nm.nm; if (k == null) return; k = String(k);
+        var y = nmList[k] || (nmList[k] = { views: 0, clicks: 0, atbs: 0, orders: 0, sum_price: 0, sum: 0 });
+        y.views += +nm.views || 0; y.clicks += +nm.clicks || 0; y.atbs += +nm.atbs || 0; y.orders += +nm.orders || 0; y.sum_price += +nm.sum_price || 0; y.sum += +nm.sum || 0;
+      }
+      asArr(s.nm).concat(asArr(s.nms)).forEach(collect);
       asArr(s.days).forEach(function (d) {
-        asArr(d.nm).concat(asArr(d.nms)).forEach(add);
-        asArr(d.apps || d.platforms).forEach(function (ap) { asArr(ap.nm).concat(asArr(ap.nms)).forEach(add); });
+        asArr(d.nm).concat(asArr(d.nms)).forEach(collect);
+        asArr(d.apps || d.platforms).forEach(function (ap) { asArr(ap.nm).concat(asArr(ap.nms)).forEach(collect); });
+      });
+      // Расход кампании распределяем по товарам (доля кликов → заказов → поровну),
+      // если у nm нет собственного расхода — чтобы Реклама/ед по WB была видна и из других кабинетов.
+      var keys = Object.keys(nmList);
+      var campSpend = (wbTotals(s) || {}).sum || 0;
+      var nmHasSpend = keys.some(function (k) { return nmList[k].sum > 0; });
+      var totClicks = keys.reduce(function (a, k) { return a + nmList[k].clicks; }, 0);
+      var totOrders = keys.reduce(function (a, k) { return a + nmList[k].orders; }, 0);
+      keys.forEach(function (k) {
+        var y = nmList[k], x = ensure(k);
+        x.views += y.views; x.clicks += y.clicks; x.atbs += y.atbs; x.orders += y.orders; x.sum_price += y.sum_price;
+        if (nmHasSpend) { x.sum += y.sum; }
+        else if (campSpend > 0) {
+          var share = totClicks > 0 ? y.clicks / totClicks : (totOrders > 0 ? y.orders / totOrders : (keys.length ? 1 / keys.length : 0));
+          x.sum += campSpend * share;
+        }
       });
     });
     return WB_NM_STATS;
@@ -2872,7 +2990,7 @@
         }
         if (om) ozF = { views: om.hits_view, cart: om.hits_tocart, orders: om.ordered_units, revenue: om.revenue, pos: om.position_category, delivered: om.delivered_units };
       }
-      if (ozPrice > 0) res.ozon = { price: ozPrice, cost: cost, comm: ozPrice * ozCommPct / 100, logi: ozLogi, store: null, acq: ozPrice * ((UNIT.ozon && UNIT.ozon.acq) || 0) / 100, f: ozF, ad: (plat === 'ozon' ? (base.ads || 0) : 0) };
+      if (ozPrice > 0) res.ozon = { price: ozPrice, cost: cost, comm: ozPrice * ozCommPct / 100, logi: ozLogi, store: null, acq: ozPrice * ((UNIT.ozon && UNIT.ozon.acq) || 0) / 100, f: ozF, ad: (plat === 'ozon' ? (base.ads || 0) : null) };
     } catch (e) { dbg('econ ozon', e.message); }
     // ── WB ──
     try {
@@ -2893,7 +3011,7 @@
       if (wbPrice > 0) {
         var wvol = wbNm ? (WB_VOL[wbNm] || WB_VOL[Number(wbNm)] || 0) : 0;
         var wlv = wbLogiByFormula(wvol, wbPrice);
-        res.wb = { price: wbPrice, cost: cost, comm: wbPrice * (WB_CFG.commission || 0) / 100, logi: wlv != null ? wlv : 0, store: wbStoreByFormula(wvol), acq: wbPrice * ((UNIT.wb && UNIT.wb.acq) || 0) / 100, f: wbF, ad: (plat === 'wb' ? (base.ads || 0) : (wbStats && wbStats.orders > 0 ? wbStats.sum / wbStats.orders : 0)) };
+        res.wb = { price: wbPrice, cost: cost, comm: wbPrice * (WB_CFG.commission || 0) / 100, logi: wlv != null ? wlv : 0, store: wbStoreByFormula(wvol), acq: wbPrice * ((UNIT.wb && UNIT.wb.acq) || 0) / 100, f: wbF, ad: (plat === 'wb' ? (base.ads || 0) : (wbStats && wbStats.sum > 0 ? wbStats.sum / (((rep && rep.qty) || wbStats.orders) || 1) : 0)) };
       }
     } catch (e) { dbg('econ wb', e.message); }
     // ── ЯМ ──
@@ -2902,7 +3020,8 @@
       var ymPrice = 0, ymF = null;
       if (plat === 'ym') { ymPrice = base.price; ymF = { views: base.views, cart: base.cart, orders: base.orders, revenue: base.revenue }; }
       else { var yb = (YM_BY_BC && YM_BY_BC[bc]) || (base.code1c && YM_BY_C1 ? YM_BY_C1[base.code1c] : null); if (yb && yb.orders > 0) { ymPrice = yb.revenue / yb.orders; ymF = { views: null, cart: null, orders: yb.orders, revenue: yb.revenue }; } }
-      if (ymPrice > 0) res.ym = { price: ymPrice, cost: cost, comm: ymPrice * (yu.comm || 0) / 100, logi: yu.logi || 0, store: null, acq: ymPrice * ((yu.acq) || 0) / 100, f: ymF, ad: (plat === 'ym' ? (base.ads || 0) : (yb && yb.orders > 0 ? yb.spend / yb.orders : 0)) };
+      var yr = YM_RATES[bc] || (base.code1c ? YM_RATES['c1:' + base.code1c] : null) || null;
+      if (ymPrice > 0) res.ym = { price: ymPrice, cost: cost, comm: ymPrice * (yr ? (yr.commPct || 0) : (yu.comm || 0)) / 100, logi: yr ? (yr.logiRub || 0) : (yu.logi || 0), store: null, acq: ymPrice * (yr ? (yr.acqPct || 0) : (yu.acq || 0)) / 100, f: ymF, ad: (plat === 'ym' ? (base.ads || 0) : (yb && yb.orders > 0 ? yb.spend / yb.orders : 0)), rateAuto: !!yr };
     } catch (e) { dbg('econ ym', e.message); }
     ['ozon', 'wb', 'ym'].forEach(function (k) {
       var r = res[k]; if (!r) return;
@@ -3092,6 +3211,27 @@
   }
 
   // Ozon: ОДНА таблица — реклама/воронка + юнит-экономика в одной строке на товар.
+  // Воронка Ozon по SKU (показы/корзины/заказы/выручка) из Seller-аналитики. Кэш 5 мин + фолбэк на кэш при лимите.
+  async function ozSkuFunnel() {
+    if (!CFG.ozSellerId || !CFG.ozSellerKey) return {};
+    var key = 'sowy_ads_oz_funnel_' + STATE.period;
+    try { var c = JSON.parse(localStorage.getItem(key) || 'null'); if (c && c.data && Date.now() - c.ts < 300000) return c.data; } catch (e) {}
+    try {
+      var sa = await workerFetch('https://api-seller.ozon.ru/v1/analytics/data', 'POST',
+        { 'Client-Id': CFG.ozSellerId, 'Api-Key': CFG.ozSellerKey, 'Content-Type': 'application/json' },
+        { date_from: ymd(daysAgo(STATE.period)), date_to: ymd(new Date()), dimension: ['sku'], metrics: ['hits_view', 'hits_tocart', 'ordered_units', 'revenue'], limit: 1000, offset: 0 });
+      rawlog('Ozon SKU-аналитика (воронка)', sa);
+      var data = {};
+      asArr(sa && sa.result && sa.result.data).forEach(function (row) {
+        var k = String((row.dimensions && row.dimensions[0] && row.dimensions[0].id) || ''); var m = row.metrics || [];
+        if (k) data[k] = { views: +m[0] || 0, cart: +m[1] || 0, orders: +m[2] || 0, revenue: +m[3] || 0 };
+      });
+      if (Object.keys(data).length) { try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {} return data; }
+    } catch (e) { dbg('Ozon воронка ошибка:', e.message); }
+    try { var c2 = JSON.parse(localStorage.getItem(key) || 'null'); if (c2 && c2.data) return c2.data; } catch (e) {}
+    return {};
+  }
+
   function cdOzFull(prodMap, spend) {
     var keys = Object.keys(prodMap);
     if (!keys.length) return '<div class="cd-note">Список товаров кампании пуст.</div>';
@@ -3127,7 +3267,14 @@
       if (!(per > 0)) return '—';
       return fmtMoney(per) + '<div class="cd-meta">' + (tot > 0 ? fmtMoney(tot) + ' всего' : '—') + '</div>';
     }
-    var html = '<div class="cd-h">Товары кампании · юнит-экономика (' + rows.length + ')</div>' +
+    var _tv = keys.reduce(function (s, k) { return s + (prodMap[k].views || 0); }, 0);
+    var _tc = keys.reduce(function (s, k) { return s + (prodMap[k].cart || 0); }, 0);
+    var _to = keys.reduce(function (s, k) { return s + (prodMap[k].orders || 0); }, 0);
+    var _v2c = _tv > 0 ? _tc / _tv * 100 : null, _c2o = _tc > 0 ? _to / _tc * 100 : null;
+    var funnelLine = (_tc > 0)
+      ? '<div class="cd-note" style="margin:2px 0 8px;line-height:1.5">Воронка товаров кампании (Seller-аналитика): показы <b>' + fmtNum(_tv) + '</b> → корзины <b>' + fmtNum(_tc) + '</b> (' + (_v2c != null ? pct(_v2c) : '—') + ') → заказы <b>' + fmtNum(_to) + '</b> (корзина→заказ ' + (_c2o != null ? pct(_c2o) : '—') + '). Корзина по товару (реклама + органика) — Ozon не делит её по рекламным кликам.</div>'
+      : '';
+    var html = '<div class="cd-h">Товары кампании · юнит-экономика (' + rows.length + ')</div>' + funnelLine +
       '<div class="cd-scroll"><table class="cd-tbl"><thead><tr>' +
       '<th>Товар / SKU</th><th>Ставка</th><th>Показы</th><th>Корзины</th><th>Заказы</th><th>Выручка</th><th>Остаток</th>' +
       '<th>Цена /ед</th><th>Себест /ед</th><th>Комис /ед</th><th>Логист /ед</th><th>Реклама /ед</th><th>Прибыль /ед</th><th>Маржа</th>' +
@@ -3463,16 +3610,8 @@
     // 2) Воронка по SKU (Seller-аналитика) + 3) остатки
     if (CFG.ozSellerId && CFG.ozSellerKey) {
       try {
-        var sa = await workerFetch('https://api-seller.ozon.ru/v1/analytics/data', 'POST',
-          { 'Client-Id': CFG.ozSellerId, 'Api-Key': CFG.ozSellerKey, 'Content-Type': 'application/json' },
-          { date_from: ymd(daysAgo(STATE.period)), date_to: ymd(new Date()), dimension: ['sku'], metrics: ['hits_view', 'hits_tocart', 'ordered_units', 'revenue'], limit: 1000, offset: 0 });
-        rawlog('Ozon drill SKU-аналитика', sa);
-        asArr(sa && sa.result && sa.result.data).forEach(function (row) {
-          var k = String((row.dimensions && row.dimensions[0] && row.dimensions[0].id) || '');
-          if (!prodMap[k]) return;
-          var m = row.metrics || [];
-          prodMap[k].views = +m[0] || 0; prodMap[k].cart = +m[1] || 0; prodMap[k].orders = +m[2] || 0; prodMap[k].revenue = +m[3] || 0;
-        });
+        var _ozf = await ozSkuFunnel();
+        Object.keys(prodMap).forEach(function (k) { var f = _ozf[k]; if (f) { prodMap[k].views = f.views; prodMap[k].cart = f.cart; prodMap[k].orders = f.orders; prodMap[k].revenue = f.revenue; } });
       } catch (e) { dbg('Ozon SKU-аналитика ошибка:', e.message); }
       await ensureOzStocks();
       skus.forEach(function (k) { if (OZ_STOCKS && OZ_STOCKS[k] != null) prodMap[k].stock = OZ_STOCKS[k]; });
@@ -3500,7 +3639,7 @@
     // ── Несоответствия в рекламе (авто-флаги) ──
     var flags = [];
     if (c.spend > 0 && !(c.orders > 0)) flags.push('Расход без заказов — реклама тратится (' + fmtMoney(c.spend) + '), продаж нет.');
-    if (c.clicks > 30 && c.cart != null && c.cart < (typeof TH !== 'undefined' && TH ? TH.cartRed : 3)) flags.push('Клики есть, корзин мало (' + pct(c.cart) + ') — трафик нерелевантный или карточка слабая.');
+    if (c.clicks > 30 && c.cart != null && !c.ozCartViews && c.cart < (typeof TH !== 'undefined' && TH ? TH.cartRed : 3)) flags.push('Клики есть, корзин мало (' + pct(c.cart) + ') — трафик нерелевантный или карточка слабая.');
     if (c.atbs > 0 && !(c.orders > 0)) flags.push('Корзины есть, заказов нет — мешает цена, доставка, отзывы или остаток.');
     if (isFinite(c.drr) && c.drr > ((typeof TL_DRR !== 'undefined' && TL_DRR) ? TL_DRR.redHigh : 8)) flags.push('Высокий ДРР (' + pct(c.drr) + ') — реклама съедает маржу.');
     if (c.views > 1000 && c.clicks > 0 && c.ctr < 0.5) flags.push('Низкий CTR (' + pct(c.ctr, 2) + ') — слабая обложка/цена/нерелевантный показ.');
@@ -3528,7 +3667,7 @@
     var drrRaw = ag.revenue > 0 ? pct(ag.drr) : (ag.spend > 0 ? '∞' : '—');
     var drrTxt = glight ? '<span class="tl tl-' + glight + '">' + drrRaw + '</span>' : drrRaw;
     var ctrTxt = ag.views > 0 ? pct(ag.ctr, 2) : (p === 'ym' ? 'н/д' : '—');
-    var cartTxt = ag.atbs > 0 ? pct(ag.cart) : (p === 'ym' ? 'н/д' : '—');
+    var cartTxt = (ag.atbs > 0 || ag.ozCartViews) ? pct(ag.cart) : (p === 'ym' ? 'н/д' : '—');
     var storeRevP = (STATE.platTotalRev && STATE.platTotalRev[p]) || 0;
     var shareP = (storeRevP > 0 && ag.revenue > 0) ? ' · доля рекламы ' + pct(ag.revenue / storeRevP * 100) : '';
     var storeTxt = storeRevP > 0 ? ' · общая ' + fmtMoney(storeRevP) : '';
@@ -3631,7 +3770,7 @@
     if (c.spend > 0) chips.push('Расход: ' + fmtMoney(c.spend));
     if (c.revenue > 0 && isFinite(c.drr)) chips.push('ДРР: ' + pct(c.drr));
     if (c.views > 0) chips.push('CTR: ' + pct(c.ctr, 2));
-    if (c.clicks > 0) chips.push('Корзина: ' + pct(c.cart));
+    if (c.clicks > 0 && c.cart != null) chips.push('Корзина: ' + pct(c.cart));
     var why = whyInsights(c);
     var whyHtml = why.length
       ? '<div class="modal-why"><div class="modal-why-h">Что в цифрах</div>' + why.map(function (w) { return '<p>' + w + '</p>'; }).join('') + '</div>'
