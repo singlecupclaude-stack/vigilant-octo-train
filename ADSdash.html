@@ -1724,13 +1724,14 @@
     // Кэш WB-статистики (эндпоинт лимитирован ~1 запрос/мин).
     // Свежий кэш (< 3 мин) используем сразу, не дёргая API при каждом обновлении.
     var fsCacheKey = 'sowy_ads_wb_fs_' + days;
-    var totById = {}, statsErr = null;
+    var totById = {}, statsErr = null, fsDaySpend = {};
     var fsCache = null;
     try { fsCache = JSON.parse(localStorage.getItem(fsCacheKey) || 'null'); } catch (e) {}
     var fsFresh = fsCache && fsCache.tot && (Date.now() - fsCache.ts < 180000);
 
     if (fsFresh) {
       totById = fsCache.tot;
+      fsDaySpend = fsCache.dayspend || {};
       dbg('WB fullstats: использую свежий кэш (' + Math.round((Date.now() - fsCache.ts) / 1000) + 'с)');
     } else {
       var statIds = spendIds.slice(0, 300);
@@ -1752,20 +1753,25 @@
               var key = (d.date || '').slice(0, 10);
               if (!key) return;
               if (!dayAgg[key]) dayAgg[key] = { spend: 0, orders: 0 };
-              dayAgg[key].orders += (d.orders || 0);  // расход по дням берём из upd, тут только заказы
+              dayAgg[key].orders += (d.orders || 0);
+              fsDaySpend[key] = (fsDaySpend[key] || 0) + (+d.sum || 0);  // дневной расход за весь период
             });
           });
         } catch (e) { statsErr = e.message; dbg('WB fullstats ошибка:', e.message); }
         if (si + 100 < statIds.length) await new Promise(function (r) { setTimeout(r, 1500); });
       }
       if (Object.keys(totById).length) {
-        try { localStorage.setItem(fsCacheKey, JSON.stringify({ ts: Date.now(), tot: totById })); } catch (e) {}
+        try { localStorage.setItem(fsCacheKey, JSON.stringify({ ts: Date.now(), tot: totById, dayspend: fsDaySpend })); } catch (e) {}
       } else if (statsErr && fsCache && fsCache.tot && Object.keys(fsCache.tot).length) {
         totById = fsCache.tot;
+        fsDaySpend = fsCache.dayspend || fsDaySpend;
         var ageMin = Math.max(1, Math.round((Date.now() - fsCache.ts) / 60000));
         statsErr = 'fullstats лимитирован — статистика из кэша (' + ageMin + ' мин назад). Нажми ↻ через минуту для свежей.';
       }
     }
+
+    // Дневной расход для графика: приоритет fullstats (полный период), upd — запас для дней без fullstats.
+    Object.keys(fsDaySpend).forEach(function (k) { if (!dayAgg[k]) dayAgg[k] = { spend: 0, orders: 0 }; if (fsDaySpend[k] > 0) dayAgg[k].spend = fsDaySpend[k]; });
 
     // 5) Сборка. Расход берём из upd (надёжно), остальные метрики — из fullstats где есть.
     var campaigns = orderIds.map(function (id) {
@@ -2356,22 +2362,21 @@
   function _ddmm(d) { return d.slice(8, 10) + '.' + d.slice(5, 7) + '.' + d.slice(0, 4); }
   function renderChart() {
     var el = $('chart');
-    var keys = Object.keys(STATE.days).sort();
-    var last = keys.slice(-STATE.period);
-    // Период цифрами над графиком: фактический диапазон данных, иначе — выбранный период.
-    var fromTxt = last.length ? _ddmm(last[0]) : _ddmm(ymd(daysAgo(STATE.period)));
-    var toTxt = last.length ? _ddmm(last[last.length - 1]) : _ddmm(ymd(new Date()));
-    $('chartMeta').textContent = fromTxt + ' — ' + toTxt + ' · ' + STATE.period + ' дн';
-    if (!last.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;margin:auto">нет дневных данных за период</div>'; return; }
-    var max = Math.max.apply(null, last.map(function (k) { return STATE.days[k].spend; })) || 1;
+    // Полный список дней периода (даже с нулевым расходом): 14 дней = 14 столбцов.
+    var last = [];
+    for (var _i = STATE.period - 1; _i >= 0; _i--) last.push(ymd(daysAgo(_i)));
+    var spendOf = function (k) { return (STATE.days[k] && STATE.days[k].spend) || 0; };
+    var fromTxt = _ddmm(last[0]), toTxt = _ddmm(last[last.length - 1]);
+    if (!last.some(function (k) { return spendOf(k) > 0; })) { $('chartMeta').textContent = fromTxt + ' — ' + toTxt + ' · ' + last.length + ' дн'; el.innerHTML = '<div style="color:var(--muted);font-size:12px;margin:auto">нет дневных данных за период</div>'; return; }
+    var max = Math.max.apply(null, last.map(spendOf)) || 1;
     var dense = last.length > 16;
     el.innerHTML = last.map(function (k) {
-      var v = STATE.days[k].spend;
-      var h = Math.max(6, Math.round(v / max * 100));
+      var v = spendOf(k);
+      var h = v > 0 ? Math.max(6, Math.round(v / max * 100)) : 2;
       var dd = k.slice(8, 10);
       var ddmm = k.slice(8, 10) + '.' + k.slice(5, 7);
       return '<div class="bar' + (dense ? ' dense' : '') + '" style="height:' + h + '%" title="' + ddmm + ': ' + fmtMoney(v) + '">' +
-        '<span>' + fmtShort(v) + '</span>' +
+        '<span>' + (v > 0 ? fmtShort(v) : '') + '</span>' +
         '<small>' + (dense ? dd : ddmm) + '</small></div>';
     }).join('');
     $('chartMeta').textContent = fromTxt + ' — ' + toTxt + ' · ' + last.length + ' дн · расход WB';
