@@ -1644,6 +1644,7 @@
   var WB_ADV = 'https://advert-api.wildberries.ru';
   var WB_FS_RAW = {};   // сырые fullstats из основной загрузки (для раскрытия без повторного запроса)
   var WB_NM_STATS = null;   // агрегат рекламной статистики WB по nmId (показы/клики/корзины/заказы) — для воронки
+  var WB_ORD_BY_BC = {};    // заказы WB по штрихкоду: {rev, orders:{gNumber:1}} — для среднего чека
   var WB_STATUS = { '-1': 'удаляется', '4': 'готова', '7': 'завершена', '8': 'отказался', '9': 'активна', '11': 'пауза' };
   var WB_TYPE = { '4': 'каталог', '5': 'карточка', '6': 'поиск', '7': 'поиск+каталог', '8': 'авто', '9': 'аукцион' };
 
@@ -1670,7 +1671,7 @@
 
   async function loadWB(days) {
     if (!CFG.wb) return { campaigns: [], days: {}, error: 'нет WB токена' };
-    WB_FS_RAW = {}; WB_REPORT = null; WB_NM_STATS = null;
+    WB_FS_RAW = {}; WB_REPORT = null; WB_NM_STATS = null; WB_ORD_BY_BC = {};
     var from = ymd(daysAgo(days)), to = ymd(new Date());
 
     // 1) Все подключённые кампании
@@ -1713,7 +1714,19 @@
     var wbTotalRev = 0;
     try {
       var wbOrders = await workerFetch('https://statistics-api.wildberries.ru/api/v1/supplier/orders?dateFrom=' + from + '&flag=0', 'GET', { 'Authorization': CFG.wb }, null);
-      asArr(wbOrders).forEach(function (o) { if (!o.isCancel) wbTotalRev += Number(o.priceWithDisc || o.finishedPrice || o.totalPrice || 0); });
+      asArr(wbOrders).forEach(function (o) {
+        if (o.isCancel) return;
+        var _pr = Number(o.priceWithDisc || o.finishedPrice || o.totalPrice || 0);
+        wbTotalRev += _pr;
+        var _gn = String(o.gNumber || o.odid || o.srid || '');
+        [String(o.nmId || ''), String(o.barcode || '').trim()].forEach(function (_k) {
+          if (!_k) return;
+          if (!WB_ORD_BY_BC[_k]) WB_ORD_BY_BC[_k] = { rev: 0, orders: {} };
+          WB_ORD_BY_BC[_k].rev += _pr;
+          if (_gn) WB_ORD_BY_BC[_k].orders[_gn] = 1;
+        });
+      });
+      rawlog('WB заказы по товарам (для среднего чека)', { ключей: Object.keys(WB_ORD_BY_BC).length, всего_заказов: asArr(wbOrders).length });
       dbg('WB общая выручка (заказы):', Math.round(wbTotalRev), 'из', asArr(wbOrders).length, 'заказов');
     } catch (e) { dbg('WB orders ошибка:', e.message); }
 
@@ -2100,7 +2113,13 @@
               var _ybc = String(it.shopSku || '').trim();
               var bidBp0 = Number(it.bidFee || 0);
               var iBoost0 = bidBp0 > 0 ? bidBp0 / 10000 * iRev : 0;
-              if (_ybc && iRev > 0) { if (!YM_BY_BC[_ybc]) YM_BY_BC[_ybc] = { revenue: 0, orders: 0, spend: 0 }; YM_BY_BC[_ybc].revenue += iRev; YM_BY_BC[_ybc].orders += iCnt; YM_BY_BC[_ybc].spend += iBoost0; if (!_ymOffers[_ybc]) _ymOffers[_ybc] = { shopSku: _ybc, price: (iCnt > 0 ? iRev / iCnt : iRev), code1c: '' }; }
+              if (_ybc && iRev > 0) {
+                if (!YM_BY_BC[_ybc]) YM_BY_BC[_ybc] = { revenue: 0, orders: 0, spend: 0, checks: 0, lastPrice: 0, lastDate: '' };
+                YM_BY_BC[_ybc].revenue += iRev; YM_BY_BC[_ybc].orders += iCnt; YM_BY_BC[_ybc].spend += iBoost0; YM_BY_BC[_ybc].checks += 1;
+                var _up = iCnt > 0 ? iRev / iCnt : iRev; var _dt = String(o.creationDate || o.statusUpdateDate || '');
+                if (_dt >= (YM_BY_BC[_ybc].lastDate || '')) { YM_BY_BC[_ybc].lastDate = _dt; YM_BY_BC[_ybc].lastPrice = _up; }
+                if (!_ymOffers[_ybc]) _ymOffers[_ybc] = { shopSku: _ybc, price: _up, code1c: '' };
+              }
               // резерв: по коду 1С через матч имени (если штрихкод ЯМ не совпадает с БД)
               if (iRev > 0 && it.offerName) {
                 var _onm = String(it.offerName);
@@ -2553,6 +2572,8 @@
   var WB_STOCKS = null, OZ_STOCKS = null, WB_STOCKS_BC = {}, WB_REPORT = null;
   // Ozon: SKU -> штрихкод (для себеста из БД) и SKU -> реальные комиссия/логистика из прайс-API.
   var OZ_SKU_BC = null, OZ_PRICES = null, OZ_SKU_OFFER = null, OZ_VOL = null;
+  var OZ_ORD = {};   // средний чек Ozon: sku -> {rev, orders, avg} из постингов
+  var _ozOrdDone = false;
   // Тарифная сетка логистики Ozon по объёму (из рабочего калькулятора, defaults — без привязки к маршруту).
   // bucketHi — верхние границы бакетов (л); le300/gt300 — ₽/ед для товара ≤300 ₽ и >300 ₽.
   var OZON_TARIFF = {
@@ -2855,16 +2876,20 @@
   }
 
   // Полная воронка Ozon по SKU из /v1/analytics/data (метрики тянем группами — defensive).
+  var _ozFunCache = null, _ozFunCacheKey = '';
   async function fetchOzFunnel(sku) {
     if (!CFG.ozSellerId || !CFG.ozSellerKey) return null;
+    sku = String(sku);
+    var ckey = 'sowy_ads_ozfun_' + STATE.period;
+    // память + localStorage (10 мин): один набор запросов даёт воронку по ВСЕМ SKU.
+    if (_ozFunCache && _ozFunCacheKey === ckey) return _ozFunCache[sku] || {};
+    try { var cc = JSON.parse(localStorage.getItem(ckey) || 'null'); if (cc && cc.data && Date.now() - cc.ts < 600000) { _ozFunCache = cc.data; _ozFunCacheKey = ckey; return _ozFunCache[sku] || {}; } } catch (e) {}
     var sh = { 'Client-Id': CFG.ozSellerId, 'Api-Key': CFG.ozSellerKey, 'Content-Type': 'application/json' };
     var mkBody = function (metrics) {
       return { date_from: ymd(daysAgo(STATE.period)), date_to: ymd(new Date()), dimension: ['sku'], metrics: metrics, filters: [], sort: [], limit: 1000, offset: 0 };
     };
-    // мелкими группами: проверенные метрики отдельно от рискованных,
-    // чтобы один неподдерживаемый код не уронил всю выборку.
     var groups = [
-      ['revenue', 'ordered_units', 'hits_view', 'hits_tocart'],          // проверены — уже работают в дашборде
+      ['revenue', 'ordered_units', 'hits_view', 'hits_tocart'],
       ['hits_view_search', 'hits_view_pdp'],
       ['session_view', 'session_view_pdp'],
       ['hits_tocart_search', 'hits_tocart_pdp'],
@@ -2872,22 +2897,31 @@
       ['delivered_units'],
       ['position_category']
     ];
-    var out = {}, gotAny = false;
-    for (var gi = 0; gi < groups.length; gi++) {
+    var bySku = {}, gotAny = false;
+    async function fetchGroup(g) {
       try {
-        var resp = await workerFetch('https://api-seller.ozon.ru/v1/analytics/data', 'POST', sh, mkBody(groups[gi]));
-        if (gi <= 1) rawlog('Ozon воронка analytics/data [' + groups[gi].join(',') + ']', resp);
+        var resp = await workerFetch('https://api-seller.ozon.ru/v1/analytics/data', 'POST', sh, mkBody(g));
         var data = asArr(resp && resp.result && resp.result.data);
         data.forEach(function (row) {
-          var k = String((row.dimensions && row.dimensions[0] && row.dimensions[0].id) || '');
-          if (k !== String(sku)) return;
-          (row.metrics || []).forEach(function (v, idx) { out[groups[gi][idx]] = +v || 0; gotAny = true; });
+          var k = String((row.dimensions && row.dimensions[0] && row.dimensions[0].id) || ''); if (!k) return;
+          if (!bySku[k]) bySku[k] = {};
+          (row.metrics || []).forEach(function (v, idx) { bySku[k][g[idx]] = +v || 0; });
         });
-      } catch (e) { dbg('Ozon воронка группа ' + gi + ' ошибка:', e.message); }
-      // пауза от троттлинга Ozon между запросами
-      await new Promise(function (res) { setTimeout(res, 280); });
+        return data.length > 0;
+      } catch (e) { dbg('Ozon воронка ' + g.join(',') + ':', e.message); return false; }
     }
-    return gotAny ? out : {};
+    var failed = [];
+    for (var gi = 0; gi < groups.length; gi++) {
+      if (await fetchGroup(groups[gi])) gotAny = true; else failed.push(groups[gi]);
+      await new Promise(function (res) { setTimeout(res, 220); });
+    }
+    for (var fi = 0; fi < failed.length; fi++) {           // повтор не пришедших групп (троттлинг)
+      await new Promise(function (res) { setTimeout(res, 600); });
+      if (await fetchGroup(failed[fi])) gotAny = true;
+    }
+    rawlog('Ozon воронка (кэш по SKU)', { skus: Object.keys(bySku).length, неудачных_групп: failed.length });
+    if (gotAny) { _ozFunCache = bySku; _ozFunCacheKey = ckey; try { localStorage.setItem(ckey, JSON.stringify({ ts: Date.now(), data: bySku })); } catch (e) {} }
+    return gotAny ? (bySku[sku] || {}) : {};
   }
 
   // Агрегат рекламной статистики WB по nmId (показы/клики/корзины/заказы) из всех кампаний.
@@ -2955,7 +2989,8 @@
         var commPct = +cm.sales_percent_fbo || +cm.sales_percent || 0;
         var deliv = +cm.fbo_deliv_to_customer_amount || 0;
         var logiApi = (+cm.fbo_direct_flow_trans_min_amount || 0) + deliv + (+cm.fbo_fulfillment_amount || 0);
-        var rec = { comm: commPct, deliv: deliv, logiApi: Math.round(logiApi * 100) / 100, real: (commPct > 0 || logiApi > 0) };
+        var price = (it.price && (+it.price.price || +it.price.marketing_price)) || 0;
+        var rec = { comm: commPct, deliv: deliv, logiApi: Math.round(logiApi * 100) / 100, price: price, real: (commPct > 0 || logiApi > 0) };
         skusOfOffer.forEach(function (sk) { OZ_PRICES[sk] = rec; });
       });
     } catch (e) { dbg('resolveOzByOffer', e.message); }
@@ -2981,8 +3016,8 @@
       if (ozSku) {
         var om = await fetchOzFunnel(ozSku);
         if (plat !== 'ozon') {
-          ozPrice = (om && om.ordered_units > 0) ? om.revenue / om.ordered_units : 0;
           var opr = OZ_PRICES && OZ_PRICES[ozSku];
+          ozPrice = (opr && opr.price > 0) ? opr.price : ((om && om.ordered_units > 0) ? om.revenue / om.ordered_units : 0);
           if (opr && opr.real) ozCommPct = opr.comm;
           var ovol = OZ_VOL && OZ_VOL[ozSku];
           var olv = ozLogiByVolume(ovol, ozPrice);
@@ -2990,7 +3025,8 @@
         }
         if (om) ozF = { views: om.hits_view, cart: om.hits_tocart, orders: om.ordered_units, revenue: om.revenue, pos: om.position_category, delivered: om.delivered_units };
       }
-      if (ozPrice > 0) res.ozon = { price: ozPrice, cost: cost, comm: ozPrice * ozCommPct / 100, logi: ozLogi, store: null, acq: ozPrice * ((UNIT.ozon && UNIT.ozon.acq) || 0) / 100, f: ozF, ad: (plat === 'ozon' ? (base.ads || 0) : null) };
+      if (ozSku && !_ozOrdDone) { _ozOrdDone = true; try { OZ_ORD = await ozOrders(); } catch (e) {} }
+      if (ozPrice > 0) res.ozon = { price: ozPrice, cost: cost, comm: ozPrice * ozCommPct / 100, logi: ozLogi, store: null, acq: ozPrice * ((UNIT.ozon && UNIT.ozon.acq) || 0) / 100, f: ozF, ad: (plat === 'ozon' ? (base.ads || 0) : null), avgCheck: (OZ_ORD && OZ_ORD[String(ozSku)] ? OZ_ORD[String(ozSku)].avg : null) };
     } catch (e) { dbg('econ ozon', e.message); }
     // ── WB ──
     try {
@@ -3011,7 +3047,7 @@
       if (wbPrice > 0) {
         var wvol = wbNm ? (WB_VOL[wbNm] || WB_VOL[Number(wbNm)] || 0) : 0;
         var wlv = wbLogiByFormula(wvol, wbPrice);
-        res.wb = { price: wbPrice, cost: cost, comm: wbPrice * (WB_CFG.commission || 0) / 100, logi: wlv != null ? wlv : 0, store: wbStoreByFormula(wvol), acq: wbPrice * ((UNIT.wb && UNIT.wb.acq) || 0) / 100, f: wbF, ad: (plat === 'wb' ? (base.ads || 0) : (wbStats && wbStats.sum > 0 ? wbStats.sum / (((rep && rep.qty) || wbStats.orders) || 1) : 0)) };
+        res.wb = { price: wbPrice, cost: cost, comm: wbPrice * (WB_CFG.commission || 0) / 100, logi: wlv != null ? wlv : 0, store: wbStoreByFormula(wvol), acq: wbPrice * ((UNIT.wb && UNIT.wb.acq) || 0) / 100, f: wbF, ad: (plat === 'wb' ? (base.ads || 0) : (wbStats && wbStats.sum > 0 ? wbStats.sum / (((rep && rep.qty) || wbStats.orders) || 1) : 0)), avgCheck: (function () { var _o = WB_ORD_BY_BC[String(wbNm)] || WB_ORD_BY_BC[bc]; return (_o && Object.keys(_o.orders).length) ? _o.rev / Object.keys(_o.orders).length : null; })() };
       }
     } catch (e) { dbg('econ wb', e.message); }
     // ── ЯМ ──
@@ -3019,9 +3055,9 @@
       var yu = UNIT.ym || { comm: 15, logi: 50 };
       var ymPrice = 0, ymF = null;
       if (plat === 'ym') { ymPrice = base.price; ymF = { views: base.views, cart: base.cart, orders: base.orders, revenue: base.revenue }; }
-      else { var yb = (YM_BY_BC && YM_BY_BC[bc]) || (base.code1c && YM_BY_C1 ? YM_BY_C1[base.code1c] : null); if (yb && yb.orders > 0) { ymPrice = yb.revenue / yb.orders; ymF = { views: null, cart: null, orders: yb.orders, revenue: yb.revenue }; } }
+      else { var yb = (YM_BY_BC && YM_BY_BC[bc]) || (base.code1c && YM_BY_C1 ? YM_BY_C1[base.code1c] : null); if (yb && yb.orders > 0) { ymPrice = (yb.lastPrice > 0) ? yb.lastPrice : yb.revenue / yb.orders; ymF = { views: null, cart: null, orders: yb.orders, revenue: yb.revenue }; } }
       var yr = YM_RATES[bc] || (base.code1c ? YM_RATES['c1:' + base.code1c] : null) || null;
-      if (ymPrice > 0) res.ym = { price: ymPrice, cost: cost, comm: ymPrice * (yr ? (yr.commPct || 0) : (yu.comm || 0)) / 100, logi: yr ? (yr.logiRub || 0) : (yu.logi || 0), store: null, acq: ymPrice * (yr ? (yr.acqPct || 0) : (yu.acq || 0)) / 100, f: ymF, ad: (plat === 'ym' ? (base.ads || 0) : (yb && yb.orders > 0 ? yb.spend / yb.orders : 0)), rateAuto: !!yr };
+      if (ymPrice > 0) res.ym = { price: ymPrice, cost: cost, comm: ymPrice * (yr ? (yr.commPct || 0) : (yu.comm || 0)) / 100, logi: yr ? (yr.logiRub || 0) : (yu.logi || 0), store: null, acq: ymPrice * (yr ? (yr.acqPct || 0) : (yu.acq || 0)) / 100, f: ymF, ad: (plat === 'ym' ? (base.ads || 0) : (yb && yb.orders > 0 ? yb.spend / yb.orders : 0)), avgCheck: (yb && yb.checks > 0) ? yb.revenue / yb.checks : null, rateAuto: !!yr };
     } catch (e) { dbg('econ ym', e.message); }
     ['ozon', 'wb', 'ym'].forEach(function (k) {
       var r = res[k]; if (!r) return;
@@ -3103,6 +3139,7 @@
       econ = '<div class="cd-h" style="margin:14px 0 6px">Юнит-экономика по кабинетам (за единицу, до рекламы)</div>' +
         '<table style="width:100%;border-collapse:collapse;font-size:13.5px"><thead>' + head + '</thead><tbody>' +
         row('Цена', 'price') +
+        row('Средний чек', 'avgCheck') +
         row('Себестоимость', 'cost') +
         row('Комиссия', 'comm') +
         row('Логистика', 'logi') +
@@ -3114,10 +3151,12 @@
         row('Реклама / ед', 'ad') +
         '<tr><td style="padding:6px 10px;' + bd + ';color:var(--muted)">Чистая прибыль / ед</td>' +
         cabs.map(function (k) { var r = ce[k]; var c = r ? (r.net >= 0 ? 'var(--green-dark,#2e6b33)' : 'var(--crit,#a8452f)') : ''; return '<td style="padding:6px 10px;' + bd + ';text-align:right;font-weight:600' + (c ? ';color:' + c : '') + '">' + (r ? fmtMoney(r.net) : '—') + '</td>'; }).join('') + '</tr>' +
+        '<tr><td style="padding:6px 10px;' + bd + ';color:var(--muted)">Маржа (после рекл.)</td>' +
+        cabs.map(function (k) { var r = ce[k]; var c = r ? (r.netMargin >= 0 ? 'var(--green-dark,#2e6b33)' : 'var(--crit,#a8452f)') : ''; return '<td style="padding:6px 10px;' + bd + ';text-align:right;font-weight:600' + (c ? ';color:' + c : '') + '">' + (r ? pct(r.netMargin) : '—') + '</td>'; }).join('') + '</tr>' +
         '<tr><td style="padding:6px 10px;' + bd + ';color:var(--muted)">ROMI (на ₽ рекламы)</td>' +
         cabs.map(function (k) { var r = ce[k]; var v = (r && r.romi != null) ? (r.romi.toFixed(2) + '×') : '—'; var c = (r && r.romi != null) ? (r.romi >= 1 ? 'var(--green-dark,#2e6b33)' : 'var(--crit,#a8452f)') : ''; return '<td style="padding:6px 10px;' + bd + ';text-align:right;font-weight:600' + (c ? ';color:' + c : '') + '">' + v + '</td>'; }).join('') + '</tr>' +
         '</tbody></table>' +
-        '<p class="cfg-hint" style="margin-top:6px">★ — выгоднее по марже до рекламы. <b>Чистая прибыль</b> = валовая − реклама. <b>ROMI</b> = валовая ÷ расход рекламы (≥1× — реклама окупается). Цена и расход рекламы — из реальных данных каждого кабинета; комиссия/логистика/эквайринг — по правилам кабинета (эквайринг по умолчанию 1,5%, меняется в «Себестоимость и ставки»). Хранение считается только для WB; на Ozon/ЯМ отдельной подушной строки нет — стоит «—».</p>';
+        '<p class="cfg-hint" style="margin-top:6px">★ — выгоднее по марже до рекламы. <b>Цена</b> — текущая/последняя. <b>Средний чек</b> = выручка ÷ число заказов (ЯМ — из заказов, WB — по номеру заказа, Ozon — из постингов). <b>Чистая прибыль</b> = валовая − реклама, <b>маржа после рекл.</b> = чистая прибыль ÷ цена. <b>ROMI</b> = валовая прибыль ÷ расход рекламы; как читать: <b>&lt;1×</b> — реклама в минус, <b>1–2×</b> — на грани (следи), <b>2–4×</b> — здоровая отдача, <b>&gt;4×</b> — отлично, можно масштабировать. Цена и расход рекламы — из реальных данных каждого кабинета; комиссия/логистика/эквайринг — по правилам кабинета (эквайринг по умолчанию 1,5%, меняется в «Себестоимость и ставки»). Хранение считается только для WB; на Ozon/ЯМ отдельной подушной строки нет — стоит «—».</p>';
     } else {
       econ = '<div class="cd-note">Юнит-экономика по кабинетам недоступна: нет данных продаж товара. Раскрой кампанию с продажами или загрузи БД.</div>';
     }
@@ -3228,6 +3267,44 @@
       });
       if (Object.keys(data).length) { try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {} return data; }
     } catch (e) { dbg('Ozon воронка ошибка:', e.message); }
+    try { var c2 = JSON.parse(localStorage.getItem(key) || 'null'); if (c2 && c2.data) return c2.data; } catch (e) {}
+    return {};
+  }
+
+  // Средний чек Ozon: число заказов на товар из постингов FBO (кэш 10 мин, пагинация с паузами, фолбэк на кэш).
+  async function ozOrders() {
+    if (!CFG.ozSellerId || !CFG.ozSellerKey) return {};
+    var key = 'sowy_ads_oz_ord_' + STATE.period;
+    try { var c = JSON.parse(localStorage.getItem(key) || 'null'); if (c && c.data && Date.now() - c.ts < 600000) return c.data; } catch (e) {}
+    var hdr = { 'Client-Id': CFG.ozSellerId, 'Api-Key': CFG.ozSellerKey, 'Content-Type': 'application/json' };
+    var since = ymd(daysAgo(STATE.period)) + 'T00:00:00.000Z', to = ymd(new Date()) + 'T23:59:59.999Z';
+    var bySku = {};
+    try {
+      var offset = 0, page = 0;
+      while (page < 5) {
+        var r = await workerFetch('https://api-seller.ozon.ru/v2/posting/fbo/list', 'POST', hdr,
+          { dir: 'DESC', filter: { since: since, to: to }, limit: 1000, offset: offset, with: {} });
+        var list = asArr(r && r.result); if (!list.length && r && r.result && r.result.postings) list = asArr(r.result.postings);
+        if (!list.length) break;
+        list.forEach(function (p) {
+          var oid = String(p.order_id || p.posting_number || '');
+          asArr(p.products).forEach(function (pr) {
+            var sk = String(pr.sku || ''); if (!sk) return;
+            var pp = (+pr.price || 0) * (+pr.quantity || 1);
+            if (!bySku[sk]) bySku[sk] = { rev: 0, ord: {} };
+            bySku[sk].rev += pp; if (oid) bySku[sk].ord[oid] = 1;
+          });
+        });
+        if (list.length < 1000) break;
+        offset += 1000; page++;
+        await new Promise(function (res) { setTimeout(res, 150); });
+      }
+      var out = {};
+      Object.keys(bySku).forEach(function (sk) { var o = bySku[sk]; var cnt = Object.keys(o.ord).length; if (cnt > 0) out[sk] = { rev: o.rev, orders: cnt, avg: o.rev / cnt }; });
+      if (Object.keys(out).length) { try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data: out })); } catch (e) {} }
+      rawlog('Ozon заказы по SKU (средний чек)', { sku: Object.keys(out).length });
+      return out;
+    } catch (e) { dbg('Ozon postings:', e.message); }
     try { var c2 = JSON.parse(localStorage.getItem(key) || 'null'); if (c2 && c2.data) return c2.data; } catch (e) {}
     return {};
   }
@@ -3823,6 +3900,37 @@
   }
   function persistRef() { try { localStorage.setItem('sowy_ads_ref', JSON.stringify({ map: SOVA_MAP, cost: SOVA_COST })); return true; } catch (e) { _persistErr = e; return false; } }
 
+  // ── Общая БД/себест для всех устройств: файл sowy_db.json рядом с дашбордом ──
+  function markLocalDb() { try { localStorage.setItem('sowy_ads_db_ts', String(Date.now())); } catch (e) {} }
+  function exportSharedDb() {
+    try {
+      var blob = new Blob([JSON.stringify({ ts: Date.now(), ref: SOVA_MAP, cost: COST_DB })], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a'); a.href = url; a.download = 'sowy_db.json';
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1500);
+    } catch (e) { alert('Не удалось выгрузить: ' + e.message); }
+  }
+  var _sharedDbDone = false;
+  async function loadSharedDb() {
+    try {
+      var resp = await fetch('sowy_db.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!resp || !resp.ok) return false;
+      var d = await resp.json();
+      if (!d || (!d.ref && !d.cost)) return false;
+      var remoteTs = +d.ts || 1;
+      var localTs = 0; try { localTs = +localStorage.getItem('sowy_ads_db_ts') || 0; } catch (e) {}
+      var localEmpty = Object.keys(SOVA_MAP).length === 0 && Object.keys(COST_DB).length === 0;
+      if (!localEmpty && remoteTs <= localTs) return false;   // локальные данные не старше — не трогаем
+      if (d.ref) Object.keys(d.ref).forEach(function (bc) { SOVA_MAP[bc] = d.ref[bc]; });
+      if (d.cost) { Object.keys(d.cost).forEach(function (c) { COST_DB[c] = d.cost[c]; }); saveCostDb(); }
+      recomputeCost(); persistRef();
+      try { localStorage.setItem('sowy_ads_db_ts', String(remoteTs)); } catch (e) {}
+      rawlog('Общая БД (sowy_db.json)', { товаров: Object.keys(d.ref || {}).length, себест: Object.keys(d.cost || {}).length });
+      return true;
+    } catch (e) { dbg('sowy_db.json:', e.message); return false; }
+  }
+
   // ── Файл БД: barcode, Код 1С, короткое имя, формат, штук в упаковке ──
   function parseDbFile(file) {
     if (typeof XLSX === 'undefined') { ensureXLSX(function () { parseDbFile(file); }); return; }
@@ -3859,6 +3967,7 @@
         _persistErr = null;
         recomputeCost(); var okR = persistRef();
         _lastLoadMsg = okR ? ('✅ БД загружена: ' + n + ' товаров. Сохранено в браузере — отдельно сохранять не нужно.') : '';
+        markLocalDb();
         STATE.detail = {}; renderTable(); openCostEditor();
         if (!okR) alert('БД распознана: ' + n + ' товаров (счётчик в окне обновлён), НО сохранить в браузер не вышло — после перезагрузки данные пропадут.\n\n' + _persistMsg());
       } catch (err) { alert('Не удалось прочитать БД: ' + err.message); }
@@ -3886,6 +3995,7 @@
         var okS = saveCostDb(); recomputeCost(); var okR = persistRef();
         var nMatched = Object.keys(SOVA_COST).length;
         _lastLoadMsg = (okS && okR) ? ('✅ Себестоимость загружена: ' + n + ' кодов 1С (себест посчитана у ' + nMatched + ' товаров). Сохранено автоматически.') : '';
+        markLocalDb();
         STATE.detail = {}; renderTable(); openCostEditor(n);
         if (!okS || !okR) alert('Себестоимость распознана: ' + n + ' кодов 1С (счётчик обновлён), НО сохранить в браузер не вышло — после перезагрузки пропадёт.\n\n' + _persistMsg());
       } catch (err) { alert('Не удалось прочитать себестоимость: ' + err.message); }
@@ -3938,8 +4048,9 @@
       '<label class="login-btn" style="cursor:pointer;display:inline-flex;align-items:center;height:38px;padding:0 14px;width:auto;background:linear-gradient(135deg,#a85d36,#7b3f25)">💸 Загрузить себестоимость' +
       '<input type="file" id="costFile" accept=".xlsx,.xls,.csv" style="display:none"></label>' +
       ((bdN || fileN) ? '<button class="tl-reset" id="costClear" style="border:none;background:transparent;color:var(--muted);text-decoration:underline;cursor:pointer">очистить</button>' : '') +
+      ((bdN || fileN) ? '<button id="dbExport" style="cursor:pointer;height:38px;padding:0 14px;border:1px solid var(--gold);background:rgba(201,131,43,.12);color:#7b3f25;border-radius:8px;font-weight:700">⬆ Скачать для сайта</button>' : '') +
       '</div>' +
-      '<p class="cfg-hint"><b>БД</b> — штрихкод, Код 1С, короткое имя, формат, штук/капсул. <b>Себестоимость</b> — «Цена с НДС» по Коду 1С за упаковку. Ozon: комиссия/логистика — из API. WB: метод калькулятора (настройки ниже). Сохраняется в браузере.</p>' +
+      '<p class="cfg-hint"><b>БД</b> — штрихкод, Код 1С, короткое имя, формат, штук/капсул. <b>Себестоимость</b> — «Цена с НДС» по Коду 1С за упаковку. Ozon: комиссия/логистика — из API. WB: метод калькулятора (настройки ниже). Сохраняется в браузере. <b>Чтобы БД/себест были у всех</b> — нажми «⬆ Скачать для сайта», положи <code>sowy_db.json</code> в репозиторий рядом с дашбордом и закоммить: дашборд подхватит его на любом устройстве.</p>' +
       '<div class="cd-h" style="margin-top:14px">Настройки WB (метод калькулятора)</div>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;font-size:12px;color:var(--muted)">' +
       ['commission|Комиссия %|0.5', 'coefLog|Коэф логистики %|1', 'coefStore|Коэф хранения %|1', 'il|ИЛ|0.01', 'irp|ИРП %|0.01', 'turnover|Оборот, дн|1'].map(function (s) {
@@ -3957,6 +4068,7 @@
     function bindFile(id, fn) { var el = document.getElementById(id); if (el) el.addEventListener('change', function () { if (this.files && this.files[0]) fn(this.files[0]); }); }
     bindFile('dbFile', parseDbFile);
     bindFile('costFile', parseCostFile);
+    var _exp = document.getElementById('dbExport'); if (_exp) _exp.addEventListener('click', exportSharedDb);
     Array.prototype.forEach.call(document.querySelectorAll('[data-wb]'), function (el) {
       el.addEventListener('change', function () {
         var key = this.getAttribute('data-wb'), v = parseFloat(this.value);
@@ -4000,6 +4112,7 @@
   async function loadAll() {
     if (_loading) { _pendingReload = true; return; }
     _loading = true;
+    if (!_sharedDbDone) { _sharedDbDone = true; try { await loadSharedDb(); } catch (e) {} }
     $('btnRefresh').classList.add('spinning');
     banner('', '');
     RAWLOG = [];
